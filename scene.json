@@ -11,46 +11,12 @@
     "tintB": 0.85
   },
   "lighting": {
-    "ambientR": 0.06,
-    "ambientG": 0.04,
-    "ambientB": 0.03,
-    "lights": [
-      {
-        "x": -2,
-        "y": 3,
-        "z": -3,
-        "r": 1.0,
-        "g": 0.8,
-        "b": 0.4,
-        "intensity": 5.0
-      },
-      {
-        "x": 2,
-        "y": 3,
-        "z": -6,
-        "r": 1.0,
-        "g": 0.85,
-        "b": 0.5,
-        "intensity": 4.0
-      },
-      {
-        "x": -1,
-        "y": 2.5,
-        "z": -8,
-        "r": 1.0,
-        "g": 0.7,
-        "b": 0.3,
-        "intensity": 4.0
-      },
-      {
-        "x": 3,
-        "y": 2,
-        "z": -4,
-        "r": 1.0,
-        "g": 0.9,
-        "b": 0.6,
-        "intensity": 3.0
-      }
-    ]
+    "ambientR": 0.05,
+    "ambientG": 0.03,
+    "ambientB": 0.02,
+    "streetLightR": 1.0,
+    "streetLightG": 0.85,
+    "streetLightB": 0.5,
+    "streetLightIntensity": 4.0
   }
 }
