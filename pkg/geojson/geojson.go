@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 )
 
 // Point2D is a 2D point in game-world meters.
@@ -18,11 +19,20 @@ type Point2D struct {
 	X, Z float32
 }
 
+// PLUTOData holds building attributes from the PLUTO dataset.
+type PLUTOData struct {
+	BldgClass string  // e.g. "A1", "D3", "O4"
+	LandUse   string  // 1-11 land use category
+	YearBuilt int     // construction year
+	NumFloors float32 // number of stories
+}
+
 // Footprint is a parsed building footprint ready for extrusion.
 type Footprint struct {
 	Rings  [][]Point2D // Outer ring first (CCW), then holes (CW)
 	Height float32     // Roof height in meters
 	BBL    string      // Borough-Block-Lot identifier
+	PLUTO  PLUTOData   // Enriched attributes (if available)
 }
 
 // Projection converts WGS84 lat/lon to local meters.
@@ -298,5 +308,142 @@ func isCCW(pts []Point2D) bool {
 func reverse(pts []Point2D) {
 	for i, j := 0, len(pts)-1; i < j; i, j = i+1, j-1 {
 		pts[i], pts[j] = pts[j], pts[i]
+	}
+}
+
+// --- PLUTO ---
+
+const plutoEndpoint = "https://data.cityofnewyork.us/resource/64uk-42ks.json"
+
+type plutoRecord struct {
+	BBL       string `json:"bbl"`
+	BldgClass string `json:"bldgclass"`
+	LandUse   string `json:"landuse"`
+	YearBuilt string `json:"yearbuilt"`
+	NumFloors string `json:"numfloors"`
+}
+
+// FetchPLUTO fetches PLUTO attributes for the given BBLs and returns
+// a map from BBL string to PLUTOData. Results are cached.
+func FetchPLUTO(bbls []string) (map[string]PLUTOData, error) {
+	if len(bbls) == 0 {
+		return nil, nil
+	}
+
+	// Deduplicate
+	seen := make(map[string]bool, len(bbls))
+	var unique []string
+	for _, bbl := range bbls {
+		if bbl != "" && !seen[bbl] {
+			seen[bbl] = true
+			unique = append(unique, bbl)
+		}
+	}
+
+	data, err := loadOrFetchPLUTO(unique)
+	if err != nil {
+		return nil, err
+	}
+
+	var records []plutoRecord
+	if err := json.Unmarshal(data, &records); err != nil {
+		return nil, fmt.Errorf("failed to decode PLUTO response: %w", err)
+	}
+
+	result := make(map[string]PLUTOData, len(records))
+	for _, rec := range records {
+		// Normalize BBL: strip trailing ".00000000"
+		bbl := rec.BBL
+		if idx := strings.Index(bbl, "."); idx >= 0 {
+			bbl = bbl[:idx]
+		}
+
+		yearBuilt, _ := strconv.Atoi(rec.YearBuilt)
+		numFloors, _ := strconv.ParseFloat(rec.NumFloors, 32)
+
+		result[bbl] = PLUTOData{
+			BldgClass: rec.BldgClass,
+			LandUse:   rec.LandUse,
+			YearBuilt: yearBuilt,
+			NumFloors: float32(numFloors),
+		}
+	}
+
+	return result, nil
+}
+
+func loadOrFetchPLUTO(bbls []string) ([]byte, error) {
+	// Cache key from sorted BBL list
+	key := "pluto_" + fmt.Sprintf("%x", sha256.Sum256([]byte(strings.Join(bbls, ","))))[:16]
+	filename := filepath.Join(cacheDir, key+".json")
+
+	if data, err := os.ReadFile(filename); err == nil {
+		fmt.Println("Loaded PLUTO data from cache:", filename)
+		return data, nil
+	}
+
+	// Build WHERE clause: bbl in (...)
+	// SODA API needs individual OR conditions for text matching
+	conditions := make([]string, len(bbls))
+	for i, bbl := range bbls {
+		conditions[i] = fmt.Sprintf("bbl=%s", bbl)
+	}
+
+	// Fetch in batches to avoid URL length limits
+	var allRecords []json.RawMessage
+	batchSize := 50
+	for start := 0; start < len(conditions); start += batchSize {
+		end := start + batchSize
+		if end > len(conditions) {
+			end = len(conditions)
+		}
+
+		where := strings.Join(conditions[start:end], " OR ")
+		params := url.Values{}
+		params.Set("$where", where)
+		params.Set("$select", "bbl,bldgclass,landuse,yearbuilt,numfloors")
+		params.Set("$limit", "5000")
+
+		reqURL := plutoEndpoint + "?" + params.Encode()
+
+		resp, err := http.Get(reqURL)
+		if err != nil {
+			return nil, fmt.Errorf("PLUTO API request failed: %w", err)
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			body, _ := io.ReadAll(resp.Body)
+			return nil, fmt.Errorf("PLUTO API returned %d: %s", resp.StatusCode, string(body))
+		}
+
+		var batch []json.RawMessage
+		if err := json.NewDecoder(resp.Body).Decode(&batch); err != nil {
+			return nil, fmt.Errorf("failed to decode PLUTO batch: %w", err)
+		}
+		allRecords = append(allRecords, batch...)
+	}
+
+	data, err := json.Marshal(allRecords)
+	if err != nil {
+		return nil, err
+	}
+
+	// Cache
+	if err := os.MkdirAll(cacheDir, 0o755); err == nil {
+		if err := os.WriteFile(filename, data, 0o644); err == nil {
+			fmt.Println("Cached PLUTO data to:", filename)
+		}
+	}
+
+	return data, nil
+}
+
+// EnrichFootprints populates PLUTO data on each footprint by matching BBL.
+func EnrichFootprints(footprints []Footprint, pluto map[string]PLUTOData) {
+	for i := range footprints {
+		if data, ok := pluto[footprints[i].BBL]; ok {
+			footprints[i].PLUTO = data
+		}
 	}
 }

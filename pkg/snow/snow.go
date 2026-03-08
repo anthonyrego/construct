@@ -136,10 +136,10 @@ func (s *System) Update(dt float32) {
 		// Respawn when out of bounds
 		minY := s.CenterY - s.HeightRange
 		if p.Pos[1] < minY {
-			s.spawn(p, false)
+			s.spawn(p, false) // fell below — respawn at top
 		} else if p.Pos[0] < minX-3 || p.Pos[0] > maxX+3 ||
 			p.Pos[2] < minZ-3 || p.Pos[2] > maxZ+3 {
-			s.spawn(p, false)
+			s.spawn(p, true) // drifted out horizontally — respawn at random height
 		}
 	}
 }

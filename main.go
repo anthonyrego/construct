@@ -220,8 +220,24 @@ func main() {
 		fmt.Printf("Fetched %d building footprints\n", len(footprints))
 	}
 
+	// Enrich with PLUTO data for building style/color
+	if len(footprints) > 0 {
+		var bbls []string
+		for _, fp := range footprints {
+			bbls = append(bbls, fp.BBL)
+		}
+		pluto, err := geojson.FetchPLUTO(bbls)
+		if err != nil {
+			fmt.Println("Warning: could not fetch PLUTO data:", err)
+		} else {
+			fmt.Printf("Fetched PLUTO data for %d lots\n", len(pluto))
+			geojson.EnrichFootprints(footprints, pluto)
+		}
+	}
+
 	for _, fp := range footprints {
-		m, pos, err := building.Extrude(rend, fp, 120, 85, 60)
+		c := building.StyleColor(fp.PLUTO)
+		m, pos, err := building.Extrude(rend, fp, c.R, c.G, c.B)
 		if err != nil {
 			continue
 		}
