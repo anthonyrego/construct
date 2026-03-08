@@ -18,8 +18,9 @@ import (
 )
 
 const (
-	windowWidth  = 1280
-	windowHeight = 720
+	defaultWindowWidth  = 1280
+	defaultWindowHeight = 720
+	defaultPixelScale   = 4
 )
 
 type SceneObject struct {
@@ -29,8 +30,10 @@ type SceneObject struct {
 }
 
 type SceneConfig struct {
-	RenderWidth  int `json:"renderWidth"`
-	RenderHeight int `json:"renderHeight"`
+	WindowWidth  int  `json:"windowWidth"`
+	WindowHeight int  `json:"windowHeight"`
+	Fullscreen   bool `json:"fullscreen"`
+	PixelScale   int  `json:"pixelScale"`
 	PostProcess  struct {
 		DitherStrength float32 `json:"ditherStrength"`
 		ColorLevels    float32 `json:"colorLevels"`
@@ -104,16 +107,40 @@ func main() {
 
 	fmt.Println("SDL Version:", sdl.GetVersion())
 
+	// Load initial config for window settings
+	startWidth := defaultWindowWidth
+	startHeight := defaultWindowHeight
+	startFullscreen := false
+	pixelScale := defaultPixelScale
+
+	configWatcher := &ConfigWatcher{path: "scene.json"}
+	if cfg, ok := configWatcher.Load(); ok {
+		if cfg.WindowWidth > 0 && cfg.WindowHeight > 0 {
+			startWidth = cfg.WindowWidth
+			startHeight = cfg.WindowHeight
+		}
+		startFullscreen = cfg.Fullscreen
+		if cfg.PixelScale > 0 {
+			pixelScale = cfg.PixelScale
+		}
+	}
+
 	// Create window
 	win, err := window.New(window.Config{
 		Title:  "Construct - Winter Night",
-		Width:  windowWidth,
-		Height: windowHeight,
+		Width:  startWidth,
+		Height: startHeight,
 	})
 	if err != nil {
 		panic("failed to create window: " + err.Error())
 	}
 	defer win.Destroy()
+
+	if startFullscreen {
+		if err := win.SetFullscreen(true); err != nil {
+			fmt.Println("Warning: could not set fullscreen:", err)
+		}
+	}
 
 	fmt.Println("GPU Driver:", win.Device().Driver())
 
@@ -130,11 +157,22 @@ func main() {
 	}
 	defer rend.Destroy()
 
+	// Set initial offscreen resolution from window size and pixel scale
+	offW := uint32(win.Width() / pixelScale)
+	offH := uint32(win.Height() / pixelScale)
+	if offW < 1 {
+		offW = 1
+	}
+	if offH < 1 {
+		offH = 1
+	}
+	rend.SetOffscreenResolution(offW, offH)
+
 	// Create input handler
 	inp := input.New()
 
 	// Create camera
-	cam := camera.New(float32(windowWidth) / float32(windowHeight))
+	cam := camera.New(float32(win.Width()) / float32(win.Height()))
 	cam.Position = mgl32.Vec3{0, 2, 2}
 	cam.Yaw = -90 // Looking toward -Z
 
@@ -212,8 +250,7 @@ func main() {
 		Tint:   mgl32.Vec4{1.08, 1.0, 0.85, 0},
 	}
 
-	// Hot-reload config from scene.json (edit while running!)
-	configWatcher := &ConfigWatcher{path: "scene.json"}
+	// Hot-reload config
 	applyConfig := func(cfg *SceneConfig) {
 		postProcess.Dither = mgl32.Vec4{cfg.PostProcess.DitherStrength, cfg.PostProcess.ColorLevels, 0, 0}
 		postProcess.Tint = mgl32.Vec4{cfg.PostProcess.TintR, cfg.PostProcess.TintG, cfg.PostProcess.TintB, 0}
@@ -231,12 +268,37 @@ func main() {
 			lightUniforms.LightColors[i] = mgl32.Vec4{l.R, l.G, l.B, l.Intensity}
 		}
 
-		if cfg.RenderWidth > 0 && cfg.RenderHeight > 0 {
-			if err := rend.SetOffscreenResolution(uint32(cfg.RenderWidth), uint32(cfg.RenderHeight)); err != nil {
-				fmt.Println("Error changing resolution:", err)
-			}
+		// Window / fullscreen
+		if err := win.SetFullscreen(cfg.Fullscreen); err != nil {
+			fmt.Println("Fullscreen error:", err)
 		}
+		if !cfg.Fullscreen && cfg.WindowWidth > 0 && cfg.WindowHeight > 0 {
+			win.SetSize(cfg.WindowWidth, cfg.WindowHeight)
+		}
+
+		// Derive offscreen resolution from pixel scale
+		scale := cfg.PixelScale
+		if scale < 1 {
+			scale = defaultPixelScale
+		}
+		newOffW := uint32(win.Width() / scale)
+		newOffH := uint32(win.Height() / scale)
+		if newOffW < 1 {
+			newOffW = 1
+		}
+		if newOffH < 1 {
+			newOffH = 1
+		}
+		if err := rend.SetOffscreenResolution(newOffW, newOffH); err != nil {
+			fmt.Println("Error changing resolution:", err)
+		}
+
+		// Update camera aspect ratio to match
+		cam.AspectRatio = float32(win.Width()) / float32(win.Height())
 	}
+
+	// Apply config on first load (already loaded above for window init)
+	configWatcher.modTime = time.Time{} // reset so it reloads
 	if cfg, ok := configWatcher.Load(); ok {
 		applyConfig(cfg)
 	}

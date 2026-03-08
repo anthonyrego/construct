@@ -7,11 +7,12 @@ import (
 )
 
 type Window struct {
-	handle *sdl.Window
-	device *sdl.GPUDevice
-	width  int
-	height int
-	title  string
+	handle     *sdl.Window
+	device     *sdl.GPUDevice
+	width      int
+	height     int
+	title      string
+	fullscreen bool
 }
 
 type Config struct {
@@ -66,6 +67,43 @@ func (w *Window) Width() int {
 
 func (w *Window) Height() int {
 	return w.height
+}
+
+func (w *Window) IsFullscreen() bool {
+	return w.fullscreen
+}
+
+func (w *Window) SetFullscreen(fullscreen bool) error {
+	if fullscreen == w.fullscreen {
+		return nil
+	}
+	if err := w.handle.SetFullscreen(fullscreen); err != nil {
+		return err
+	}
+	w.fullscreen = fullscreen
+
+	if fullscreen {
+		// Use the display's native resolution
+		displayID := sdl.GetDisplayForWindow(w.handle)
+		mode, err := displayID.DesktopDisplayMode()
+		if err == nil {
+			w.width = int(mode.W)
+			w.height = int(mode.H)
+		}
+	}
+	return nil
+}
+
+func (w *Window) SetSize(width, height int) error {
+	if w.fullscreen {
+		return nil
+	}
+	if err := w.handle.SetSize(int32(width), int32(height)); err != nil {
+		return err
+	}
+	w.width = width
+	w.height = height
+	return nil
 }
 
 func (w *Window) SetRelativeMouseMode(enabled bool) error {
