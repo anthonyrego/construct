@@ -14,6 +14,7 @@ import (
 	"github.com/anthonyrego/construct/pkg/input"
 	"github.com/anthonyrego/construct/pkg/mesh"
 	"github.com/anthonyrego/construct/pkg/renderer"
+	"github.com/anthonyrego/construct/pkg/scene"
 	"github.com/anthonyrego/construct/pkg/window"
 )
 
@@ -22,12 +23,6 @@ const (
 	defaultWindowHeight = 720
 	defaultPixelScale   = 4
 )
-
-type SceneObject struct {
-	Mesh     *mesh.Mesh
-	Position mgl32.Vec3
-	Scale    mgl32.Vec3
-}
 
 type SceneConfig struct {
 	WindowWidth  int  `json:"windowWidth"`
@@ -42,21 +37,14 @@ type SceneConfig struct {
 		TintB          float32 `json:"tintB"`
 	} `json:"postProcess"`
 	Lighting struct {
-		AmbientR float32       `json:"ambientR"`
-		AmbientG float32       `json:"ambientG"`
-		AmbientB float32       `json:"ambientB"`
-		Lights   []ConfigLight `json:"lights"`
+		AmbientR             float32 `json:"ambientR"`
+		AmbientG             float32 `json:"ambientG"`
+		AmbientB             float32 `json:"ambientB"`
+		StreetLightR         float32 `json:"streetLightR"`
+		StreetLightG         float32 `json:"streetLightG"`
+		StreetLightB         float32 `json:"streetLightB"`
+		StreetLightIntensity float32 `json:"streetLightIntensity"`
 	} `json:"lighting"`
-}
-
-type ConfigLight struct {
-	X         float32 `json:"x"`
-	Y         float32 `json:"y"`
-	Z         float32 `json:"z"`
-	R         float32 `json:"r"`
-	G         float32 `json:"g"`
-	B         float32 `json:"b"`
-	Intensity float32 `json:"intensity"`
 }
 
 type ConfigWatcher struct {
@@ -127,7 +115,7 @@ func main() {
 
 	// Create window
 	win, err := window.New(window.Config{
-		Title:  "Construct - Winter Night",
+		Title:  "Construct - City Block",
 		Width:  startWidth,
 		Height: startHeight,
 	})
@@ -176,71 +164,94 @@ func main() {
 	cam.Position = mgl32.Vec3{0, 2, 2}
 	cam.Yaw = -90 // Looking toward -Z
 
-	// --- Scene objects ---
-	var objects []SceneObject
-
-	// Ground plane (snow)
-	ground, err := mesh.NewGroundPlane(rend, 20, 200, 190, 180)
-	if err != nil {
-		panic("failed to create ground: " + err.Error())
+	// --- Create meshes ---
+	type namedMesh struct {
+		name string
+		mesh *mesh.Mesh
 	}
-	objects = append(objects, SceneObject{
-		Mesh:     ground,
-		Position: mgl32.Vec3{0, 0, 0},
-		Scale:    mgl32.Vec3{1, 1, 1},
-	})
+	var meshes []namedMesh
 
-	// Buildings
-	buildingCube, err := mesh.NewLitCube(rend, 90, 70, 60) // dark brown
-	if err != nil {
-		panic("failed to create building cube: " + err.Error())
-	}
-	objects = append(objects,
-		SceneObject{Mesh: buildingCube, Position: mgl32.Vec3{-3, 2, -5}, Scale: mgl32.Vec3{2, 4, 2}},
-		SceneObject{Mesh: buildingCube, Position: mgl32.Vec3{3, 3, -6}, Scale: mgl32.Vec3{3, 6, 2}},
-		SceneObject{Mesh: buildingCube, Position: mgl32.Vec3{-1, 1.5, -9}, Scale: mgl32.Vec3{2, 3, 2}},
-		SceneObject{Mesh: buildingCube, Position: mgl32.Vec3{5, 2.5, -10}, Scale: mgl32.Vec3{2, 5, 3}},
-		SceneObject{Mesh: buildingCube, Position: mgl32.Vec3{-5, 1, -3}, Scale: mgl32.Vec3{1.5, 2, 1.5}},
-	)
-
-	// Light marker cubes (bright, small)
-	type PointLight struct {
-		Position  mgl32.Vec3
-		Color     mgl32.Vec3
-		Intensity float32
+	createLitCube := func(name string, r, g, b uint8) *mesh.Mesh {
+		m, err := mesh.NewLitCube(rend, r, g, b)
+		if err != nil {
+			panic("failed to create mesh " + name + ": " + err.Error())
+		}
+		meshes = append(meshes, namedMesh{name, m})
+		return m
 	}
 
-	lights := []PointLight{
-		{mgl32.Vec3{-2, 3, -3}, mgl32.Vec3{1.0, 0.8, 0.4}, 5.0},
-		{mgl32.Vec3{2, 3, -6}, mgl32.Vec3{1.0, 0.85, 0.5}, 4.0},
-		{mgl32.Vec3{-1, 2.5, -8}, mgl32.Vec3{1.0, 0.7, 0.3}, 4.0},
-		{mgl32.Vec3{3, 2, -4}, mgl32.Vec3{1.0, 0.9, 0.6}, 3.0},
-	}
-
-	lightMarker, err := mesh.NewLitCube(rend, 255, 240, 200)
-	if err != nil {
-		panic("failed to create light marker: " + err.Error())
-	}
-	for _, l := range lights {
-		objects = append(objects, SceneObject{
-			Mesh:     lightMarker,
-			Position: l.Position,
-			Scale:    mgl32.Vec3{0.2, 0.2, 0.2},
-		})
-	}
+	body0 := createLitCube("body0", 120, 75, 55)
+	body1 := createLitCube("body1", 105, 80, 60)
+	body2 := createLitCube("body2", 95, 65, 50)
+	body3 := createLitCube("body3", 130, 85, 65)
+	stoopMesh := createLitCube("stoop", 140, 130, 120)
+	corniceMesh := createLitCube("cornice", 110, 95, 80)
+	poleMesh := createLitCube("pole", 40, 42, 45)
+	lanternMesh := createLitCube("lantern", 255, 230, 180)
+	streetMesh := createLitCube("street", 50, 48, 45)
+	sidewalkMesh := createLitCube("sidewalk", 110, 105, 100)
 
 	defer func() {
-		ground.Destroy(rend)
-		buildingCube.Destroy(rend)
-		lightMarker.Destroy(rend)
+		for _, nm := range meshes {
+			nm.mesh.Destroy(rend)
+		}
 	}()
 
-	// Build light uniforms from hardcoded lights
-	lightUniforms := renderer.LightUniforms{
-		AmbientColor: mgl32.Vec4{0.06, 0.04, 0.03, 1.0},
-		NumLights:    mgl32.Vec4{float32(len(lights)), 0, 0, 0},
+	bodyMeshes := []*mesh.Mesh{body0, body1, body2, body3}
+	heights := [12]float32{8, 10, 9, 11, 8.5, 10.5, 7.5, 9.5, 8, 10.5, 9, 11.5}
+
+	// --- Build the scene ---
+	s := &scene.Scene{}
+
+	// 12 buildings per side
+	for i := 0; i < 12; i++ {
+		z := float32(-3.5) - float32(i)*3.0
+		bodyMesh := bodyMeshes[i%len(bodyMeshes)]
+		h := heights[i]
+
+		// Left side (center X = -5.0, stoop faces +X toward street)
+		leftObjs := scene.Brownstone(bodyMesh, stoopMesh, corniceMesh, mgl32.Vec3{-5.0, 0, z}, h, 1.0)
+		s.Add(leftObjs...)
+
+		// Right side (center X = 5.0, stoop faces -X toward street)
+		rightObjs := scene.Brownstone(bodyMesh, stoopMesh, corniceMesh, mgl32.Vec3{5.0, 0, z}, h, -1.0)
+		s.Add(rightObjs...)
+
+		// Street lights every other building
+		if i%2 == 0 {
+			// Left sidewalk light (X = -2.75, lantern extends toward street +X)
+			lObjs, lLight := scene.StreetLight(poleMesh, lanternMesh,
+				mgl32.Vec3{-2.75, 0, z}, 1.0,
+				mgl32.Vec3{1.0, 0.85, 0.5}, 4.0)
+			s.Add(lObjs...)
+			s.AddLight(lLight)
+
+			// Right sidewalk light (X = 2.75, lantern extends toward street -X)
+			rObjs, rLight := scene.StreetLight(poleMesh, lanternMesh,
+				mgl32.Vec3{2.75, 0, z}, -1.0,
+				mgl32.Vec3{1.0, 0.85, 0.5}, 4.0)
+			s.Add(rObjs...)
+			s.AddLight(rLight)
+		}
 	}
-	for i, l := range lights {
+
+	// Ground strips
+	streetLength := float32(40.0)
+	s.Add(scene.GroundStrip(streetMesh, 0, 4.0, streetLength))
+	s.Add(scene.GroundStrip(sidewalkMesh, -2.75, 1.5, streetLength))
+	s.Add(scene.GroundStrip(sidewalkMesh, 2.75, 1.5, streetLength))
+
+	// --- Build light uniforms ---
+	lightUniforms := renderer.LightUniforms{
+		AmbientColor: mgl32.Vec4{0.05, 0.03, 0.02, 1.0},
+	}
+	n := len(s.Lights)
+	if n > 16 {
+		n = 16
+	}
+	lightUniforms.NumLights = mgl32.Vec4{float32(n), 0, 0, 0}
+	for i := 0; i < n; i++ {
+		l := s.Lights[i]
 		lightUniforms.LightPositions[i] = mgl32.Vec4{l.Position.X(), l.Position.Y(), l.Position.Z(), 0}
 		lightUniforms.LightColors[i] = mgl32.Vec4{l.Color.X(), l.Color.Y(), l.Color.Z(), l.Intensity}
 	}
@@ -257,15 +268,11 @@ func main() {
 
 		lightUniforms.AmbientColor = mgl32.Vec4{cfg.Lighting.AmbientR, cfg.Lighting.AmbientG, cfg.Lighting.AmbientB, 1.0}
 
-		n := len(cfg.Lighting.Lights)
-		if n > 4 {
-			n = 4
-		}
-		lightUniforms.NumLights = mgl32.Vec4{float32(n), 0, 0, 0}
+		// Update street light color/intensity from config (positions stay fixed from scene builder)
+		streetColor := mgl32.Vec3{cfg.Lighting.StreetLightR, cfg.Lighting.StreetLightG, cfg.Lighting.StreetLightB}
+		streetIntensity := cfg.Lighting.StreetLightIntensity
 		for i := 0; i < n; i++ {
-			l := cfg.Lighting.Lights[i]
-			lightUniforms.LightPositions[i] = mgl32.Vec4{l.X, l.Y, l.Z, 0}
-			lightUniforms.LightColors[i] = mgl32.Vec4{l.R, l.G, l.B, l.Intensity}
+			lightUniforms.LightColors[i] = mgl32.Vec4{streetColor.X(), streetColor.Y(), streetColor.Z(), streetIntensity}
 		}
 
 		// Window / fullscreen
@@ -373,7 +380,7 @@ func main() {
 		scenePass := rend.BeginScenePass(cmdBuf)
 		rend.PushLightUniforms(cmdBuf, lightUniforms)
 
-		for _, obj := range objects {
+		for _, obj := range s.Objects {
 			model := mgl32.Translate3D(obj.Position.X(), obj.Position.Y(), obj.Position.Z())
 			model = model.Mul4(mgl32.Scale3D(obj.Scale.X(), obj.Scale.Y(), obj.Scale.Z()))
 			mvp := viewProj.Mul4(model)

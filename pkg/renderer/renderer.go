@@ -52,8 +52,8 @@ type LitVertexUniforms struct {
 }
 
 type LightUniforms struct {
-	LightPositions [4]mgl32.Vec4 // xyz=pos, w=unused
-	LightColors    [4]mgl32.Vec4 // rgb=color, a=intensity
+	LightPositions [16]mgl32.Vec4 // xyz=pos, w=unused
+	LightColors    [16]mgl32.Vec4 // rgb=color, a=intensity
 	AmbientColor   mgl32.Vec4
 	CameraPos      mgl32.Vec4
 	NumLights      mgl32.Vec4 // x=count
