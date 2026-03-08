@@ -60,7 +60,9 @@ type LightUniforms struct {
 }
 
 type PostProcessUniforms struct {
-	Resolution mgl32.Vec4
+	Resolution mgl32.Vec4 // xy = offscreen size
+	Dither     mgl32.Vec4 // x = strength (0=off, 1=full), y = color levels
+	Tint       mgl32.Vec4 // rgb = per-channel multiplier
 }
 
 type Renderer struct {
@@ -647,7 +649,9 @@ func (r *Renderer) EndScenePass(renderPass *sdl.GPURenderPass) {
 	renderPass.End()
 }
 
-func (r *Renderer) RunPostProcess(cmdBuf *sdl.GPUCommandBuffer, swapchainTexture *sdl.GPUTexture) {
+func (r *Renderer) RunPostProcess(cmdBuf *sdl.GPUCommandBuffer, swapchainTexture *sdl.GPUTexture, uniforms PostProcessUniforms) {
+	uniforms.Resolution = mgl32.Vec4{offscreenWidth, offscreenHeight, 0, 0}
+
 	colorTargetInfo := sdl.GPUColorTargetInfo{
 		Texture: swapchainTexture,
 		LoadOp:  sdl.GPU_LOADOP_DONT_CARE,
@@ -665,9 +669,6 @@ func (r *Renderer) RunPostProcess(cmdBuf *sdl.GPUCommandBuffer, swapchainTexture
 		{Texture: r.offscreenTexture, Sampler: r.nearestSampler},
 	})
 
-	uniforms := PostProcessUniforms{
-		Resolution: mgl32.Vec4{offscreenWidth, offscreenHeight, 0, 0},
-	}
 	cmdBuf.PushFragmentUniformData(0, unsafe.Slice(
 		(*byte)(unsafe.Pointer(&uniforms)), unsafe.Sizeof(uniforms),
 	))
