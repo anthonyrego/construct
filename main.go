@@ -48,6 +48,12 @@ type SceneConfig struct {
 		StreetLightB         float32 `json:"streetLightB"`
 		StreetLightIntensity float32 `json:"streetLightIntensity"`
 	} `json:"lighting"`
+	Headlamp struct {
+		R         float32 `json:"r"`
+		G         float32 `json:"g"`
+		B         float32 `json:"b"`
+		Intensity float32 `json:"intensity"`
+	} `json:"headlamp"`
 	Snow struct {
 		Count        int     `json:"count"`
 		FallSpeed    float32 `json:"fallSpeed"`
@@ -189,17 +195,6 @@ func main() {
 		return m
 	}
 
-	body0 := createLitCube("body0", 120, 75, 55)
-	body1 := createLitCube("body1", 105, 80, 60)
-	body2 := createLitCube("body2", 95, 65, 50)
-	body3 := createLitCube("body3", 130, 85, 65)
-	stoopMesh := createLitCube("stoop", 140, 130, 120)
-	corniceMesh := createLitCube("cornice", 110, 95, 80)
-	poleMesh := createLitCube("pole", 40, 42, 45)
-	lanternMesh := createLitCube("lantern", 255, 230, 180)
-	streetMesh := createLitCube("street", 50, 48, 45)
-	sidewalkMesh := createLitCube("sidewalk", 110, 105, 100)
-
 	var buildingMeshes []*mesh.Mesh
 
 	defer func() {
@@ -211,109 +206,8 @@ func main() {
 		}
 	}()
 
-	bodyMeshes := []*mesh.Mesh{body0, body1, body2, body3}
-	heights := [14]float32{8, 10, 9, 11, 8.5, 10.5, 7.5, 9.5, 8, 10.5, 9, 11.5, 7, 10}
-
-	// --- Build the scene: 4-block grid ---
+	// --- Build the scene ---
 	s := &scene.Scene{}
-
-	// Two parallel streets running in Z at X=±10, cross street at Z=-22
-	streetOffsets := [2]float32{-10, 10}
-	// Two groups of 6 buildings per street, split by cross street
-	groupStartZ := [2]float32{-3.5, -49.5}
-	groupCount := 14
-
-	for _, streetX := range streetOffsets {
-		bIdx := 0
-		for _, startZ := range groupStartZ {
-			for i := 0; i < groupCount; i++ {
-				z := startZ - float32(i)*3.0
-				bodyMesh := bodyMeshes[bIdx%len(bodyMeshes)]
-				h := heights[bIdx%len(heights)]
-
-				// Left side (stoop faces +X toward street)
-				leftObjs := scene.Brownstone(bodyMesh, stoopMesh, corniceMesh,
-					mgl32.Vec3{streetX - 5.0, 0, z}, h, 1.0)
-				s.Add(leftObjs...)
-
-				// Right side (stoop faces -X toward street)
-				rightObjs := scene.Brownstone(bodyMesh, stoopMesh, corniceMesh,
-					mgl32.Vec3{streetX + 5.0, 0, z}, h, -1.0)
-				s.Add(rightObjs...)
-
-				// Street lights every other building
-				if i%2 == 0 {
-					lObjs, lLight := scene.StreetLight(poleMesh, lanternMesh,
-						mgl32.Vec3{streetX - 2.75, 0, z}, 1.0,
-						mgl32.Vec3{1.0, 0.85, 0.5}, 4.0)
-					s.Add(lObjs...)
-					s.AddLight(lLight)
-
-					rObjs, rLight := scene.StreetLight(poleMesh, lanternMesh,
-						mgl32.Vec3{streetX + 2.75, 0, z}, -1.0,
-						mgl32.Vec3{1.0, 0.85, 0.5}, 4.0)
-					s.Add(rObjs...)
-					s.AddLight(rLight)
-				}
-
-				bIdx++
-			}
-		}
-
-		// Z-running ground strips per street, split into north/south to avoid
-		// overlap with the cross street at Z=-46
-		// Cross street occupies Z=-42.5 to Z=-49.5 (street + sidewalks)
-		// North: Z=0 to Z=-42.5, length=42.5, center=-21.25
-		// South: Z=-49.5 to Z=-92, length=42.5, center=-70.75
-		for _, seg := range [][2]float32{{-21.25, 42.5}, {-70.75, 42.5}} {
-			centerZ, length := seg[0], seg[1]
-			s.Add(scene.Object{Mesh: streetMesh, Position: mgl32.Vec3{streetX, -0.01, centerZ}, Scale: mgl32.Vec3{4.0, 0.02, length}})
-			s.Add(scene.Object{Mesh: sidewalkMesh, Position: mgl32.Vec3{streetX - 2.75, -0.01, centerZ}, Scale: mgl32.Vec3{1.5, 0.02, length}})
-			s.Add(scene.Object{Mesh: sidewalkMesh, Position: mgl32.Vec3{streetX + 2.75, -0.01, centerZ}, Scale: mgl32.Vec3{1.5, 0.02, length}})
-		}
-	}
-
-	// Cross street at Z=-46
-	crossZ := float32(-46.0)
-	crossWidth := float32(50.0)
-	s.Add(scene.Object{Mesh: streetMesh, Position: mgl32.Vec3{0, -0.01, crossZ}, Scale: mgl32.Vec3{crossWidth, 0.02, 4.0}})
-	s.Add(scene.Object{Mesh: sidewalkMesh, Position: mgl32.Vec3{0, -0.01, crossZ + 2.75}, Scale: mgl32.Vec3{crossWidth, 0.02, 1.5}})
-	s.Add(scene.Object{Mesh: sidewalkMesh, Position: mgl32.Vec3{0, -0.01, crossZ - 2.75}, Scale: mgl32.Vec3{crossWidth, 0.02, 1.5}})
-
-	// Cross-street buildings (face ±Z toward the cross street)
-	// North side: center Z = crossZ+5 = -41 (south edge at sidewalk edge)
-	// South side: center Z = crossZ-5 = -51 (north edge at sidewalk edge)
-	crossBuildingXs := []float32{-21.5, -18.5, -1.5, 1.5, 18.5, 21.5}
-	crossBuildingHeights := []float32{9, 10.5, 8, 11, 9.5, 7.5}
-	northBuildingZ := crossZ + 5
-	southBuildingZ := crossZ - 5
-
-	for i, x := range crossBuildingXs {
-		bodyMesh := bodyMeshes[i%len(bodyMeshes)]
-		h := crossBuildingHeights[i]
-
-		northObjs := scene.BrownstoneZ(bodyMesh, stoopMesh, corniceMesh,
-			mgl32.Vec3{x, 0, northBuildingZ}, h, -1.0)
-		s.Add(northObjs...)
-
-		southObjs := scene.BrownstoneZ(bodyMesh, stoopMesh, corniceMesh,
-			mgl32.Vec3{x, 0, southBuildingZ}, h, 1.0)
-		s.Add(southObjs...)
-	}
-
-	// Cross-street lights (between Z-streets)
-	lightColor := mgl32.Vec3{1.0, 0.85, 0.5}
-	for _, x := range []float32{-1.5, 1.5} {
-		nObjs, nLight := scene.StreetLightZ(poleMesh, lanternMesh,
-			mgl32.Vec3{x, 0, crossZ + 2.75}, -1.0, lightColor, 4.0)
-		s.Add(nObjs...)
-		s.AddLight(nLight)
-
-		sObjs, sLight := scene.StreetLightZ(poleMesh, lanternMesh,
-			mgl32.Vec3{x, 0, crossZ - 2.75}, 1.0, lightColor, 4.0)
-		s.Add(sObjs...)
-		s.AddLight(sLight)
-	}
 
 	// --- Fetch and extrude NYC building footprints ---
 	footprints, err := geojson.FetchFootprints(
@@ -340,18 +234,22 @@ func main() {
 	snowSys := snow.New(200)
 
 	// --- Build light uniforms ---
+	// Slot 0 = headlamp (updated each frame), scene lights start at slot 1
 	lightUniforms := renderer.LightUniforms{
 		AmbientColor: mgl32.Vec4{0.05, 0.03, 0.02, 1.0},
 	}
-	n := len(s.Lights)
-	if n > 64 {
-		n = 64
+	headlampColor := mgl32.Vec4{1.0, 0.95, 0.8, 8.0} // rgb + intensity
+
+	nScene := len(s.Lights)
+	if nScene > 63 {
+		nScene = 63
 	}
-	lightUniforms.NumLights = mgl32.Vec4{float32(n), 0, 0, 0}
-	for i := 0; i < n; i++ {
+	lightUniforms.NumLights = mgl32.Vec4{float32(1 + nScene), 0, 0, 0}
+	lightUniforms.LightColors[0] = headlampColor
+	for i := 0; i < nScene; i++ {
 		l := s.Lights[i]
-		lightUniforms.LightPositions[i] = mgl32.Vec4{l.Position.X(), l.Position.Y(), l.Position.Z(), 0}
-		lightUniforms.LightColors[i] = mgl32.Vec4{l.Color.X(), l.Color.Y(), l.Color.Z(), l.Intensity}
+		lightUniforms.LightPositions[i+1] = mgl32.Vec4{l.Position.X(), l.Position.Y(), l.Position.Z(), 0}
+		lightUniforms.LightColors[i+1] = mgl32.Vec4{l.Color.X(), l.Color.Y(), l.Color.Z(), l.Intensity}
 	}
 
 	postProcess := renderer.PostProcessUniforms{
@@ -366,11 +264,17 @@ func main() {
 
 		lightUniforms.AmbientColor = mgl32.Vec4{cfg.Lighting.AmbientR, cfg.Lighting.AmbientG, cfg.Lighting.AmbientB, 1.0}
 
+		// Headlamp
+		if cfg.Headlamp.Intensity > 0 {
+			headlampColor = mgl32.Vec4{cfg.Headlamp.R, cfg.Headlamp.G, cfg.Headlamp.B, cfg.Headlamp.Intensity}
+		}
+		lightUniforms.LightColors[0] = headlampColor
+
 		// Update street light color/intensity from config (positions stay fixed from scene builder)
 		streetColor := mgl32.Vec3{cfg.Lighting.StreetLightR, cfg.Lighting.StreetLightG, cfg.Lighting.StreetLightB}
 		streetIntensity := cfg.Lighting.StreetLightIntensity
-		for i := 0; i < n; i++ {
-			lightUniforms.LightColors[i] = mgl32.Vec4{streetColor.X(), streetColor.Y(), streetColor.Z(), streetIntensity}
+		for i := 0; i < nScene; i++ {
+			lightUniforms.LightColors[i+1] = mgl32.Vec4{streetColor.X(), streetColor.Y(), streetColor.Z(), streetIntensity}
 		}
 
 		// Window / fullscreen
@@ -466,11 +370,13 @@ func main() {
 		mouseDX, mouseDY := inp.MouseDelta()
 		cam.Look(mouseDX, mouseDY)
 
-		// Update snow particles
+		// Update snow particles (follow camera)
+		snowSys.SetCenter(cam.Position.X(), cam.Position.Z())
 		snowSys.Update(deltaTime)
 
-		// Update camera position in light uniforms
+		// Update camera position and headlamp in light uniforms
 		lightUniforms.CameraPos = mgl32.Vec4{cam.Position.X(), cam.Position.Y(), cam.Position.Z(), 0}
+		lightUniforms.LightPositions[0] = lightUniforms.CameraPos
 
 		// Get view-projection matrix
 		viewProj := cam.ViewProjectionMatrix()

@@ -16,14 +16,15 @@ type Particle struct {
 }
 
 type System struct {
-	Particles    []Particle
-	WindTime     float32
-	WindStrength float32
-	FallSpeed    float32
-	ParticleSize float32
-	MinX, MaxX   float32
-	MinZ, MaxZ   float32
-	MinY, MaxY   float32
+	Particles      []Particle
+	WindTime       float32
+	WindStrength   float32
+	FallSpeed      float32
+	ParticleSize   float32
+	Radius         float32 // half-size of the snow area around center
+	CenterX        float32
+	CenterZ        float32
+	MinY, MaxY     float32
 }
 
 func (s *System) SetFallSpeed(speed float32) {
@@ -69,10 +70,7 @@ func New(count int) *System {
 		WindStrength: 0.4,
 		FallSpeed:    1.5,
 		ParticleSize: 0.06,
-		MinX:         -24,
-		MaxX:         24,
-		MinZ:         -94,
-		MaxZ:         4,
+		Radius:       30,
 		MinY:         -0.5,
 		MaxY:         16,
 	}
@@ -86,9 +84,9 @@ func New(count int) *System {
 
 func (s *System) spawn(p *Particle, randomY bool) {
 	p.Pos = mgl32.Vec3{
-		s.MinX + rand.Float32()*(s.MaxX-s.MinX),
+		s.CenterX - s.Radius + rand.Float32()*2*s.Radius,
 		0,
-		s.MinZ + rand.Float32()*(s.MaxZ-s.MinZ),
+		s.CenterZ - s.Radius + rand.Float32()*2*s.Radius,
 	}
 	if randomY {
 		p.Pos[1] = s.MinY + rand.Float32()*(s.MaxY-s.MinY)
@@ -103,11 +101,21 @@ func (s *System) spawn(p *Particle, randomY bool) {
 	p.Aspect = 0.75 + rand.Float32()*0.25
 }
 
+func (s *System) SetCenter(x, z float32) {
+	s.CenterX = x
+	s.CenterZ = z
+}
+
 func (s *System) Update(dt float32) {
 	s.WindTime += dt
 
 	ws := s.WindStrength
 	t := s.WindTime
+
+	minX := s.CenterX - s.Radius
+	maxX := s.CenterX + s.Radius
+	minZ := s.CenterZ - s.Radius
+	maxZ := s.CenterZ + s.Radius
 
 	for i := range s.Particles {
 		p := &s.Particles[i]
@@ -125,8 +133,8 @@ func (s *System) Update(dt float32) {
 		// Respawn when below ground or out of bounds
 		if p.Pos[1] < s.MinY {
 			s.spawn(p, false)
-		} else if p.Pos[0] < s.MinX-3 || p.Pos[0] > s.MaxX+3 ||
-			p.Pos[2] < s.MinZ-3 || p.Pos[2] > s.MaxZ+3 {
+		} else if p.Pos[0] < minX-3 || p.Pos[0] > maxX+3 ||
+			p.Pos[2] < minZ-3 || p.Pos[2] > maxZ+3 {
 			s.spawn(p, false)
 		}
 	}
