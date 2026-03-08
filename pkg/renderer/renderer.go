@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	offscreenWidth  = 320
-	offscreenHeight = 180
+	defaultOffscreenWidth  = 320
+	defaultOffscreenHeight = 180
 )
 
 type Vertex struct {
@@ -77,6 +77,8 @@ type Renderer struct {
 	offscreenTexture    *sdl.GPUTexture
 	offscreenDepth      *sdl.GPUTexture
 	nearestSampler      *sdl.GPUSampler
+	offscreenW          uint32
+	offscreenH          uint32
 }
 
 func New(w *window.Window) (*Renderer, error) {
@@ -273,35 +275,10 @@ func (r *Renderer) initLitPipeline() error {
 	}
 	r.postProcessPipeline = postProcessPipeline
 
-	// --- Offscreen texture (320x180) ---
-	offscreenTexture, err := device.CreateTexture(&sdl.GPUTextureCreateInfo{
-		Type:              sdl.GPU_TEXTURETYPE_2D,
-		Format:            sdl.GPU_TEXTUREFORMAT_R8G8B8A8_UNORM,
-		Width:             offscreenWidth,
-		Height:            offscreenHeight,
-		LayerCountOrDepth: 1,
-		NumLevels:         1,
-		Usage:             sdl.GPU_TEXTUREUSAGE_SAMPLER | sdl.GPU_TEXTUREUSAGE_COLOR_TARGET,
-	})
-	if err != nil {
-		return errors.New("failed to create offscreen texture: " + err.Error())
+	// --- Offscreen textures ---
+	if err := r.createOffscreenTargets(defaultOffscreenWidth, defaultOffscreenHeight); err != nil {
+		return err
 	}
-	r.offscreenTexture = offscreenTexture
-
-	// --- Offscreen depth (320x180) ---
-	offscreenDepth, err := device.CreateTexture(&sdl.GPUTextureCreateInfo{
-		Type:              sdl.GPU_TEXTURETYPE_2D,
-		Format:            sdl.GPU_TEXTUREFORMAT_D32_FLOAT,
-		Width:             offscreenWidth,
-		Height:            offscreenHeight,
-		LayerCountOrDepth: 1,
-		NumLevels:         1,
-		Usage:             sdl.GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET,
-	})
-	if err != nil {
-		return errors.New("failed to create offscreen depth texture: " + err.Error())
-	}
-	r.offscreenDepth = offscreenDepth
 
 	// --- Nearest sampler ---
 	nearestSampler, err := device.CreateSampler(&sdl.GPUSamplerCreateInfo{
@@ -318,6 +295,65 @@ func (r *Renderer) initLitPipeline() error {
 	r.nearestSampler = nearestSampler
 
 	return nil
+}
+
+func (r *Renderer) createOffscreenTargets(w, h uint32) error {
+	device := r.window.Device()
+
+	offscreenTexture, err := device.CreateTexture(&sdl.GPUTextureCreateInfo{
+		Type:              sdl.GPU_TEXTURETYPE_2D,
+		Format:            sdl.GPU_TEXTUREFORMAT_R8G8B8A8_UNORM,
+		Width:             w,
+		Height:            h,
+		LayerCountOrDepth: 1,
+		NumLevels:         1,
+		Usage:             sdl.GPU_TEXTUREUSAGE_SAMPLER | sdl.GPU_TEXTUREUSAGE_COLOR_TARGET,
+	})
+	if err != nil {
+		return errors.New("failed to create offscreen texture: " + err.Error())
+	}
+
+	offscreenDepth, err := device.CreateTexture(&sdl.GPUTextureCreateInfo{
+		Type:              sdl.GPU_TEXTURETYPE_2D,
+		Format:            sdl.GPU_TEXTUREFORMAT_D32_FLOAT,
+		Width:             w,
+		Height:            h,
+		LayerCountOrDepth: 1,
+		NumLevels:         1,
+		Usage:             sdl.GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET,
+	})
+	if err != nil {
+		device.ReleaseTexture(offscreenTexture)
+		return errors.New("failed to create offscreen depth texture: " + err.Error())
+	}
+
+	r.offscreenTexture = offscreenTexture
+	r.offscreenDepth = offscreenDepth
+	r.offscreenW = w
+	r.offscreenH = h
+	return nil
+}
+
+func (r *Renderer) SetOffscreenResolution(w, h uint32) error {
+	if w == r.offscreenW && h == r.offscreenH {
+		return nil
+	}
+
+	device := r.window.Device()
+
+	// Wait for GPU to finish using the old textures
+	device.WaitForIdle()
+
+	if r.offscreenDepth != nil {
+		device.ReleaseTexture(r.offscreenDepth)
+		r.offscreenDepth = nil
+	}
+	if r.offscreenTexture != nil {
+		device.ReleaseTexture(r.offscreenTexture)
+		r.offscreenTexture = nil
+	}
+
+	return r.createOffscreenTargets(w, h)
 }
 
 func (r *Renderer) CreateVertexBuffer(vertices []Vertex) (*sdl.GPUBuffer, error) {
@@ -650,7 +686,7 @@ func (r *Renderer) EndScenePass(renderPass *sdl.GPURenderPass) {
 }
 
 func (r *Renderer) RunPostProcess(cmdBuf *sdl.GPUCommandBuffer, swapchainTexture *sdl.GPUTexture, uniforms PostProcessUniforms) {
-	uniforms.Resolution = mgl32.Vec4{offscreenWidth, offscreenHeight, 0, 0}
+	uniforms.Resolution = mgl32.Vec4{float32(r.offscreenW), float32(r.offscreenH), 0, 0}
 
 	colorTargetInfo := sdl.GPUColorTargetInfo{
 		Texture: swapchainTexture,

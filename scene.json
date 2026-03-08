@@ -1,4 +1,6 @@
 {
+  "renderWidth": 352,
+  "renderHeight": 198,
   "postProcess": {
     "ditherStrength": 0.985,
     "colorLevels": 8.0,
