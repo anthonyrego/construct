@@ -18,5 +18,11 @@
     "streetLightG": 0.85,
     "streetLightB": 0.5,
     "streetLightIntensity": 4.0
+  },
+  "snow": {
+    "count": 4000,
+    "fallSpeed": 1.8,
+    "windStrength": 0.5,
+    "particleSize": 0.03
   }
 }

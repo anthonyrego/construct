@@ -15,6 +15,7 @@ import (
 	"github.com/anthonyrego/construct/pkg/mesh"
 	"github.com/anthonyrego/construct/pkg/renderer"
 	"github.com/anthonyrego/construct/pkg/scene"
+	"github.com/anthonyrego/construct/pkg/snow"
 	"github.com/anthonyrego/construct/pkg/window"
 )
 
@@ -45,6 +46,12 @@ type SceneConfig struct {
 		StreetLightB         float32 `json:"streetLightB"`
 		StreetLightIntensity float32 `json:"streetLightIntensity"`
 	} `json:"lighting"`
+	Snow struct {
+		Count        int     `json:"count"`
+		FallSpeed    float32 `json:"fallSpeed"`
+		WindStrength float32 `json:"windStrength"`
+		ParticleSize float32 `json:"particleSize"`
+	} `json:"snow"`
 }
 
 type ConfigWatcher struct {
@@ -241,6 +248,10 @@ func main() {
 	s.Add(scene.GroundStrip(sidewalkMesh, -2.75, 1.5, streetLength))
 	s.Add(scene.GroundStrip(sidewalkMesh, 2.75, 1.5, streetLength))
 
+	// --- Snow particle system ---
+	snowMesh := createLitCube("snow", 255, 255, 255)
+	snowSys := snow.New(200)
+
 	// --- Build light uniforms ---
 	lightUniforms := renderer.LightUniforms{
 		AmbientColor: mgl32.Vec4{0.05, 0.03, 0.02, 1.0},
@@ -302,6 +313,20 @@ func main() {
 
 		// Update camera aspect ratio to match
 		cam.AspectRatio = float32(win.Width()) / float32(win.Height())
+
+		// Snow parameters
+		if cfg.Snow.Count > 0 {
+			snowSys.SetCount(cfg.Snow.Count)
+		}
+		if cfg.Snow.FallSpeed > 0 {
+			snowSys.FallSpeed = cfg.Snow.FallSpeed
+		}
+		if cfg.Snow.WindStrength > 0 {
+			snowSys.WindStrength = cfg.Snow.WindStrength
+		}
+		if cfg.Snow.ParticleSize > 0 {
+			snowSys.ParticleSize = cfg.Snow.ParticleSize
+		}
 	}
 
 	// Apply config on first load (already loaded above for window init)
@@ -362,6 +387,9 @@ func main() {
 		mouseDX, mouseDY := inp.MouseDelta()
 		cam.Look(mouseDX, mouseDY)
 
+		// Update snow particles
+		snowSys.Update(deltaTime)
+
 		// Update camera position in light uniforms
 		lightUniforms.CameraPos = mgl32.Vec4{cam.Position.X(), cam.Position.Y(), cam.Position.Z(), 0}
 
@@ -389,6 +417,33 @@ func main() {
 				VertexBuffer: obj.Mesh.VertexBuffer,
 				IndexBuffer:  obj.Mesh.IndexBuffer,
 				IndexCount:   obj.Mesh.IndexCount,
+				MVP:          mvp,
+				Model:        model,
+			})
+		}
+
+		// Draw snow particles (billboarded to face camera)
+		camRight := cam.Right()
+		camUp := cam.Up()
+		for i := range snowSys.Particles {
+			p := &snowSys.Particles[i]
+			sx := p.Size
+			sy := p.Size * p.Aspect
+			r := camRight.Mul(sx)
+			u := camUp.Mul(sy)
+			f := camRight.Cross(camUp).Mul(p.Size * 0.05)
+			model := mgl32.Mat4{
+				r[0], r[1], r[2], 0,
+				u[0], u[1], u[2], 0,
+				f[0], f[1], f[2], 0,
+				p.Pos[0], p.Pos[1], p.Pos[2], 1,
+			}
+			mvp := viewProj.Mul4(model)
+
+			rend.DrawLit(cmdBuf, scenePass, renderer.LitDrawCall{
+				VertexBuffer: snowMesh.VertexBuffer,
+				IndexBuffer:  snowMesh.IndexBuffer,
+				IndexCount:   snowMesh.IndexCount,
 				MVP:          mvp,
 				Model:        model,
 			})
