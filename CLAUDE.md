@@ -2,11 +2,11 @@
 
 ## Project Overview
 
-**Construct** is a cross-platform game library in Go using SDL3 for window management, input handling, and GPU rendering. The goal is to provide a simple foundation for building 3D games with a pixel art aesthetic.
+**Construct** is a cross-platform game library in Go using SDL3 for window management, input handling, and GPU rendering. The goal is to provide a simple foundation for building 3D games with a pixel art aesthetic. Currently renders real NYC building footprints fetched from open data.
 
 ## Tech Stack
 
-- **Go 1.21+**
+- **Go 1.24+**
 - **SDL3** via [Zyko0/go-sdl3](https://github.com/Zyko0/go-sdl3) (pure Go, no CGO required)
 - **SDL3 GPU API** for rendering (abstracts Vulkan/Metal/D3D12)
 - **mathgl** (go-gl/mathgl) for 3D math (vectors, matrices)
@@ -15,14 +15,19 @@
 
 ```
 construct/
-├── main.go                 # Winter night demo scene
+├── main.go                 # NYC building footprint demo scene
 ├── scene.json              # Hot-reloadable config (edit while running)
+├── build/                  # Build output (gitignored)
+├── .cache/                 # Cached API responses (gitignored)
 ├── pkg/
+│   ├── geojson/            # NYC SODA API fetcher, GeoJSON parser, coordinate projection
+│   ├── building/           # Polygon extruder (footprint → 3D mesh) + ear-clip triangulation
 │   ├── window/             # SDL3 window + GPU device + fullscreen
 │   ├── input/              # Keyboard and mouse input handling
 │   ├── renderer/           # Two-pass GPU rendering pipeline
 │   ├── camera/             # First-person camera implementation
-│   └── mesh/               # Mesh primitives (cube, lit cube, ground plane)
+│   ├── mesh/               # Mesh primitives (cube, lit cube, ground plane)
+│   └── snow/               # Snow particle system (follows camera)
 └── shaders/
     ├── embed.go            # Shader loading with go:embed
     └── compiled/
@@ -34,11 +39,8 @@ construct/
 ## Build & Run
 
 ```bash
-go build .
-./construct
-
-# Or directly:
-go run .
+go build -o build/construct .
+./build/construct
 ```
 
 ## Architecture: Two-Pass Rendering
@@ -49,7 +51,7 @@ Pass 1 (Scene)                    Pass 2 (Post-Process)
 │ Render lit geometry  │          │ Fullscreen triangle      │
 │ to low-res offscreen │───────▶│ samples offscreen texture │
 │ texture (with depth) │          │ applies dither + palette  │
-│ + 4 point lights     │          │ outputs to swapchain      │
+│ + up to 64 lights    │          │ outputs to swapchain      │
 └─────────────────────┘          └──────────────────────────┘
 ```
 
@@ -58,7 +60,7 @@ Offscreen resolution = window size / `pixelScale`. At scale 4: each game pixel =
 ### Lit Rendering (Pass 1)
 - `LitVertex` type: position (float3) + normal (float3) + color (ubyte4_norm)
 - Vertex uniforms: MVP + Model matrices
-- Fragment uniforms: 4 point lights (position/color/intensity), ambient, camera pos
+- Fragment uniforms: up to 64 point lights (position/color/intensity), ambient, camera pos
 - Lambertian diffuse with distance attenuation
 - Renders to R8G8B8A8_UNORM offscreen texture + D32_FLOAT depth
 
@@ -81,6 +83,21 @@ Current shaders:
 - `Lit.vert` / `Lit.frag` — Lit scene rendering with point lights (MSL only currently)
 - `PostProcess.vert` / `PostProcess.frag` — Pixel art post-processing (MSL only currently)
 
+## Data Pipeline
+
+### GeoJSON Fetcher (`pkg/geojson`)
+- Fetches building footprints from NYC SODA API (`data.cityofnewyork.us`, dataset `5zhs-2jue`)
+- Caches raw JSON responses to `.cache/` — subsequent runs load from disk
+- Parses Polygon and MultiPolygon geometries
+- Projects WGS84 lat/lon to local meters via equirectangular approximation
+- Enforces CCW winding on outer rings, converts height from feet to meters
+
+### Building Extruder (`pkg/building`)
+- Extrudes 2D footprint polygons into 3D `LitVertex` meshes
+- Walls: 4 vertices per edge with outward normals
+- Roof: ear-clipping triangulation with upward normal
+- Positions are centroid-relative; centroid returned for scene placement
+
 ## scene.json — Hot-Reloadable Config
 
 Edit while the app is running; changes apply instantly on save.
@@ -94,25 +111,29 @@ Edit while the app is running; changes apply instantly on save.
   "postProcess": {
     "ditherStrength": 0.985,
     "colorLevels": 8.0,
-    "tintR": 1.08,
-    "tintG": 1.0,
-    "tintB": 0.85
+    "tintR": 1.08, "tintG": 1.0, "tintB": 0.85
   },
   "lighting": {
-    "ambientR": 0.06, "ambientG": 0.04, "ambientB": 0.03,
-    "lights": [
-      { "x": -2, "y": 3, "z": -3, "r": 1.0, "g": 0.8, "b": 0.4, "intensity": 5.0 }
-    ]
+    "ambientR": 0.05, "ambientG": 0.03, "ambientB": 0.02,
+    "streetLightR": 1.0, "streetLightG": 0.85, "streetLightB": 0.5,
+    "streetLightIntensity": 3.2
+  },
+  "headlamp": {
+    "r": 1.0, "g": 0.95, "b": 0.8, "intensity": 8.0
+  },
+  "snow": {
+    "count": 9000, "fallSpeed": 1.2, "windStrength": 0.4, "particleSize": 0.04
   }
 }
 ```
 
 Key parameters:
-- `pixelScale` — Controls pixel chunkiness. Offscreen = window / scale. Stays consistent across resolutions.
+- `pixelScale` — Controls pixel chunkiness. Offscreen = window / scale.
 - `ditherStrength` — 0 = smooth, 1 = full Bayer dithering
 - `colorLevels` — 2 = extreme posterization, 8 = default, 256 = smooth
 - `tintR/G/B` — Per-channel color multipliers (1.0 = neutral)
-- `lights` — Up to 4 point lights with position, color, and intensity
+- `headlamp` — Point light that follows the camera (color + intensity)
+- `snow` — Particle count, fall speed, wind, and size
 
 ## Key Patterns
 
@@ -128,12 +149,12 @@ rend.RunPostProcess(cmdBuf, swapchain.Texture, postProcessUniforms)
 rend.EndLitFrame(cmdBuf)
 ```
 
-### Original Unlit Render Loop (retained, not used in demo)
+### Building Mesh Creation
 ```go
-cmdBuf, renderPass, err := renderer.BeginFrame()
-if renderPass != nil {
-    renderer.Draw(cmdBuf, renderPass, DrawCall{...})
-    renderer.EndFrame(cmdBuf, renderPass)
+footprints, _ := geojson.FetchFootprints(minLat, minLon, maxLat, maxLon, limit)
+for _, fp := range footprints {
+    m, pos, _ := building.Extrude(rend, fp, r, g, b)
+    scene.Add(scene.Object{Mesh: m, Position: pos, Scale: mgl32.Vec3{1,1,1}})
 }
 ```
 
@@ -141,17 +162,16 @@ if renderPass != nil {
 - `NewCube(r, r, g, b)` — Unlit vertex-color cube (original)
 - `NewLitCube(r, r, g, b)` — Cube with face normals for lighting
 - `NewGroundPlane(r, size, r, g, b)` — Flat plane at Y=0 with up normal
+- `building.Extrude(r, footprint, r, g, b)` — Extruded polygon mesh from GeoJSON
 
 ### Camera
-FPS-style yaw/pitch camera. ViewProjection matrix computed each frame. Aspect ratio updates when window/fullscreen changes.
+FPS-style yaw/pitch camera (far plane = 1000m). ViewProjection matrix computed each frame. Aspect ratio updates when window/fullscreen changes.
 
-### Window
-Supports windowed and fullscreen modes. `SetFullscreen(bool)` toggles desktop fullscreen. `SetSize(w, h)` for windowed resize.
+### Snow
+Particle system that follows the camera in all 3 axes. Configurable count, fall speed, wind, and particle size via scene.json.
 
 ## Demo Controls
 
 - **WASD** - Move
 - **Mouse** - Look around
-- **Space** - Move up
-- **Shift** - Move down
 - **ESC** - Quit
