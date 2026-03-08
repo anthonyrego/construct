@@ -10,7 +10,9 @@ import (
 	"github.com/Zyko0/go-sdl3/sdl"
 	"github.com/go-gl/mathgl/mgl32"
 
+	"github.com/anthonyrego/construct/pkg/building"
 	"github.com/anthonyrego/construct/pkg/camera"
+	"github.com/anthonyrego/construct/pkg/geojson"
 	"github.com/anthonyrego/construct/pkg/input"
 	"github.com/anthonyrego/construct/pkg/mesh"
 	"github.com/anthonyrego/construct/pkg/renderer"
@@ -198,9 +200,14 @@ func main() {
 	streetMesh := createLitCube("street", 50, 48, 45)
 	sidewalkMesh := createLitCube("sidewalk", 110, 105, 100)
 
+	var buildingMeshes []*mesh.Mesh
+
 	defer func() {
 		for _, nm := range meshes {
 			nm.mesh.Destroy(rend)
+		}
+		for _, bm := range buildingMeshes {
+			bm.Destroy(rend)
 		}
 	}()
 
@@ -308,6 +315,26 @@ func main() {
 		s.AddLight(sLight)
 	}
 
+	// --- Fetch and extrude NYC building footprints ---
+	footprints, err := geojson.FetchFootprints(
+		40.735, -73.990, 40.740, -73.980, // Greenwich Village bbox
+		200,
+	)
+	if err != nil {
+		fmt.Println("Warning: could not fetch buildings:", err)
+	} else {
+		fmt.Printf("Fetched %d building footprints\n", len(footprints))
+	}
+
+	for _, fp := range footprints {
+		m, pos, err := building.Extrude(rend, fp, 120, 85, 60)
+		if err != nil {
+			continue
+		}
+		buildingMeshes = append(buildingMeshes, m)
+		s.Add(scene.Object{Mesh: m, Position: pos, Scale: mgl32.Vec3{1, 1, 1}})
+	}
+
 	// --- Snow particle system ---
 	snowMesh := createLitCube("snow", 255, 255, 255)
 	snowSys := snow.New(200)
@@ -398,8 +425,6 @@ func main() {
 	fmt.Println("\nControls:")
 	fmt.Println("  WASD  - Move")
 	fmt.Println("  Mouse - Look around")
-	fmt.Println("  Space - Move up")
-	fmt.Println("  Shift - Move down")
 	fmt.Println("  ESC   - Quit")
 
 	// Main loop
@@ -433,12 +458,6 @@ func main() {
 		}
 		if inp.IsKeyDown(sdl.K_A) {
 			right = -1
-		}
-		if inp.IsKeyDown(sdl.K_SPACE) {
-			up = 1
-		}
-		if inp.IsKeyDown(sdl.K_LSHIFT) || inp.IsKeyDown(sdl.K_RSHIFT) {
-			up = -1
 		}
 
 		cam.Move(forward, right, up, deltaTime)
