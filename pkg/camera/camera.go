@@ -29,7 +29,7 @@ func New(aspectRatio float32) *Camera {
 		AspectRatio: aspectRatio,
 		FOV:         45.0,
 		Near:        0.1,
-		Far:         100.0,
+		Far:         1000.0,
 	}
 }
 

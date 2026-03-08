@@ -11,13 +11,19 @@
     "tintB": 0.85
   },
   "lighting": {
-    "ambientR": 0.05,
-    "ambientG": 0.03,
-    "ambientB": 0.02,
+    "ambientR": 0.55,
+    "ambientG": 0.53,
+    "ambientB": 0.52,
     "streetLightR": 1.0,
     "streetLightG": 0.85,
     "streetLightB": 0.5,
     "streetLightIntensity": 3.2
+  },
+  "headlamp": {
+    "r": 1.0,
+    "g": 0.95,
+    "b": 0.8,
+    "intensity": 8.0
   },
   "snow": {
     "count": 9000,
