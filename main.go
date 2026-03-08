@@ -371,7 +371,7 @@ func main() {
 		cam.Look(mouseDX, mouseDY)
 
 		// Update snow particles (follow camera)
-		snowSys.SetCenter(cam.Position.X(), cam.Position.Z())
+		snowSys.SetCenter(cam.Position.X(), cam.Position.Y(), cam.Position.Z())
 		snowSys.Update(deltaTime)
 
 		// Update camera position and headlamp in light uniforms

@@ -22,9 +22,10 @@ type System struct {
 	FallSpeed      float32
 	ParticleSize   float32
 	Radius         float32 // half-size of the snow area around center
+	HeightRange    float32 // vertical range above/below center
 	CenterX        float32
+	CenterY        float32
 	CenterZ        float32
-	MinY, MaxY     float32
 }
 
 func (s *System) SetFallSpeed(speed float32) {
@@ -70,9 +71,8 @@ func New(count int) *System {
 		WindStrength: 0.4,
 		FallSpeed:    1.5,
 		ParticleSize: 0.06,
-		Radius:       30,
-		MinY:         -0.5,
-		MaxY:         16,
+		Radius:      30,
+		HeightRange: 15,
 	}
 
 	for i := range s.Particles {
@@ -88,10 +88,12 @@ func (s *System) spawn(p *Particle, randomY bool) {
 		0,
 		s.CenterZ - s.Radius + rand.Float32()*2*s.Radius,
 	}
+	minY := s.CenterY - s.HeightRange
+	maxY := s.CenterY + s.HeightRange
 	if randomY {
-		p.Pos[1] = s.MinY + rand.Float32()*(s.MaxY-s.MinY)
+		p.Pos[1] = minY + rand.Float32()*(maxY-minY)
 	} else {
-		p.Pos[1] = s.MaxY + rand.Float32()*3
+		p.Pos[1] = maxY + rand.Float32()*3
 	}
 	// Vary fall speed per particle
 	p.VelY = -(s.FallSpeed * (0.6 + rand.Float32()*0.8))
@@ -101,8 +103,9 @@ func (s *System) spawn(p *Particle, randomY bool) {
 	p.Aspect = 0.75 + rand.Float32()*0.25
 }
 
-func (s *System) SetCenter(x, z float32) {
+func (s *System) SetCenter(x, y, z float32) {
 	s.CenterX = x
+	s.CenterY = y
 	s.CenterZ = z
 }
 
@@ -130,8 +133,9 @@ func (s *System) Update(dt float32) {
 		p.Pos[1] += p.VelY * dt
 		p.Pos[2] += windZ * dt
 
-		// Respawn when below ground or out of bounds
-		if p.Pos[1] < s.MinY {
+		// Respawn when out of bounds
+		minY := s.CenterY - s.HeightRange
+		if p.Pos[1] < minY {
 			s.spawn(p, false)
 		} else if p.Pos[0] < minX-3 || p.Pos[0] > maxX+3 ||
 			p.Pos[2] < minZ-3 || p.Pos[2] > maxZ+3 {
