@@ -20,10 +20,10 @@ const (
 	windowHeight = 720
 )
 
-type CubeInstance struct {
+type SceneObject struct {
 	Mesh     *mesh.Mesh
 	Position mgl32.Vec3
-	Scale    float32
+	Scale    mgl32.Vec3
 }
 
 func main() {
@@ -45,7 +45,7 @@ func main() {
 
 	// Create window
 	win, err := window.New(window.Config{
-		Title:  "Construct - First Person Demo",
+		Title:  "Construct - Winter Night",
 		Width:  windowWidth,
 		Height: windowHeight,
 	})
@@ -74,65 +74,77 @@ func main() {
 
 	// Create camera
 	cam := camera.New(float32(windowWidth) / float32(windowHeight))
-	cam.Position = mgl32.Vec3{0, 1, 5}
+	cam.Position = mgl32.Vec3{0, 2, 2}
+	cam.Yaw = -90 // Looking toward -Z
 
-	// Create cubes with different colors and positions
-	cubes := []CubeInstance{}
+	// --- Scene objects ---
+	var objects []SceneObject
 
-	// Red cube
-	redCube, err := mesh.NewCube(rend, 255, 80, 80)
+	// Ground plane (snow)
+	ground, err := mesh.NewGroundPlane(rend, 20, 200, 190, 180)
 	if err != nil {
-		panic("failed to create red cube: " + err.Error())
+		panic("failed to create ground: " + err.Error())
 	}
-	cubes = append(cubes, CubeInstance{Mesh: redCube, Position: mgl32.Vec3{-3, 0.5, -2}, Scale: 1.0})
+	objects = append(objects, SceneObject{
+		Mesh:     ground,
+		Position: mgl32.Vec3{0, 0, 0},
+		Scale:    mgl32.Vec3{1, 1, 1},
+	})
 
-	// Green cube
-	greenCube, err := mesh.NewCube(rend, 80, 255, 80)
+	// Buildings
+	buildingCube, err := mesh.NewLitCube(rend, 90, 70, 60) // dark brown
 	if err != nil {
-		panic("failed to create green cube: " + err.Error())
+		panic("failed to create building cube: " + err.Error())
 	}
-	cubes = append(cubes, CubeInstance{Mesh: greenCube, Position: mgl32.Vec3{0, 0.5, -5}, Scale: 1.0})
+	objects = append(objects,
+		SceneObject{Mesh: buildingCube, Position: mgl32.Vec3{-3, 2, -5}, Scale: mgl32.Vec3{2, 4, 2}},
+		SceneObject{Mesh: buildingCube, Position: mgl32.Vec3{3, 3, -6}, Scale: mgl32.Vec3{3, 6, 2}},
+		SceneObject{Mesh: buildingCube, Position: mgl32.Vec3{-1, 1.5, -9}, Scale: mgl32.Vec3{2, 3, 2}},
+		SceneObject{Mesh: buildingCube, Position: mgl32.Vec3{5, 2.5, -10}, Scale: mgl32.Vec3{2, 5, 3}},
+		SceneObject{Mesh: buildingCube, Position: mgl32.Vec3{-5, 1, -3}, Scale: mgl32.Vec3{1.5, 2, 1.5}},
+	)
 
-	// Blue cube
-	blueCube, err := mesh.NewCube(rend, 80, 80, 255)
-	if err != nil {
-		panic("failed to create blue cube: " + err.Error())
+	// Light marker cubes (bright, small)
+	type PointLight struct {
+		Position  mgl32.Vec3
+		Color     mgl32.Vec3
+		Intensity float32
 	}
-	cubes = append(cubes, CubeInstance{Mesh: blueCube, Position: mgl32.Vec3{3, 0.5, -2}, Scale: 1.0})
 
-	// Yellow cube (far)
-	yellowCube, err := mesh.NewCube(rend, 255, 255, 80)
-	if err != nil {
-		panic("failed to create yellow cube: " + err.Error())
+	lights := []PointLight{
+		{mgl32.Vec3{-2, 3, -3}, mgl32.Vec3{1.0, 0.8, 0.4}, 5.0},
+		{mgl32.Vec3{2, 3, -6}, mgl32.Vec3{1.0, 0.85, 0.5}, 4.0},
+		{mgl32.Vec3{-1, 2.5, -8}, mgl32.Vec3{1.0, 0.7, 0.3}, 4.0},
+		{mgl32.Vec3{3, 2, -4}, mgl32.Vec3{1.0, 0.9, 0.6}, 3.0},
 	}
-	cubes = append(cubes, CubeInstance{Mesh: yellowCube, Position: mgl32.Vec3{0, 0.5, -10}, Scale: 2.0})
 
-	// Cyan cube (left)
-	cyanCube, err := mesh.NewCube(rend, 80, 255, 255)
+	lightMarker, err := mesh.NewLitCube(rend, 255, 240, 200)
 	if err != nil {
-		panic("failed to create cyan cube: " + err.Error())
+		panic("failed to create light marker: " + err.Error())
 	}
-	cubes = append(cubes, CubeInstance{Mesh: cyanCube, Position: mgl32.Vec3{-6, 1, -8}, Scale: 1.5})
-
-	// Magenta cube (right)
-	magentaCube, err := mesh.NewCube(rend, 255, 80, 255)
-	if err != nil {
-		panic("failed to create magenta cube: " + err.Error())
+	for _, l := range lights {
+		objects = append(objects, SceneObject{
+			Mesh:     lightMarker,
+			Position: l.Position,
+			Scale:    mgl32.Vec3{0.2, 0.2, 0.2},
+		})
 	}
-	cubes = append(cubes, CubeInstance{Mesh: magentaCube, Position: mgl32.Vec3{6, 0.5, -6}, Scale: 1.0})
-
-	// Floor (gray, large flat cube)
-	floorCube, err := mesh.NewCube(rend, 100, 100, 100)
-	if err != nil {
-		panic("failed to create floor: " + err.Error())
-	}
-	cubes = append(cubes, CubeInstance{Mesh: floorCube, Position: mgl32.Vec3{0, -0.5, -5}, Scale: 20.0})
 
 	defer func() {
-		for _, cube := range cubes {
-			cube.Mesh.Destroy(rend)
-		}
+		ground.Destroy(rend)
+		buildingCube.Destroy(rend)
+		lightMarker.Destroy(rend)
 	}()
+
+	// Build light uniforms
+	lightUniforms := renderer.LightUniforms{
+		AmbientColor: mgl32.Vec4{0.06, 0.04, 0.03, 1.0},
+		NumLights:    mgl32.Vec4{float32(len(lights)), 0, 0, 0},
+	}
+	for i, l := range lights {
+		lightUniforms.LightPositions[i] = mgl32.Vec4{l.Position.X(), l.Position.Y(), l.Position.Z(), 0}
+		lightUniforms.LightColors[i] = mgl32.Vec4{l.Color.X(), l.Color.Y(), l.Color.Z(), l.Intensity}
+	}
 
 	fmt.Println("\nControls:")
 	fmt.Println("  WASD  - Move")
@@ -181,36 +193,53 @@ func main() {
 		mouseDX, mouseDY := inp.MouseDelta()
 		cam.Look(mouseDX, mouseDY)
 
+		// Update camera position in light uniforms
+		lightUniforms.CameraPos = mgl32.Vec4{cam.Position.X(), cam.Position.Y(), cam.Position.Z(), 0}
+
 		// Get view-projection matrix
 		viewProj := cam.ViewProjectionMatrix()
 
-		// Begin rendering
-		cmdBuf, renderPass, err := rend.BeginFrame()
+		// --- Two-pass rendering ---
+
+		// Pass 1: Render lit scene to offscreen texture
+		cmdBuf, err := rend.BeginLitFrame()
 		if err != nil {
-			fmt.Println("Error beginning frame:", err)
+			fmt.Println("Error beginning lit frame:", err)
 			continue
 		}
 
-		if renderPass != nil {
-			// Draw all cubes
-			for _, cube := range cubes {
-				// Create model matrix (translate + scale)
-				model := mgl32.Translate3D(cube.Position.X(), cube.Position.Y(), cube.Position.Z())
-				model = model.Mul4(mgl32.Scale3D(cube.Scale, cube.Scale, cube.Scale))
+		scenePass := rend.BeginScenePass(cmdBuf)
+		rend.PushLightUniforms(cmdBuf, lightUniforms)
 
-				// Calculate MVP
-				mvp := viewProj.Mul4(model)
+		for _, obj := range objects {
+			model := mgl32.Translate3D(obj.Position.X(), obj.Position.Y(), obj.Position.Z())
+			model = model.Mul4(mgl32.Scale3D(obj.Scale.X(), obj.Scale.Y(), obj.Scale.Z()))
+			mvp := viewProj.Mul4(model)
 
-				rend.Draw(cmdBuf, renderPass, renderer.DrawCall{
-					VertexBuffer: cube.Mesh.VertexBuffer,
-					IndexBuffer:  cube.Mesh.IndexBuffer,
-					IndexCount:   cube.Mesh.IndexCount,
-					Transform:    mvp,
-				})
-			}
-
-			rend.EndFrame(cmdBuf, renderPass)
+			rend.DrawLit(cmdBuf, scenePass, renderer.LitDrawCall{
+				VertexBuffer: obj.Mesh.VertexBuffer,
+				IndexBuffer:  obj.Mesh.IndexBuffer,
+				IndexCount:   obj.Mesh.IndexCount,
+				MVP:          mvp,
+				Model:        model,
+			})
 		}
+
+		rend.EndScenePass(scenePass)
+
+		// Pass 2: Post-process to swapchain
+		swapchain, err := cmdBuf.WaitAndAcquireGPUSwapchainTexture(win.Handle())
+		if err != nil {
+			fmt.Println("Error acquiring swapchain:", err)
+			rend.EndLitFrame(cmdBuf)
+			continue
+		}
+
+		if swapchain != nil {
+			rend.RunPostProcess(cmdBuf, swapchain.Texture)
+		}
+
+		rend.EndLitFrame(cmdBuf)
 	}
 
 	fmt.Println("\nGoodbye!")

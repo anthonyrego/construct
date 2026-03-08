@@ -1,0 +1,55 @@
+#include <metal_stdlib>
+#include <simd/simd.h>
+
+using namespace metal;
+
+struct LightUniforms
+{
+    float4 lightPositions[4];
+    float4 lightColors[4];
+    float4 ambientColor;
+    float4 cameraPos;
+    float4 numLights;
+};
+
+struct main0_out
+{
+    float4 color [[color(0)]];
+};
+
+struct main0_in
+{
+    float3 worldPosition [[user(locn0)]];
+    float3 worldNormal [[user(locn1)]];
+    float4 vertexColor [[user(locn2)]];
+};
+
+fragment main0_out main0(main0_in in [[stage_in]], constant LightUniforms& lights [[buffer(0)]])
+{
+    main0_out out = {};
+
+    float3 normal = normalize(in.worldNormal);
+    float3 result = lights.ambientColor.rgb * in.vertexColor.rgb;
+
+    int numLights = int(lights.numLights.x);
+    for (int i = 0; i < 4; i++)
+    {
+        if (i >= numLights) break;
+
+        float3 lightPos = lights.lightPositions[i].xyz;
+        float3 lightColor = lights.lightColors[i].rgb;
+        float intensity = lights.lightColors[i].a;
+
+        float3 lightDir = lightPos - in.worldPosition;
+        float distance = length(lightDir);
+        lightDir = normalize(lightDir);
+
+        float NdotL = max(dot(normal, lightDir), 0.0);
+        float attenuation = intensity / (1.0 + distance * distance);
+
+        result += in.vertexColor.rgb * lightColor * NdotL * attenuation;
+    }
+
+    out.color = float4(clamp(result, 0.0, 1.0), 1.0);
+    return out;
+}
