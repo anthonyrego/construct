@@ -5,7 +5,9 @@ using namespace metal;
 
 struct PostProcessUniforms
 {
-    float4 resolution;
+    float4 resolution;  // xy = offscreen size
+    float4 dither;      // x = strength (0=off, 1=full), y = color levels
+    float4 tint;        // rgb = per-channel multiplier
 };
 
 struct main0_out
@@ -34,18 +36,19 @@ fragment main0_out main0(main0_in in [[stage_in]],
         15.0/16.0,  7.0/16.0, 13.0/16.0,  5.0/16.0
     };
 
+    float ditherStrength = uniforms.dither.x;
+    float levels = uniforms.dither.y;
+
     float2 pixelPos = in.uv * uniforms.resolution.xy;
     int x = int(pixelPos.x) % 4;
     int y = int(pixelPos.y) % 4;
     float threshold = bayerMatrix[y * 4 + x];
 
-    float levels = 8.0;
-    color.rgb = floor(color.rgb * levels + threshold) / levels;
+    color.rgb = floor(color.rgb * levels + threshold * ditherStrength) / levels;
 
-    color.r = clamp(color.r * 1.08, 0.0, 1.0);
-    color.b = clamp(color.b * 0.85, 0.0, 1.0);
-
-    color.rgb = clamp(color.rgb, 0.0, 1.0);
+    color.r = clamp(color.r * uniforms.tint.x, 0.0, 1.0);
+    color.g = clamp(color.g * uniforms.tint.y, 0.0, 1.0);
+    color.b = clamp(color.b * uniforms.tint.z, 0.0, 1.0);
     color.a = 1.0;
 
     out.color = color;

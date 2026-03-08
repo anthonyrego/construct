@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/Zyko0/go-sdl3/bin/binsdl"
@@ -24,6 +26,63 @@ type SceneObject struct {
 	Mesh     *mesh.Mesh
 	Position mgl32.Vec3
 	Scale    mgl32.Vec3
+}
+
+type SceneConfig struct {
+	PostProcess struct {
+		DitherStrength float32 `json:"ditherStrength"`
+		ColorLevels    float32 `json:"colorLevels"`
+		TintR          float32 `json:"tintR"`
+		TintG          float32 `json:"tintG"`
+		TintB          float32 `json:"tintB"`
+	} `json:"postProcess"`
+	Lighting struct {
+		AmbientR float32       `json:"ambientR"`
+		AmbientG float32       `json:"ambientG"`
+		AmbientB float32       `json:"ambientB"`
+		Lights   []ConfigLight `json:"lights"`
+	} `json:"lighting"`
+}
+
+type ConfigLight struct {
+	X         float32 `json:"x"`
+	Y         float32 `json:"y"`
+	Z         float32 `json:"z"`
+	R         float32 `json:"r"`
+	G         float32 `json:"g"`
+	B         float32 `json:"b"`
+	Intensity float32 `json:"intensity"`
+}
+
+type ConfigWatcher struct {
+	path    string
+	modTime time.Time
+}
+
+func (cw *ConfigWatcher) Load() (*SceneConfig, bool) {
+	info, err := os.Stat(cw.path)
+	if err != nil {
+		return nil, false
+	}
+	if !info.ModTime().After(cw.modTime) {
+		return nil, false
+	}
+	cw.modTime = info.ModTime()
+
+	data, err := os.ReadFile(cw.path)
+	if err != nil {
+		fmt.Println("Config read error:", err)
+		return nil, false
+	}
+
+	var cfg SceneConfig
+	if err := json.Unmarshal(data, &cfg); err != nil {
+		fmt.Println("Config parse error:", err)
+		return nil, false
+	}
+
+	fmt.Println("Config reloaded")
+	return &cfg, true
 }
 
 func main() {
@@ -136,7 +195,7 @@ func main() {
 		lightMarker.Destroy(rend)
 	}()
 
-	// Build light uniforms
+	// Build light uniforms from hardcoded lights
 	lightUniforms := renderer.LightUniforms{
 		AmbientColor: mgl32.Vec4{0.06, 0.04, 0.03, 1.0},
 		NumLights:    mgl32.Vec4{float32(len(lights)), 0, 0, 0},
@@ -144,6 +203,34 @@ func main() {
 	for i, l := range lights {
 		lightUniforms.LightPositions[i] = mgl32.Vec4{l.Position.X(), l.Position.Y(), l.Position.Z(), 0}
 		lightUniforms.LightColors[i] = mgl32.Vec4{l.Color.X(), l.Color.Y(), l.Color.Z(), l.Intensity}
+	}
+
+	postProcess := renderer.PostProcessUniforms{
+		Dither: mgl32.Vec4{1.0, 8.0, 0, 0},
+		Tint:   mgl32.Vec4{1.08, 1.0, 0.85, 0},
+	}
+
+	// Hot-reload config from scene.json (edit while running!)
+	configWatcher := &ConfigWatcher{path: "scene.json"}
+	applyConfig := func(cfg *SceneConfig) {
+		postProcess.Dither = mgl32.Vec4{cfg.PostProcess.DitherStrength, cfg.PostProcess.ColorLevels, 0, 0}
+		postProcess.Tint = mgl32.Vec4{cfg.PostProcess.TintR, cfg.PostProcess.TintG, cfg.PostProcess.TintB, 0}
+
+		lightUniforms.AmbientColor = mgl32.Vec4{cfg.Lighting.AmbientR, cfg.Lighting.AmbientG, cfg.Lighting.AmbientB, 1.0}
+
+		n := len(cfg.Lighting.Lights)
+		if n > 4 {
+			n = 4
+		}
+		lightUniforms.NumLights = mgl32.Vec4{float32(n), 0, 0, 0}
+		for i := 0; i < n; i++ {
+			l := cfg.Lighting.Lights[i]
+			lightUniforms.LightPositions[i] = mgl32.Vec4{l.X, l.Y, l.Z, 0}
+			lightUniforms.LightColors[i] = mgl32.Vec4{l.R, l.G, l.B, l.Intensity}
+		}
+	}
+	if cfg, ok := configWatcher.Load(); ok {
+		applyConfig(cfg)
 	}
 
 	fmt.Println("\nControls:")
@@ -164,6 +251,11 @@ func main() {
 
 		// Update input
 		inp.Update()
+
+		// Hot-reload config
+		if cfg, ok := configWatcher.Load(); ok {
+			applyConfig(cfg)
+		}
 
 		// Handle camera movement
 		var forward, right, up float32
@@ -236,7 +328,7 @@ func main() {
 		}
 
 		if swapchain != nil {
-			rend.RunPostProcess(cmdBuf, swapchain.Texture)
+			rend.RunPostProcess(cmdBuf, swapchain.Texture, postProcess)
 		}
 
 		rend.EndLitFrame(cmdBuf)
