@@ -17,7 +17,7 @@
     "streetLightR": 1.0,
     "streetLightG": 0.85,
     "streetLightB": 0.5,
-    "streetLightIntensity": 4.0
+    "streetLightIntensity": 3.2
   },
   "snow": {
     "count": 9000,
