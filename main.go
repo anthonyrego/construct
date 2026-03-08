@@ -319,13 +319,13 @@ func main() {
 			snowSys.SetCount(cfg.Snow.Count)
 		}
 		if cfg.Snow.FallSpeed > 0 {
-			snowSys.FallSpeed = cfg.Snow.FallSpeed
+			snowSys.SetFallSpeed(cfg.Snow.FallSpeed)
 		}
 		if cfg.Snow.WindStrength > 0 {
 			snowSys.WindStrength = cfg.Snow.WindStrength
 		}
 		if cfg.Snow.ParticleSize > 0 {
-			snowSys.ParticleSize = cfg.Snow.ParticleSize
+			snowSys.SetParticleSize(cfg.Snow.ParticleSize)
 		}
 	}
 

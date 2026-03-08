@@ -26,6 +26,28 @@ type System struct {
 	MinY, MaxY   float32
 }
 
+func (s *System) SetFallSpeed(speed float32) {
+	if speed == s.FallSpeed {
+		return
+	}
+	old := s.FallSpeed
+	s.FallSpeed = speed
+	for i := range s.Particles {
+		s.Particles[i].VelY = s.Particles[i].VelY / old * speed
+	}
+}
+
+func (s *System) SetParticleSize(size float32) {
+	if size == s.ParticleSize {
+		return
+	}
+	old := s.ParticleSize
+	s.ParticleSize = size
+	for i := range s.Particles {
+		s.Particles[i].Size = s.Particles[i].Size / old * size
+	}
+}
+
 func (s *System) SetCount(count int) {
 	if count == len(s.Particles) {
 		return
@@ -78,7 +100,7 @@ func (s *System) spawn(p *Particle, randomY bool) {
 	p.Phase = rand.Float32() * math.Pi * 2
 	// Vary size and aspect per particle
 	p.Size = s.ParticleSize * (0.5 + rand.Float32())
-	p.Aspect = 0.4 + rand.Float32()*0.6
+	p.Aspect = 0.75 + rand.Float32()*0.25
 }
 
 func (s *System) Update(dt float32) {

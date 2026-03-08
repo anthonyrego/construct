@@ -21,8 +21,8 @@
   },
   "snow": {
     "count": 4000,
-    "fallSpeed": 1.8,
-    "windStrength": 0.5,
-    "particleSize": 0.03
+    "fallSpeed": 1.2,
+    "windStrength": 0.4,
+    "particleSize": 0.04
   }
 }
