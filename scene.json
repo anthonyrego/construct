@@ -20,7 +20,7 @@
     "streetLightIntensity": 4.0
   },
   "snow": {
-    "count": 4000,
+    "count": 9000,
     "fallSpeed": 1.2,
     "windStrength": 0.4,
     "particleSize": 0.04

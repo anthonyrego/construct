@@ -168,7 +168,7 @@ func main() {
 
 	// Create camera
 	cam := camera.New(float32(win.Width()) / float32(win.Height()))
-	cam.Position = mgl32.Vec3{0, 2, 2}
+	cam.Position = mgl32.Vec3{-10, 2, 2}
 	cam.Yaw = -90 // Looking toward -Z
 
 	// --- Create meshes ---
@@ -205,48 +205,108 @@ func main() {
 	}()
 
 	bodyMeshes := []*mesh.Mesh{body0, body1, body2, body3}
-	heights := [12]float32{8, 10, 9, 11, 8.5, 10.5, 7.5, 9.5, 8, 10.5, 9, 11.5}
+	heights := [14]float32{8, 10, 9, 11, 8.5, 10.5, 7.5, 9.5, 8, 10.5, 9, 11.5, 7, 10}
 
-	// --- Build the scene ---
+	// --- Build the scene: 4-block grid ---
 	s := &scene.Scene{}
 
-	// 12 buildings per side
-	for i := 0; i < 12; i++ {
-		z := float32(-3.5) - float32(i)*3.0
-		bodyMesh := bodyMeshes[i%len(bodyMeshes)]
-		h := heights[i]
+	// Two parallel streets running in Z at X=±10, cross street at Z=-22
+	streetOffsets := [2]float32{-10, 10}
+	// Two groups of 6 buildings per street, split by cross street
+	groupStartZ := [2]float32{-3.5, -49.5}
+	groupCount := 14
 
-		// Left side (center X = -5.0, stoop faces +X toward street)
-		leftObjs := scene.Brownstone(bodyMesh, stoopMesh, corniceMesh, mgl32.Vec3{-5.0, 0, z}, h, 1.0)
-		s.Add(leftObjs...)
+	for _, streetX := range streetOffsets {
+		bIdx := 0
+		for _, startZ := range groupStartZ {
+			for i := 0; i < groupCount; i++ {
+				z := startZ - float32(i)*3.0
+				bodyMesh := bodyMeshes[bIdx%len(bodyMeshes)]
+				h := heights[bIdx%len(heights)]
 
-		// Right side (center X = 5.0, stoop faces -X toward street)
-		rightObjs := scene.Brownstone(bodyMesh, stoopMesh, corniceMesh, mgl32.Vec3{5.0, 0, z}, h, -1.0)
-		s.Add(rightObjs...)
+				// Left side (stoop faces +X toward street)
+				leftObjs := scene.Brownstone(bodyMesh, stoopMesh, corniceMesh,
+					mgl32.Vec3{streetX - 5.0, 0, z}, h, 1.0)
+				s.Add(leftObjs...)
 
-		// Street lights every other building
-		if i%2 == 0 {
-			// Left sidewalk light (X = -2.75, lantern extends toward street +X)
-			lObjs, lLight := scene.StreetLight(poleMesh, lanternMesh,
-				mgl32.Vec3{-2.75, 0, z}, 1.0,
-				mgl32.Vec3{1.0, 0.85, 0.5}, 4.0)
-			s.Add(lObjs...)
-			s.AddLight(lLight)
+				// Right side (stoop faces -X toward street)
+				rightObjs := scene.Brownstone(bodyMesh, stoopMesh, corniceMesh,
+					mgl32.Vec3{streetX + 5.0, 0, z}, h, -1.0)
+				s.Add(rightObjs...)
 
-			// Right sidewalk light (X = 2.75, lantern extends toward street -X)
-			rObjs, rLight := scene.StreetLight(poleMesh, lanternMesh,
-				mgl32.Vec3{2.75, 0, z}, -1.0,
-				mgl32.Vec3{1.0, 0.85, 0.5}, 4.0)
-			s.Add(rObjs...)
-			s.AddLight(rLight)
+				// Street lights every other building
+				if i%2 == 0 {
+					lObjs, lLight := scene.StreetLight(poleMesh, lanternMesh,
+						mgl32.Vec3{streetX - 2.75, 0, z}, 1.0,
+						mgl32.Vec3{1.0, 0.85, 0.5}, 4.0)
+					s.Add(lObjs...)
+					s.AddLight(lLight)
+
+					rObjs, rLight := scene.StreetLight(poleMesh, lanternMesh,
+						mgl32.Vec3{streetX + 2.75, 0, z}, -1.0,
+						mgl32.Vec3{1.0, 0.85, 0.5}, 4.0)
+					s.Add(rObjs...)
+					s.AddLight(rLight)
+				}
+
+				bIdx++
+			}
+		}
+
+		// Z-running ground strips per street, split into north/south to avoid
+		// overlap with the cross street at Z=-46
+		// Cross street occupies Z=-42.5 to Z=-49.5 (street + sidewalks)
+		// North: Z=0 to Z=-42.5, length=42.5, center=-21.25
+		// South: Z=-49.5 to Z=-92, length=42.5, center=-70.75
+		for _, seg := range [][2]float32{{-21.25, 42.5}, {-70.75, 42.5}} {
+			centerZ, length := seg[0], seg[1]
+			s.Add(scene.Object{Mesh: streetMesh, Position: mgl32.Vec3{streetX, -0.01, centerZ}, Scale: mgl32.Vec3{4.0, 0.02, length}})
+			s.Add(scene.Object{Mesh: sidewalkMesh, Position: mgl32.Vec3{streetX - 2.75, -0.01, centerZ}, Scale: mgl32.Vec3{1.5, 0.02, length}})
+			s.Add(scene.Object{Mesh: sidewalkMesh, Position: mgl32.Vec3{streetX + 2.75, -0.01, centerZ}, Scale: mgl32.Vec3{1.5, 0.02, length}})
 		}
 	}
 
-	// Ground strips
-	streetLength := float32(40.0)
-	s.Add(scene.GroundStrip(streetMesh, 0, 4.0, streetLength))
-	s.Add(scene.GroundStrip(sidewalkMesh, -2.75, 1.5, streetLength))
-	s.Add(scene.GroundStrip(sidewalkMesh, 2.75, 1.5, streetLength))
+	// Cross street at Z=-46
+	crossZ := float32(-46.0)
+	crossWidth := float32(50.0)
+	s.Add(scene.Object{Mesh: streetMesh, Position: mgl32.Vec3{0, -0.01, crossZ}, Scale: mgl32.Vec3{crossWidth, 0.02, 4.0}})
+	s.Add(scene.Object{Mesh: sidewalkMesh, Position: mgl32.Vec3{0, -0.01, crossZ + 2.75}, Scale: mgl32.Vec3{crossWidth, 0.02, 1.5}})
+	s.Add(scene.Object{Mesh: sidewalkMesh, Position: mgl32.Vec3{0, -0.01, crossZ - 2.75}, Scale: mgl32.Vec3{crossWidth, 0.02, 1.5}})
+
+	// Cross-street buildings (face ±Z toward the cross street)
+	// North side: center Z = crossZ+5 = -41 (south edge at sidewalk edge)
+	// South side: center Z = crossZ-5 = -51 (north edge at sidewalk edge)
+	crossBuildingXs := []float32{-21.5, -18.5, -1.5, 1.5, 18.5, 21.5}
+	crossBuildingHeights := []float32{9, 10.5, 8, 11, 9.5, 7.5}
+	northBuildingZ := crossZ + 5
+	southBuildingZ := crossZ - 5
+
+	for i, x := range crossBuildingXs {
+		bodyMesh := bodyMeshes[i%len(bodyMeshes)]
+		h := crossBuildingHeights[i]
+
+		northObjs := scene.BrownstoneZ(bodyMesh, stoopMesh, corniceMesh,
+			mgl32.Vec3{x, 0, northBuildingZ}, h, -1.0)
+		s.Add(northObjs...)
+
+		southObjs := scene.BrownstoneZ(bodyMesh, stoopMesh, corniceMesh,
+			mgl32.Vec3{x, 0, southBuildingZ}, h, 1.0)
+		s.Add(southObjs...)
+	}
+
+	// Cross-street lights (between Z-streets)
+	lightColor := mgl32.Vec3{1.0, 0.85, 0.5}
+	for _, x := range []float32{-1.5, 1.5} {
+		nObjs, nLight := scene.StreetLightZ(poleMesh, lanternMesh,
+			mgl32.Vec3{x, 0, crossZ + 2.75}, -1.0, lightColor, 4.0)
+		s.Add(nObjs...)
+		s.AddLight(nLight)
+
+		sObjs, sLight := scene.StreetLightZ(poleMesh, lanternMesh,
+			mgl32.Vec3{x, 0, crossZ - 2.75}, 1.0, lightColor, 4.0)
+		s.Add(sObjs...)
+		s.AddLight(sLight)
+	}
 
 	// --- Snow particle system ---
 	snowMesh := createLitCube("snow", 255, 255, 255)
@@ -257,8 +317,8 @@ func main() {
 		AmbientColor: mgl32.Vec4{0.05, 0.03, 0.02, 1.0},
 	}
 	n := len(s.Lights)
-	if n > 16 {
-		n = 16
+	if n > 64 {
+		n = 64
 	}
 	lightUniforms.NumLights = mgl32.Vec4{float32(n), 0, 0, 0}
 	for i := 0; i < n; i++ {

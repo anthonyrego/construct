@@ -51,6 +51,50 @@ func StreetLight(poleMesh, lanternMesh *mesh.Mesh, pos mgl32.Vec3, facingX float
 	return objects, light
 }
 
+// BrownstoneZ returns objects for a brownstone facing the Z axis.
+// facingZ is +1 (stoop faces +Z) or -1 (stoop faces -Z).
+func BrownstoneZ(bodyMesh, stoopMesh, corniceMesh *mesh.Mesh, pos mgl32.Vec3, height float32, facingZ float32) []Object {
+	return []Object{
+		{
+			Mesh:     bodyMesh,
+			Position: mgl32.Vec3{pos.X(), height / 2, pos.Z()},
+			Scale:    mgl32.Vec3{3.0, height, 3.0},
+		},
+		{
+			Mesh:     stoopMesh,
+			Position: mgl32.Vec3{pos.X(), 0.3, pos.Z() + facingZ*1.8},
+			Scale:    mgl32.Vec3{1.0, 0.6, 0.6},
+		},
+		{
+			Mesh:     corniceMesh,
+			Position: mgl32.Vec3{pos.X(), height + 0.1, pos.Z()},
+			Scale:    mgl32.Vec3{3.2, 0.2, 3.2},
+		},
+	}
+}
+
+// StreetLightZ returns objects and point light for a lamp facing the Z axis.
+func StreetLightZ(poleMesh, lanternMesh *mesh.Mesh, pos mgl32.Vec3, facingZ float32, color mgl32.Vec3, intensity float32) ([]Object, PointLight) {
+	objects := []Object{
+		{
+			Mesh:     poleMesh,
+			Position: mgl32.Vec3{pos.X(), 1.5, pos.Z()},
+			Scale:    mgl32.Vec3{0.15, 3.0, 0.15},
+		},
+		{
+			Mesh:     lanternMesh,
+			Position: mgl32.Vec3{pos.X(), 3.1, pos.Z() + facingZ*0.3},
+			Scale:    mgl32.Vec3{0.3, 0.3, 0.3},
+		},
+	}
+	light := PointLight{
+		Position:  mgl32.Vec3{pos.X(), 3.3, pos.Z() + facingZ*0.3},
+		Color:     color,
+		Intensity: intensity,
+	}
+	return objects, light
+}
+
 // GroundStrip returns a single flat cube acting as a ground strip.
 func GroundStrip(groundMesh *mesh.Mesh, centerX, width, length float32) Object {
 	return Object{
