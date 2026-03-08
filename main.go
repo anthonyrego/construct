@@ -29,7 +29,9 @@ type SceneObject struct {
 }
 
 type SceneConfig struct {
-	PostProcess struct {
+	RenderWidth  int `json:"renderWidth"`
+	RenderHeight int `json:"renderHeight"`
+	PostProcess  struct {
 		DitherStrength float32 `json:"ditherStrength"`
 		ColorLevels    float32 `json:"colorLevels"`
 		TintR          float32 `json:"tintR"`
@@ -227,6 +229,12 @@ func main() {
 			l := cfg.Lighting.Lights[i]
 			lightUniforms.LightPositions[i] = mgl32.Vec4{l.X, l.Y, l.Z, 0}
 			lightUniforms.LightColors[i] = mgl32.Vec4{l.R, l.G, l.B, l.Intensity}
+		}
+
+		if cfg.RenderWidth > 0 && cfg.RenderHeight > 0 {
+			if err := rend.SetOffscreenResolution(uint32(cfg.RenderWidth), uint32(cfg.RenderHeight)); err != nil {
+				fmt.Println("Error changing resolution:", err)
+			}
 		}
 	}
 	if cfg, ok := configWatcher.Load(); ok {
