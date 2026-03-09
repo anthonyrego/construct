@@ -81,18 +81,34 @@ func cacheKey(minLat, minLon, maxLat, maxLon float64, limit int) string {
 	return fmt.Sprintf("footprints_%x.json", hash[:8])
 }
 
+// DatasetConfig describes a NYC Open Data polygon dataset for generic fetching.
+type DatasetConfig struct {
+	Endpoint    string // SODA API resource URL
+	GeomColumn  string // geometry column name ("the_geom", "multipolygon", etc.)
+	ExtraSelect string // additional $select columns (comma-separated)
+	CachePrefix string // cache filename prefix
+}
+
+// SurfacePolygon is a parsed ground-level polygon ready for flat meshing.
+type SurfacePolygon struct {
+	Rings [][]Point2D // Outer ring (CCW), then holes (CW)
+	Name  string      // e.g., park name
+	Type  string      // e.g., park category
+}
+
 // FetchFootprints queries the NYC SODA API for building footprints
 // within the given bounding box. Results are cached locally so subsequent
-// runs don't need to re-fetch.
-func FetchFootprints(minLat, minLon, maxLat, maxLon float64, limit int) ([]Footprint, error) {
+// runs don't need to re-fetch. Returns the Projection used so ground
+// surfaces can share the same coordinate origin.
+func FetchFootprints(minLat, minLon, maxLat, maxLon float64, limit int) ([]Footprint, *Projection, error) {
 	data, err := loadOrFetch(minLat, minLon, maxLat, maxLon, limit)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	var records []sodaRecord
 	if err := json.Unmarshal(data, &records); err != nil {
-		return nil, fmt.Errorf("failed to decode SODA response: %w", err)
+		return nil, nil, fmt.Errorf("failed to decode SODA response: %w", err)
 	}
 
 	return recordsToFootprints(records)
@@ -101,13 +117,6 @@ func FetchFootprints(minLat, minLon, maxLat, maxLon float64, limit int) ([]Footp
 func loadOrFetch(minLat, minLon, maxLat, maxLon float64, limit int) ([]byte, error) {
 	filename := filepath.Join(cacheDir, cacheKey(minLat, minLon, maxLat, maxLon, limit))
 
-	// Try cache first
-	if data, err := os.ReadFile(filename); err == nil {
-		fmt.Println("Loaded building footprints from cache:", filename)
-		return data, nil
-	}
-
-	// Fetch from API
 	where := fmt.Sprintf(
 		"within_box(the_geom, %f, %f, %f, %f)",
 		maxLat, minLon, minLat, maxLon,
@@ -119,6 +128,17 @@ func loadOrFetch(minLat, minLon, maxLat, maxLon float64, limit int) ([]byte, err
 	params.Set("$limit", strconv.Itoa(limit))
 
 	reqURL := sodaEndpoint + "?" + params.Encode()
+
+	return loadOrFetchURL(reqURL, filename, "building footprints")
+}
+
+// loadOrFetchURL fetches a URL with local file caching.
+func loadOrFetchURL(reqURL, filename, label string) ([]byte, error) {
+	// Try cache first
+	if data, err := os.ReadFile(filename); err == nil {
+		fmt.Printf("Loaded %s from cache: %s\n", label, filename)
+		return data, nil
+	}
 
 	resp, err := http.Get(reqURL)
 	if err != nil {
@@ -139,14 +159,14 @@ func loadOrFetch(minLat, minLon, maxLat, maxLon float64, limit int) ([]byte, err
 	// Save to cache
 	if err := os.MkdirAll(cacheDir, 0o755); err == nil {
 		if err := os.WriteFile(filename, data, 0o644); err == nil {
-			fmt.Println("Cached building footprints to:", filename)
+			fmt.Printf("Cached %s to: %s\n", label, filename)
 		}
 	}
 
 	return data, nil
 }
 
-func recordsToFootprints(records []sodaRecord) ([]Footprint, error) {
+func recordsToFootprints(records []sodaRecord) ([]Footprint, *Projection, error) {
 	var allLats, allLons []float64
 	for _, rec := range records {
 		lats, lons := extractCoords(rec.TheGeom)
@@ -155,7 +175,7 @@ func recordsToFootprints(records []sodaRecord) ([]Footprint, error) {
 	}
 
 	if len(allLats) == 0 {
-		return nil, nil
+		return nil, nil, nil
 	}
 
 	var sumLat, sumLon float64
@@ -172,7 +192,7 @@ func recordsToFootprints(records []sodaRecord) ([]Footprint, error) {
 		footprints = append(footprints, fps...)
 	}
 
-	return footprints, nil
+	return footprints, proj, nil
 }
 
 func extractCoords(geom geojsonGeometry) (lats, lons []float64) {
@@ -235,19 +255,30 @@ func parseRecord(rec sodaRecord, proj *Projection) []Footprint {
 	return nil
 }
 
-func buildFootprint(rings [][][2]float64, height float32, bbl string, proj *Projection) *Footprint {
-	if len(rings) == 0 || len(rings[0]) < 3 {
+func buildFootprint(rawRings [][][2]float64, height float32, bbl string, proj *Projection) *Footprint {
+	if len(rawRings) == 0 || len(rawRings[0]) < 3 {
 		return nil
 	}
 
-	var fp Footprint
-	fp.Height = height
-	fp.BBL = bbl
+	rings := buildRings(rawRings, proj)
+	if len(rings) == 0 {
+		return nil
+	}
 
+	return &Footprint{
+		Rings:  rings,
+		Height: height,
+		BBL:    bbl,
+	}
+}
+
+// buildRings converts raw coordinate rings to projected Point2D slices
+// with winding normalization (outer CCW, holes CW).
+func buildRings(rings [][][2]float64, proj *Projection) [][]Point2D {
+	var result [][]Point2D
 	for i, ring := range rings {
 		var pts []Point2D
 		for _, coord := range ring {
-			// GeoJSON is [lon, lat]
 			pt := proj.ToLocal(coord[1], coord[0])
 			pts = append(pts, pt)
 		}
@@ -271,13 +302,94 @@ func buildFootprint(rings [][][2]float64, height float32, bbl string, proj *Proj
 			}
 		}
 
-		fp.Rings = append(fp.Rings, pts)
+		result = append(result, pts)
+	}
+	return result
+}
+
+// FetchSurfacePolygons fetches ground-level polygon data from any NYC Open Data
+// dataset using the provided configuration and shared projection.
+func FetchSurfacePolygons(cfg DatasetConfig, minLat, minLon, maxLat, maxLon float64, limit int, proj *Projection) ([]SurfacePolygon, error) {
+	// Cache key
+	key := fmt.Sprintf("%s_%f_%f_%f_%f_%d", cfg.CachePrefix, minLat, minLon, maxLat, maxLon, limit)
+	hash := sha256.Sum256([]byte(key))
+	filename := filepath.Join(cacheDir, fmt.Sprintf("%s_%x.json", cfg.CachePrefix, hash[:8]))
+
+	// Build query
+	where := fmt.Sprintf(
+		"within_box(%s, %f, %f, %f, %f)",
+		cfg.GeomColumn, maxLat, minLon, minLat, maxLon,
+	)
+
+	selectCols := cfg.GeomColumn
+	if cfg.ExtraSelect != "" {
+		selectCols += "," + cfg.ExtraSelect
 	}
 
-	if len(fp.Rings) == 0 {
-		return nil
+	params := url.Values{}
+	params.Set("$where", where)
+	params.Set("$select", selectCols)
+	params.Set("$limit", strconv.Itoa(limit))
+
+	reqURL := cfg.Endpoint + "?" + params.Encode()
+
+	data, err := loadOrFetchURL(reqURL, filename, cfg.CachePrefix)
+	if err != nil {
+		return nil, err
 	}
-	return &fp
+
+	// Parse as array of generic records
+	var records []map[string]json.RawMessage
+	if err := json.Unmarshal(data, &records); err != nil {
+		return nil, fmt.Errorf("failed to decode %s response: %w", cfg.CachePrefix, err)
+	}
+
+	var surfaces []SurfacePolygon
+	for _, rec := range records {
+		geomRaw, ok := rec[cfg.GeomColumn]
+		if !ok {
+			continue
+		}
+
+		var geom geojsonGeometry
+		if err := json.Unmarshal(geomRaw, &geom); err != nil {
+			continue
+		}
+
+		// Parse optional metadata
+		var name, typ string
+		if raw, ok := rec["signname"]; ok {
+			json.Unmarshal(raw, &name)
+		}
+		if raw, ok := rec["typecategory"]; ok {
+			json.Unmarshal(raw, &typ)
+		}
+
+		switch geom.Type {
+		case "Polygon":
+			var coords [][][2]float64
+			if err := json.Unmarshal(geom.Coordinates, &coords); err != nil {
+				continue
+			}
+			rings := buildRings(coords, proj)
+			if len(rings) > 0 {
+				surfaces = append(surfaces, SurfacePolygon{Rings: rings, Name: name, Type: typ})
+			}
+		case "MultiPolygon":
+			var coords [][][][2]float64
+			if err := json.Unmarshal(geom.Coordinates, &coords); err != nil {
+				continue
+			}
+			for _, poly := range coords {
+				rings := buildRings(poly, proj)
+				if len(rings) > 0 {
+					surfaces = append(surfaces, SurfacePolygon{Rings: rings, Name: name, Type: typ})
+				}
+			}
+		}
+	}
+
+	return surfaces, nil
 }
 
 func parseHeight(s string) float32 {

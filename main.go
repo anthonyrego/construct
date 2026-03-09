@@ -13,6 +13,7 @@ import (
 	"github.com/anthonyrego/construct/pkg/building"
 	"github.com/anthonyrego/construct/pkg/camera"
 	"github.com/anthonyrego/construct/pkg/geojson"
+	"github.com/anthonyrego/construct/pkg/ground"
 	"github.com/anthonyrego/construct/pkg/input"
 	"github.com/anthonyrego/construct/pkg/mesh"
 	"github.com/anthonyrego/construct/pkg/renderer"
@@ -196,6 +197,7 @@ func main() {
 	}
 
 	var buildingMeshes []*mesh.Mesh
+	var groundMeshes []*mesh.Mesh
 
 	defer func() {
 		for _, nm := range meshes {
@@ -204,16 +206,17 @@ func main() {
 		for _, bm := range buildingMeshes {
 			bm.Destroy(rend)
 		}
+		for _, gm := range groundMeshes {
+			gm.Destroy(rend)
+		}
 	}()
 
 	// --- Build the scene ---
 	s := &scene.Scene{}
 
 	// --- Fetch and extrude NYC building footprints ---
-	footprints, err := geojson.FetchFootprints(
-		40.735, -73.990, 40.740, -73.980, // Greenwich Village bbox
-		200,
-	)
+	minLat, minLon, maxLat, maxLon := 40.735, -73.990, 40.740, -73.980 // Greenwich Village bbox
+	footprints, proj, err := geojson.FetchFootprints(minLat, minLon, maxLat, maxLon, 200)
 	if err != nil {
 		fmt.Println("Warning: could not fetch buildings:", err)
 	} else {
@@ -243,6 +246,36 @@ func main() {
 		}
 		buildingMeshes = append(buildingMeshes, m)
 		s.Add(scene.Object{Mesh: m, Position: pos, Scale: mgl32.Vec3{1, 1, 1}})
+	}
+
+	// --- Fetch and flatten ground surfaces ---
+	if proj != nil {
+		type surfaceEntry struct {
+			dataset geojson.DatasetConfig
+			surfType ground.SurfaceType
+			label   string
+		}
+		surfaces := []surfaceEntry{
+			{ground.RoadbedDataset, ground.Roadbed, "roadbed"},
+			{ground.SidewalkDataset, ground.Sidewalk, "sidewalk"},
+			{ground.ParkDataset, ground.Park, "park"},
+		}
+		for _, se := range surfaces {
+			polys, err := geojson.FetchSurfacePolygons(se.dataset, minLat, minLon, maxLat, maxLon, 5000, proj)
+			if err != nil {
+				fmt.Printf("Warning: could not fetch %s polygons: %v\n", se.label, err)
+				continue
+			}
+			fmt.Printf("Fetched %d %s polygons\n", len(polys), se.label)
+			for _, poly := range polys {
+				m, pos, err := ground.Flatten(rend, poly, se.surfType)
+				if err != nil {
+					continue
+				}
+				groundMeshes = append(groundMeshes, m)
+				s.Add(scene.Object{Mesh: m, Position: pos, Scale: mgl32.Vec3{1, 1, 1}})
+			}
+		}
 	}
 
 	// --- Snow particle system ---
