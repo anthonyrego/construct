@@ -11,9 +11,9 @@
     "tintB": 0.85
   },
   "lighting": {
-    "ambientR": 0.55,
-    "ambientG": 0.53,
-    "ambientB": 0.52,
+    "ambientR": 0.45,
+    "ambientG": 0.43,
+    "ambientB": 0.42,
     "streetLightR": 1.0,
     "streetLightG": 0.85,
     "streetLightB": 0.5,

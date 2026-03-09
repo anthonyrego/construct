@@ -82,17 +82,22 @@ func NewMesh(r *renderer.Renderer, text string) (*mesh.Mesh, float32, error) {
 	var vertices []renderer.LitVertex
 	var indices []uint16
 
-	// Background quad (dark green, like NYC street signs)
+	// Sign is a thin slab: front at Z=0, back at Z=-0.01
+	const frontZ float32 = 0
+	const backZ float32 = -0.01
+	const textBump float32 = 0.003 // text offset from background surface
+
+	// Front background
 	addQuad(&vertices, &indices,
 		-totalWidth/2, 0, totalWidth/2, totalHeight,
-		-0.003, 0, 0, 1,
+		frontZ, 0, 0, 1,
 		0, 80, 40)
 
-	// Back face of background
+	// Back background (same positions, back Z, reversed winding via negative normal)
 	addQuad(&vertices, &indices,
-		totalWidth/2, 0, -totalWidth/2, totalHeight,
-		-0.003, 0, 0, -1,
-		0, 60, 30)
+		-totalWidth/2, 0, totalWidth/2, totalHeight,
+		backZ, 0, 0, -1,
+		0, 80, 40)
 
 	// Text pixels (white)
 	startX := -totalWidth/2 + float32(padding)*PixelSize
@@ -114,9 +119,16 @@ func NewMesh(r *renderer.Renderer, text string) (*mesh.Mesh, float32, error) {
 			for col := 0; col < charWidth; col++ {
 				if bits&(1<<(charWidth-1-col)) != 0 {
 					pixX := charX + float32(col)*PixelSize
+					// Front text
 					addQuad(&vertices, &indices,
 						pixX, pixY, pixX+PixelSize, pixY+PixelSize,
-						0, 0, 0, 1,
+						frontZ+textBump, 0, 0, 1,
+						255, 255, 255)
+					// Back text (mirrored X so text reads correctly from behind)
+					mirX := -pixX - PixelSize
+					addQuad(&vertices, &indices,
+						mirX, pixY, mirX+PixelSize, pixY+PixelSize,
+						backZ-textBump, 0, 0, -1,
 						255, 255, 255)
 				}
 			}
@@ -152,8 +164,17 @@ func addQuad(verts *[]renderer.LitVertex, idxs *[]uint16,
 		renderer.LitVertex{X: x1, Y: y1, Z: z, NX: nx, NY: ny, NZ: nz, R: r, G: g, B: b, A: 255},
 		renderer.LitVertex{X: x0, Y: y1, Z: z, NX: nx, NY: ny, NZ: nz, R: r, G: g, B: b, A: 255},
 	)
-	*idxs = append(*idxs,
-		base, base+1, base+2,
-		base, base+2, base+3,
-	)
+	if nz >= 0 {
+		// Front face: CCW from +Z
+		*idxs = append(*idxs,
+			base, base+1, base+2,
+			base, base+2, base+3,
+		)
+	} else {
+		// Back face: reversed winding (CCW from -Z)
+		*idxs = append(*idxs,
+			base, base+2, base+1,
+			base, base+3, base+2,
+		)
+	}
 }
