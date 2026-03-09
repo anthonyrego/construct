@@ -24,7 +24,7 @@ func New(aspectRatio float32) *Camera {
 		Position:    mgl32.Vec3{0, 0, 5},
 		Yaw:         -90, // Looking towards -Z
 		Pitch:       0,
-		MoveSpeed:   5.0,
+		MoveSpeed:   20.0,
 		LookSpeed:   0.1,
 		AspectRatio: aspectRatio,
 		FOV:         45.0,
