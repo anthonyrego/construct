@@ -99,13 +99,14 @@ type SurfacePolygon struct {
 // StreetSegment is a projected street centerline with traffic direction.
 type StreetSegment struct {
 	Points []Point2D
-	TwoWay bool // true if "TW", false for one-way ("FT"/"TF")
+	TwoWay bool   // true if "TW", false for one-way ("FT"/"TF")
+	Name   string // street name label
 }
 
 // FetchStreetSegments fetches LineString street centerline segments with
 // traffic direction from a NYC Open Data dataset.
 func FetchStreetSegments(cfg DatasetConfig, minLat, minLon, maxLat, maxLon float64, limit int, proj *Projection) ([]StreetSegment, error) {
-	key := fmt.Sprintf("%s_%f_%f_%f_%f_%d", cfg.CachePrefix, minLat, minLon, maxLat, maxLon, limit)
+	key := fmt.Sprintf("%s_%s_%f_%f_%f_%f_%d", cfg.CachePrefix, cfg.ExtraSelect, minLat, minLon, maxLat, maxLon, limit)
 	hash := sha256.Sum256([]byte(key))
 	filename := filepath.Join(cacheDir, fmt.Sprintf("%s_%x.json", cfg.CachePrefix, hash[:8]))
 
@@ -173,7 +174,12 @@ func FetchStreetSegments(cfg DatasetConfig, minLat, minLon, maxLat, maxLon float
 			twoWay = (td == "TW")
 		}
 
-		segments = append(segments, StreetSegment{Points: pts, TwoWay: twoWay})
+		var name string
+		if raw, ok := rec["stname_lab"]; ok {
+			json.Unmarshal(raw, &name)
+		}
+
+		segments = append(segments, StreetSegment{Points: pts, TwoWay: twoWay, Name: name})
 	}
 
 	return segments, nil
@@ -568,6 +574,47 @@ func FetchPointLocations(cfg DatasetConfig, minLat, minLon, maxLat, maxLon float
 		default:
 			continue
 		}
+	}
+
+	return points, nil
+}
+
+// overpassResponse is the JSON structure returned by the Overpass API.
+type overpassResponse struct {
+	Elements []overpassNode `json:"elements"`
+}
+
+type overpassNode struct {
+	Lat float64 `json:"lat"`
+	Lon float64 `json:"lon"`
+}
+
+// FetchOSMTrafficSignals queries the Overpass API for highway=traffic_signals
+// nodes within the bounding box and returns projected positions.
+func FetchOSMTrafficSignals(minLat, minLon, maxLat, maxLon float64, proj *Projection) ([]Point2D, error) {
+	key := fmt.Sprintf("osm_signals_%f_%f_%f_%f", minLat, minLon, maxLat, maxLon)
+	hash := sha256.Sum256([]byte(key))
+	filename := filepath.Join(cacheDir, fmt.Sprintf("osm_signals_%x.json", hash[:8]))
+
+	query := fmt.Sprintf(
+		"[out:json];node[highway=traffic_signals](%f,%f,%f,%f);out;",
+		minLat, minLon, maxLat, maxLon,
+	)
+	reqURL := "https://overpass-api.de/api/interpreter?data=" + url.QueryEscape(query)
+
+	data, err := loadOrFetchURL(reqURL, filename, "OSM traffic signals")
+	if err != nil {
+		return nil, err
+	}
+
+	var resp overpassResponse
+	if err := json.Unmarshal(data, &resp); err != nil {
+		return nil, fmt.Errorf("failed to decode Overpass response: %w", err)
+	}
+
+	points := make([]Point2D, len(resp.Elements))
+	for i, el := range resp.Elements {
+		points[i] = proj.ToLocal(el.Lat, el.Lon)
 	}
 
 	return points, nil

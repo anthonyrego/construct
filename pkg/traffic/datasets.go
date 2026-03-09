@@ -12,6 +12,6 @@ var SignalDataset = geojson.DatasetConfig{
 var CenterlineDataset = geojson.DatasetConfig{
 	Endpoint:    "https://data.cityofnewyork.us/resource/dpb9-ubdh.json",
 	GeomColumn:  "the_geom",
-	ExtraSelect: "trafdir",
+	ExtraSelect: "trafdir,stname_lab",
 	CachePrefix: "centerline",
 }

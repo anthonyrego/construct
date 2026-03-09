@@ -81,6 +81,70 @@ func (s *Signal) advance(dt float32) bool {
 	return s.Phase != oldPhase
 }
 
+// IntersectionsFromSegments derives intersection points from street centerline
+// endpoints. Where 2+ segment endpoints cluster within snapDist meters, an
+// intersection is created with the two most common street names.
+func IntersectionsFromSegments(segments []geojson.StreetSegment, snapDist float32) []geojson.PointLocation {
+	type node struct {
+		pos   geojson.Point2D
+		names map[string]bool
+	}
+
+	var nodes []node
+
+	addEndpoint := func(pt geojson.Point2D, name string) {
+		// Find existing node within snapDist
+		for i := range nodes {
+			dx := nodes[i].pos.X - pt.X
+			dz := nodes[i].pos.Z - pt.Z
+			if dx*dx+dz*dz < snapDist*snapDist {
+				if name != "" {
+					nodes[i].names[name] = true
+				}
+				return
+			}
+		}
+		names := make(map[string]bool)
+		if name != "" {
+			names[name] = true
+		}
+		nodes = append(nodes, node{pos: pt, names: names})
+	}
+
+	for _, seg := range segments {
+		if len(seg.Points) < 2 {
+			continue
+		}
+		// Add both endpoints
+		addEndpoint(seg.Points[0], seg.Name)
+		addEndpoint(seg.Points[len(seg.Points)-1], seg.Name)
+	}
+
+	// Only keep nodes where 2+ distinct streets meet (actual intersections)
+	var locs []geojson.PointLocation
+	for _, n := range nodes {
+		if len(n.names) < 2 {
+			continue
+		}
+		// Pick first two names
+		fields := map[string]string{}
+		i := 0
+		for name := range n.names {
+			if i == 0 {
+				fields["onstreetna"] = name
+			} else if i == 1 {
+				fields["fromstreet"] = name
+			} else {
+				break
+			}
+			i++
+		}
+		locs = append(locs, geojson.PointLocation{Point: n.pos, Fields: fields})
+	}
+
+	return locs
+}
+
 // System manages independent traffic signals.
 type System struct {
 	Signals        []Signal
@@ -88,23 +152,25 @@ type System struct {
 	lightIntensity float32
 }
 
-// New creates a traffic system from point locations with street names.
-// Each signal gets a random cycle offset and is offset to the curb edge.
-func New(locs []geojson.PointLocation, lightIntensity float32, streets []geojson.StreetSegment) *System {
-	signals := make([]Signal, len(locs))
-	for i, loc := range locs {
-		pos := loc.Point
+// NewFromPoints creates a traffic system from raw point positions (e.g. OSM).
+// Street names are derived from the two nearest distinct-named centerline segments.
+func NewFromPoints(points []geojson.Point2D, lightIntensity float32, streets []geojson.StreetSegment) *System {
+	signals := make([]Signal, len(points))
+	for i, pt := range points {
+		pos := pt
 		var dirAngle float32
+		var street1, street2 string
 
 		if len(streets) > 0 {
-			pos, dirAngle = positionAndDirection(loc.Point, streets)
+			pos, dirAngle = positionAndDirection(pt, streets)
+			street1, street2 = nearestStreetNames(pt, streets)
 		}
 
 		offset := rand.Float32() * cycleDuration
 		sig := Signal{
 			Position: pos,
-			Street1:  loc.Fields["onstreetna"],
-			Street2:  loc.Fields["fromstreet"],
+			Street1:  street1,
+			Street2:  street2,
 			DirAngle: dirAngle,
 		}
 		sig.advance(offset)
@@ -115,6 +181,43 @@ func New(locs []geojson.PointLocation, lightIntensity float32, streets []geojson
 		dirty:          true,
 		lightIntensity: lightIntensity,
 	}
+}
+
+// nearestStreetNames finds the two closest segments with distinct names.
+func nearestStreetNames(pt geojson.Point2D, streets []geojson.StreetSegment) (string, string) {
+	type segDist struct {
+		name string
+		dist float32
+	}
+	var closest []segDist
+
+	for _, seg := range streets {
+		if seg.Name == "" {
+			continue
+		}
+		for j := 0; j < len(seg.Points)-1; j++ {
+			d, _ := pointToSegmentInfo(pt, seg.Points[j], seg.Points[j+1])
+			closest = append(closest, segDist{seg.Name, d})
+		}
+	}
+
+	// Find nearest, then nearest with a different name
+	var name1, name2 string
+	best1 := float32(math.MaxFloat32)
+	best2 := float32(math.MaxFloat32)
+	for _, c := range closest {
+		if c.dist < best1 {
+			best1 = c.dist
+			name1 = c.name
+		}
+	}
+	for _, c := range closest {
+		if c.name != name1 && c.dist < best2 {
+			best2 = c.dist
+			name2 = c.name
+		}
+	}
+	return name1, name2
 }
 
 // positionAndDirection finds the nearest street segment, offsets the point

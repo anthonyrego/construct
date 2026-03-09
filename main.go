@@ -223,8 +223,8 @@ func main() {
 	s := &scene.Scene{}
 
 	// --- Fetch and extrude NYC building footprints ---
-	minLat, minLon, maxLat, maxLon := 40.735, -73.990, 40.740, -73.980 // Greenwich Village bbox
-	footprints, proj, err := geojson.FetchFootprints(minLat, minLon, maxLat, maxLon, 200)
+	minLat, minLon, maxLat, maxLon := 40.735, -73.990, 40.740, -73.980 // Gramercy Park area bbox
+	footprints, proj, err := geojson.FetchFootprints(minLat, minLon, maxLat, maxLon, 3000)
 	if err != nil {
 		fmt.Println("Warning: could not fetch buildings:", err)
 	} else {
@@ -259,9 +259,9 @@ func main() {
 	// --- Fetch and flatten ground surfaces ---
 	if proj != nil {
 		type surfaceEntry struct {
-			dataset geojson.DatasetConfig
+			dataset  geojson.DatasetConfig
 			surfType ground.SurfaceType
-			label   string
+			label    string
 		}
 		surfaces := []surfaceEntry{
 			{ground.RoadbedDataset, ground.Roadbed, "roadbed"},
@@ -299,23 +299,26 @@ func main() {
 	redOff := createLitCube("redOff", 30, 3, 0)
 
 	if proj != nil {
-		signalLocs, err := geojson.FetchPointLocations(traffic.SignalDataset, minLat, minLon, maxLat, maxLon, 5000, proj)
+		// Fetch street centerlines for curb-edge offset and street name lookup
+		var streets []geojson.StreetSegment
+		segs, err := geojson.FetchStreetSegments(traffic.CenterlineDataset, minLat, minLon, maxLat, maxLon, 5000, proj)
 		if err != nil {
-			fmt.Println("Warning: could not fetch traffic signals:", err)
+			fmt.Println("Warning: could not fetch centerlines:", err)
 		} else {
-			fmt.Printf("Fetched %d traffic signal locations\n", len(signalLocs))
+			fmt.Printf("Fetched %d street centerline segments\n", len(segs))
+			streets = segs
+		}
 
-			// Fetch street centerlines for curb-edge offset
-			var streets []geojson.StreetSegment
-			segs, err := geojson.FetchStreetSegments(traffic.CenterlineDataset, minLat, minLon, maxLat, maxLon, 5000, proj)
-			if err != nil {
-				fmt.Println("Warning: could not fetch centerlines:", err)
-			} else {
-				fmt.Printf("Fetched %d street centerline segments\n", len(segs))
-				streets = segs
-			}
+		// Fetch traffic signal positions from OpenStreetMap
+		signalPts, err := geojson.FetchOSMTrafficSignals(minLat, minLon, maxLat, maxLon, proj)
+		if err != nil {
+			fmt.Println("Warning: could not fetch OSM traffic signals:", err)
+		} else {
+			fmt.Printf("Fetched %d traffic signals from OpenStreetMap\n", len(signalPts))
+		}
 
-			trafficSys = traffic.New(signalLocs, 2.0, streets)
+		if len(signalPts) > 0 {
+			trafficSys = traffic.NewFromPoints(signalPts, 2.0, streets)
 
 			// Create sign meshes for unique street names
 			for _, sig := range trafficSys.Signals {
@@ -338,6 +341,7 @@ func main() {
 			fmt.Printf("Created %d unique street sign meshes\n", len(signMeshes))
 		}
 	}
+
 
 	// --- Snow particle system ---
 	snowMesh := createLitCube("snow", 255, 255, 255)
