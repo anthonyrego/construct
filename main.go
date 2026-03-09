@@ -289,6 +289,7 @@ func main() {
 	// --- Fetch traffic signal locations ---
 	var trafficSys *traffic.System
 	poleMesh := createLitCube("pole", 30, 30, 30)
+	housingMesh := createLitCube("housing", 20, 20, 20)
 	// Lit (active) light meshes
 	greenOn := createLitCube("greenOn", 0, 255, 76)
 	yellowOn := createLitCube("yellowOn", 255, 230, 0)
@@ -577,7 +578,7 @@ func main() {
 			})
 		}
 
-		// Draw traffic signals (pole + 3 stacked light boxes per signal)
+		// Draw traffic signals (pole + 2 directional signal heads per intersection)
 		if trafficSys != nil {
 			drawBox := func(m *mesh.Mesh, x, y, z float32) {
 				model := mgl32.Translate3D(x, y, z)
@@ -594,7 +595,7 @@ func main() {
 			for _, sig := range trafficSys.Signals {
 				x, z := sig.Position.X, sig.Position.Z
 
-				// Pole
+				// Pole (one per intersection)
 				poleModel := mgl32.Translate3D(x, traffic.PoleHeight/2, z)
 				poleModel = poleModel.Mul4(mgl32.Scale3D(traffic.PoleWidth, traffic.PoleHeight, traffic.PoleWidth))
 				rend.DrawLit(cmdBuf, scenePass, renderer.LitDrawCall{
@@ -605,30 +606,52 @@ func main() {
 					Model:        poleModel,
 				})
 
-				// 3 stacked lights: red (top), yellow (mid), green (bottom)
-				if sig.Phase == traffic.Red {
-					drawBox(redOn, x, traffic.RedY, z)
-				} else {
-					drawBox(redOff, x, traffic.RedY, z)
-				}
-				if sig.Phase == traffic.Yellow {
-					drawBox(yellowOn, x, traffic.YellowY, z)
-				} else {
-					drawBox(yellowOff, x, traffic.YellowY, z)
-				}
-				if sig.Phase == traffic.Green {
-					drawBox(greenOn, x, traffic.GreenY, z)
-				} else {
-					drawBox(greenOff, x, traffic.GreenY, z)
+				// Two directional signal heads per intersection
+				heads := sig.Heads()
+				for _, h := range heads {
+					// Forward direction for this head
+					sinA := float32(math.Sin(float64(h.Angle)))
+					cosA := float32(math.Cos(float64(h.Angle)))
+
+					// Housing (dark box behind lights, blocks side/rear view)
+					hModel := mgl32.Translate3D(h.X, traffic.HousingY, h.Z)
+					hModel = hModel.Mul4(mgl32.HomogRotate3DY(h.Angle))
+					hModel = hModel.Mul4(mgl32.Scale3D(traffic.HousingWidth, traffic.HousingHeight, traffic.HousingDepth))
+					rend.DrawLit(cmdBuf, scenePass, renderer.LitDrawCall{
+						VertexBuffer: housingMesh.VertexBuffer,
+						IndexBuffer:  housingMesh.IndexBuffer,
+						IndexCount:   housingMesh.IndexCount,
+						MVP:          viewProj.Mul4(hModel),
+						Model:        hModel,
+					})
+
+					// Light cubes offset forward from housing
+					fwd := traffic.LightForward
+					lx := h.X + sinA*fwd
+					lz := h.Z + cosA*fwd
+					if h.Phase == traffic.Red {
+						drawBox(redOn, lx, traffic.RedY, lz)
+					} else {
+						drawBox(redOff, lx, traffic.RedY, lz)
+					}
+					if h.Phase == traffic.Yellow {
+						drawBox(yellowOn, lx, traffic.YellowY, lz)
+					} else {
+						drawBox(yellowOff, lx, traffic.YellowY, lz)
+					}
+					if h.Phase == traffic.Green {
+						drawBox(greenOn, lx, traffic.GreenY, lz)
+					} else {
+						drawBox(greenOff, lx, traffic.GreenY, lz)
+					}
 				}
 
-				// Street name signs
+				// Street name signs (stacked on the pole, not on the heads)
 				drawSign := func(name string, y, angle float32) {
 					sm, ok := signMeshes[name]
 					if !ok {
 						return
 					}
-					_ = signWidths[name]
 					model := mgl32.Translate3D(x, y, z).Mul4(mgl32.HomogRotate3DY(angle))
 					rend.DrawLit(cmdBuf, scenePass, renderer.LitDrawCall{
 						VertexBuffer: sm.VertexBuffer,
@@ -638,12 +661,11 @@ func main() {
 						Model:        model,
 					})
 				}
-
 				if sig.Street1 != "" {
-					drawSign(sig.Street1, traffic.SignY1, sig.DirAngle)
+					drawSign(sig.Street1, traffic.SignY1, sig.DirAngle+math.Pi/2)
 				}
 				if sig.Street2 != "" {
-					drawSign(sig.Street2, traffic.SignY2, sig.DirAngle+math.Pi/2)
+					drawSign(sig.Street2, traffic.SignY2, sig.DirAngle+math.Pi)
 				}
 			}
 		}
