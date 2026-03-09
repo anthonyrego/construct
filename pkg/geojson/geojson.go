@@ -96,6 +96,89 @@ type SurfacePolygon struct {
 	Type  string      // e.g., park category
 }
 
+// StreetSegment is a projected street centerline with traffic direction.
+type StreetSegment struct {
+	Points []Point2D
+	TwoWay bool // true if "TW", false for one-way ("FT"/"TF")
+}
+
+// FetchStreetSegments fetches LineString street centerline segments with
+// traffic direction from a NYC Open Data dataset.
+func FetchStreetSegments(cfg DatasetConfig, minLat, minLon, maxLat, maxLon float64, limit int, proj *Projection) ([]StreetSegment, error) {
+	key := fmt.Sprintf("%s_%f_%f_%f_%f_%d", cfg.CachePrefix, minLat, minLon, maxLat, maxLon, limit)
+	hash := sha256.Sum256([]byte(key))
+	filename := filepath.Join(cacheDir, fmt.Sprintf("%s_%x.json", cfg.CachePrefix, hash[:8]))
+
+	where := fmt.Sprintf(
+		"within_box(%s, %f, %f, %f, %f)",
+		cfg.GeomColumn, maxLat, minLon, minLat, maxLon,
+	)
+
+	selectCols := cfg.GeomColumn
+	if cfg.ExtraSelect != "" {
+		selectCols += "," + cfg.ExtraSelect
+	}
+
+	params := url.Values{}
+	params.Set("$where", where)
+	params.Set("$select", selectCols)
+	params.Set("$limit", strconv.Itoa(limit))
+
+	reqURL := cfg.Endpoint + "?" + params.Encode()
+
+	data, err := loadOrFetchURL(reqURL, filename, cfg.CachePrefix)
+	if err != nil {
+		return nil, err
+	}
+
+	var records []map[string]json.RawMessage
+	if err := json.Unmarshal(data, &records); err != nil {
+		return nil, fmt.Errorf("failed to decode %s response: %w", cfg.CachePrefix, err)
+	}
+
+	var segments []StreetSegment
+	for _, rec := range records {
+		geomRaw, ok := rec[cfg.GeomColumn]
+		if !ok {
+			continue
+		}
+
+		var geom geojsonGeometry
+		if err := json.Unmarshal(geomRaw, &geom); err != nil {
+			continue
+		}
+
+		if geom.Type != "LineString" {
+			continue
+		}
+
+		var coords [][2]float64
+		if err := json.Unmarshal(geom.Coordinates, &coords); err != nil {
+			continue
+		}
+
+		if len(coords) < 2 {
+			continue
+		}
+
+		pts := make([]Point2D, len(coords))
+		for i, c := range coords {
+			pts[i] = proj.ToLocal(c[1], c[0])
+		}
+
+		twoWay := false
+		if raw, ok := rec["trafdir"]; ok {
+			var td string
+			json.Unmarshal(raw, &td)
+			twoWay = (td == "TW")
+		}
+
+		segments = append(segments, StreetSegment{Points: pts, TwoWay: twoWay})
+	}
+
+	return segments, nil
+}
+
 // FetchFootprints queries the NYC SODA API for building footprints
 // within the given bounding box. Results are cached locally so subsequent
 // runs don't need to re-fetch. Returns the Projection used so ground
@@ -390,6 +473,104 @@ func FetchSurfacePolygons(cfg DatasetConfig, minLat, minLon, maxLat, maxLon floa
 	}
 
 	return surfaces, nil
+}
+
+// PointLocation is a projected point with optional string metadata fields.
+type PointLocation struct {
+	Point  Point2D
+	Fields map[string]string
+}
+
+// FetchPointLocations fetches Point/MultiPoint geometry data from a NYC Open Data
+// dataset and returns projected positions with any extra string fields.
+func FetchPointLocations(cfg DatasetConfig, minLat, minLon, maxLat, maxLon float64, limit int, proj *Projection) ([]PointLocation, error) {
+	// Cache key includes ExtraSelect so different column sets get separate caches
+	key := fmt.Sprintf("%s_%s_%f_%f_%f_%f_%d", cfg.CachePrefix, cfg.ExtraSelect, minLat, minLon, maxLat, maxLon, limit)
+	hash := sha256.Sum256([]byte(key))
+	filename := filepath.Join(cacheDir, fmt.Sprintf("%s_%x.json", cfg.CachePrefix, hash[:8]))
+
+	// Build query
+	where := fmt.Sprintf(
+		"within_box(%s, %f, %f, %f, %f)",
+		cfg.GeomColumn, maxLat, minLon, minLat, maxLon,
+	)
+
+	selectCols := cfg.GeomColumn
+	if cfg.ExtraSelect != "" {
+		selectCols += "," + cfg.ExtraSelect
+	}
+
+	params := url.Values{}
+	params.Set("$where", where)
+	params.Set("$select", selectCols)
+	params.Set("$limit", strconv.Itoa(limit))
+
+	reqURL := cfg.Endpoint + "?" + params.Encode()
+
+	data, err := loadOrFetchURL(reqURL, filename, cfg.CachePrefix)
+	if err != nil {
+		return nil, err
+	}
+
+	// Parse as array of generic records
+	var records []map[string]json.RawMessage
+	if err := json.Unmarshal(data, &records); err != nil {
+		return nil, fmt.Errorf("failed to decode %s response: %w", cfg.CachePrefix, err)
+	}
+
+	// Determine which extra columns to extract
+	var extraCols []string
+	if cfg.ExtraSelect != "" {
+		for _, col := range strings.Split(cfg.ExtraSelect, ",") {
+			extraCols = append(extraCols, strings.TrimSpace(col))
+		}
+	}
+
+	var points []PointLocation
+	for _, rec := range records {
+		geomRaw, ok := rec[cfg.GeomColumn]
+		if !ok {
+			continue
+		}
+
+		var geom geojsonGeometry
+		if err := json.Unmarshal(geomRaw, &geom); err != nil {
+			continue
+		}
+
+		// Extract string fields from extra columns
+		fields := make(map[string]string, len(extraCols))
+		for _, col := range extraCols {
+			if raw, ok := rec[col]; ok {
+				var val string
+				json.Unmarshal(raw, &val)
+				fields[col] = val
+			}
+		}
+
+		switch geom.Type {
+		case "Point":
+			var coords [2]float64
+			if err := json.Unmarshal(geom.Coordinates, &coords); err != nil {
+				continue
+			}
+			pt := proj.ToLocal(coords[1], coords[0])
+			points = append(points, PointLocation{Point: pt, Fields: fields})
+		case "MultiPoint":
+			var coords [][2]float64
+			if err := json.Unmarshal(geom.Coordinates, &coords); err != nil {
+				continue
+			}
+			for _, c := range coords {
+				pt := proj.ToLocal(c[1], c[0])
+				points = append(points, PointLocation{Point: pt, Fields: fields})
+			}
+		default:
+			continue
+		}
+	}
+
+	return points, nil
 }
 
 func parseHeight(s string) float32 {

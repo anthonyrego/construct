@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"os"
 	"time"
 
@@ -18,7 +19,9 @@ import (
 	"github.com/anthonyrego/construct/pkg/mesh"
 	"github.com/anthonyrego/construct/pkg/renderer"
 	"github.com/anthonyrego/construct/pkg/scene"
+	"github.com/anthonyrego/construct/pkg/sign"
 	"github.com/anthonyrego/construct/pkg/snow"
+	"github.com/anthonyrego/construct/pkg/traffic"
 	"github.com/anthonyrego/construct/pkg/window"
 )
 
@@ -198,6 +201,8 @@ func main() {
 
 	var buildingMeshes []*mesh.Mesh
 	var groundMeshes []*mesh.Mesh
+	signMeshes := make(map[string]*mesh.Mesh)
+	signWidths := make(map[string]float32)
 
 	defer func() {
 		for _, nm := range meshes {
@@ -208,6 +213,9 @@ func main() {
 		}
 		for _, gm := range groundMeshes {
 			gm.Destroy(rend)
+		}
+		for _, sm := range signMeshes {
+			sm.Destroy(rend)
 		}
 	}()
 
@@ -278,6 +286,59 @@ func main() {
 		}
 	}
 
+	// --- Fetch traffic signal locations ---
+	var trafficSys *traffic.System
+	poleMesh := createLitCube("pole", 30, 30, 30)
+	// Lit (active) light meshes
+	greenOn := createLitCube("greenOn", 0, 255, 76)
+	yellowOn := createLitCube("yellowOn", 255, 230, 0)
+	redOn := createLitCube("redOn", 255, 25, 0)
+	// Dim (inactive) light meshes
+	greenOff := createLitCube("greenOff", 0, 30, 9)
+	yellowOff := createLitCube("yellowOff", 30, 27, 0)
+	redOff := createLitCube("redOff", 30, 3, 0)
+
+	if proj != nil {
+		signalLocs, err := geojson.FetchPointLocations(traffic.SignalDataset, minLat, minLon, maxLat, maxLon, 5000, proj)
+		if err != nil {
+			fmt.Println("Warning: could not fetch traffic signals:", err)
+		} else {
+			fmt.Printf("Fetched %d traffic signal locations\n", len(signalLocs))
+
+			// Fetch street centerlines for curb-edge offset
+			var streets []geojson.StreetSegment
+			segs, err := geojson.FetchStreetSegments(traffic.CenterlineDataset, minLat, minLon, maxLat, maxLon, 5000, proj)
+			if err != nil {
+				fmt.Println("Warning: could not fetch centerlines:", err)
+			} else {
+				fmt.Printf("Fetched %d street centerline segments\n", len(segs))
+				streets = segs
+			}
+
+			trafficSys = traffic.New(signalLocs, 2.0, streets)
+
+			// Create sign meshes for unique street names
+			for _, sig := range trafficSys.Signals {
+				for _, name := range []string{sig.Street1, sig.Street2} {
+					if name == "" {
+						continue
+					}
+					if _, exists := signMeshes[name]; exists {
+						continue
+					}
+					m, w, err := sign.NewMesh(rend, name)
+					if err != nil {
+						fmt.Printf("Warning: could not create sign mesh for %q: %v\n", name, err)
+						continue
+					}
+					signMeshes[name] = m
+					signWidths[name] = w
+				}
+			}
+			fmt.Printf("Created %d unique street sign meshes\n", len(signMeshes))
+		}
+	}
+
 	// --- Snow particle system ---
 	snowMesh := createLitCube("snow", 255, 255, 255)
 	snowSys := snow.New(200)
@@ -290,16 +351,36 @@ func main() {
 	headlampColor := mgl32.Vec4{1.0, 0.95, 0.8, 8.0} // rgb + intensity
 
 	nScene := len(s.Lights)
-	if nScene > 63 {
-		nScene = 63
+	if nScene > 511 {
+		nScene = 511
 	}
-	lightUniforms.NumLights = mgl32.Vec4{float32(1 + nScene), 0, 0, 0}
-	lightUniforms.LightColors[0] = headlampColor
-	for i := 0; i < nScene; i++ {
-		l := s.Lights[i]
-		lightUniforms.LightPositions[i+1] = mgl32.Vec4{l.Position.X(), l.Position.Y(), l.Position.Z(), 0}
-		lightUniforms.LightColors[i+1] = mgl32.Vec4{l.Color.X(), l.Color.Y(), l.Color.Z(), l.Intensity}
+
+	rebuildLightUniforms := func() {
+		lightUniforms.LightColors[0] = headlampColor
+
+		for i := 0; i < nScene; i++ {
+			l := s.Lights[i]
+			lightUniforms.LightPositions[i+1] = mgl32.Vec4{l.Position.X(), l.Position.Y(), l.Position.Z(), 0}
+			lightUniforms.LightColors[i+1] = mgl32.Vec4{l.Color.X(), l.Color.Y(), l.Color.Z(), l.Intensity}
+		}
+
+		totalLights := 1 + nScene
+		if trafficSys != nil {
+			trafficLights := trafficSys.Lights()
+			for i, tl := range trafficLights {
+				slot := 1 + nScene + i
+				if slot >= 512 {
+					break
+				}
+				lightUniforms.LightPositions[slot] = mgl32.Vec4{tl.Position.X(), tl.Position.Y(), tl.Position.Z(), 0}
+				lightUniforms.LightColors[slot] = mgl32.Vec4{tl.Color.X(), tl.Color.Y(), tl.Color.Z(), tl.Intensity}
+				totalLights = slot + 1
+			}
+		}
+
+		lightUniforms.NumLights = mgl32.Vec4{float32(totalLights), 0, 0, 0}
 	}
+	rebuildLightUniforms()
 
 	postProcess := renderer.PostProcessUniforms{
 		Dither: mgl32.Vec4{1.0, 8.0, 0, 0},
@@ -317,14 +398,15 @@ func main() {
 		if cfg.Headlamp.Intensity > 0 {
 			headlampColor = mgl32.Vec4{cfg.Headlamp.R, cfg.Headlamp.G, cfg.Headlamp.B, cfg.Headlamp.Intensity}
 		}
-		lightUniforms.LightColors[0] = headlampColor
 
 		// Update street light color/intensity from config (positions stay fixed from scene builder)
 		streetColor := mgl32.Vec3{cfg.Lighting.StreetLightR, cfg.Lighting.StreetLightG, cfg.Lighting.StreetLightB}
 		streetIntensity := cfg.Lighting.StreetLightIntensity
 		for i := 0; i < nScene; i++ {
-			lightUniforms.LightColors[i+1] = mgl32.Vec4{streetColor.X(), streetColor.Y(), streetColor.Z(), streetIntensity}
+			s.Lights[i].Color = streetColor
+			s.Lights[i].Intensity = streetIntensity
 		}
+		rebuildLightUniforms()
 
 		// Window / fullscreen
 		if err := win.SetFullscreen(cfg.Fullscreen); err != nil {
@@ -419,6 +501,14 @@ func main() {
 		mouseDX, mouseDY := inp.MouseDelta()
 		cam.Look(mouseDX, mouseDY)
 
+		// Update traffic lights
+		if trafficSys != nil {
+			trafficSys.Update(deltaTime)
+			if trafficSys.Dirty() {
+				rebuildLightUniforms()
+			}
+		}
+
 		// Update snow particles (follow camera)
 		snowSys.SetCenter(cam.Position.X(), cam.Position.Y(), cam.Position.Z())
 		snowSys.Update(deltaTime)
@@ -481,6 +571,77 @@ func main() {
 				MVP:          mvp,
 				Model:        model,
 			})
+		}
+
+		// Draw traffic signals (pole + 3 stacked light boxes per signal)
+		if trafficSys != nil {
+			drawBox := func(m *mesh.Mesh, x, y, z float32) {
+				model := mgl32.Translate3D(x, y, z)
+				model = model.Mul4(mgl32.Scale3D(traffic.LightBoxSize, traffic.LightBoxSize, traffic.LightBoxSize))
+				rend.DrawLit(cmdBuf, scenePass, renderer.LitDrawCall{
+					VertexBuffer: m.VertexBuffer,
+					IndexBuffer:  m.IndexBuffer,
+					IndexCount:   m.IndexCount,
+					MVP:          viewProj.Mul4(model),
+					Model:        model,
+				})
+			}
+
+			for _, sig := range trafficSys.Signals {
+				x, z := sig.Position.X, sig.Position.Z
+
+				// Pole
+				poleModel := mgl32.Translate3D(x, traffic.PoleHeight/2, z)
+				poleModel = poleModel.Mul4(mgl32.Scale3D(traffic.PoleWidth, traffic.PoleHeight, traffic.PoleWidth))
+				rend.DrawLit(cmdBuf, scenePass, renderer.LitDrawCall{
+					VertexBuffer: poleMesh.VertexBuffer,
+					IndexBuffer:  poleMesh.IndexBuffer,
+					IndexCount:   poleMesh.IndexCount,
+					MVP:          viewProj.Mul4(poleModel),
+					Model:        poleModel,
+				})
+
+				// 3 stacked lights: red (top), yellow (mid), green (bottom)
+				if sig.Phase == traffic.Red {
+					drawBox(redOn, x, traffic.RedY, z)
+				} else {
+					drawBox(redOff, x, traffic.RedY, z)
+				}
+				if sig.Phase == traffic.Yellow {
+					drawBox(yellowOn, x, traffic.YellowY, z)
+				} else {
+					drawBox(yellowOff, x, traffic.YellowY, z)
+				}
+				if sig.Phase == traffic.Green {
+					drawBox(greenOn, x, traffic.GreenY, z)
+				} else {
+					drawBox(greenOff, x, traffic.GreenY, z)
+				}
+
+				// Street name signs
+				drawSign := func(name string, y, angle float32) {
+					sm, ok := signMeshes[name]
+					if !ok {
+						return
+					}
+					_ = signWidths[name]
+					model := mgl32.Translate3D(x, y, z).Mul4(mgl32.HomogRotate3DY(angle))
+					rend.DrawLit(cmdBuf, scenePass, renderer.LitDrawCall{
+						VertexBuffer: sm.VertexBuffer,
+						IndexBuffer:  sm.IndexBuffer,
+						IndexCount:   sm.IndexCount,
+						MVP:          viewProj.Mul4(model),
+						Model:        model,
+					})
+				}
+
+				if sig.Street1 != "" {
+					drawSign(sig.Street1, traffic.SignY1, sig.DirAngle)
+				}
+				if sig.Street2 != "" {
+					drawSign(sig.Street2, traffic.SignY2, sig.DirAngle+math.Pi/2)
+				}
+			}
 		}
 
 		rend.EndScenePass(scenePass)
