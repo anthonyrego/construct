@@ -1,6 +1,7 @@
 package traffic
 
 import (
+	"fmt"
 	"math"
 	"math/rand"
 
@@ -22,63 +23,102 @@ const (
 	PoleHeight   float32 = 3.5
 	PoleWidth    float32 = 0.1
 	LightBoxSize float32 = 0.2
+	ArmOffset    float32 = 0.5 // horizontal offset from pole for each signal head
 
 	// Vertical positions for the 3 stacked lights (top to bottom: red, yellow, green)
 	RedY    float32 = PoleHeight + LightBoxSize*2
 	YellowY float32 = PoleHeight + LightBoxSize
 	GreenY  float32 = PoleHeight
 
-	// Sign mount heights (above lights)
+	// Housing (dark box behind lights to block side/rear view)
+	HousingWidth  float32 = LightBoxSize + 0.1
+	HousingHeight float32 = LightBoxSize*3 + 0.1
+	HousingDepth  float32 = 0.25
+	HousingY      float32 = PoleHeight + LightBoxSize // vertical center of the 3 lights
+	LightForward  float32 = HousingDepth/2 + 0.01     // how far lights sit in front of housing
+
+	// Sign mount heights (above lights, stacked)
 	SignY1 float32 = RedY + LightBoxSize*1.5
 	SignY2 float32 = SignY1 + 0.35
 
 	greenDuration  float32 = 30.0
 	yellowDuration float32 = 5.0
-	redDuration    float32 = 30.0
-	cycleDuration  float32 = greenDuration + yellowDuration + redDuration
+
+	// Coordinated cycle: Dir1 green/yellow, then Dir2 green/yellow
+	// Dir1: green(30) → yellow(5) → red(35)
+	// Dir2: red(35) → green(30) → yellow(5)
+	coordCycleDuration float32 = 2 * (greenDuration + yellowDuration) // 70s
 
 	// Half-width offsets from center to curb edge
 	oneWayOffset float32 = 4.0
 	twoWayOffset float32 = 8.0
 )
 
-// Signal represents a single traffic signal with independent timing.
+// SignalHead represents one directional signal head at an intersection.
+type SignalHead struct {
+	X, Z   float32
+	Phase  Phase
+	Angle  float32
+	Street string
+}
+
+// Signal represents a coordinated intersection with two directional signal heads.
 type Signal struct {
 	Position geojson.Point2D
-	Phase    Phase
+	Phase1   Phase   // current phase for street1 direction
+	Phase2   Phase   // current phase for street2 direction
 	Street1  string  // on-street name
 	Street2  string  // cross-street name
-	DirAngle float32 // radians: direction the first sign faces
+	DirAngle float32 // radians: direction the street1 head faces
 	timer    float32
+}
+
+// Heads returns the two directional signal heads with their positions and phases.
+func (s *Signal) Heads() [2]SignalHead {
+	var heads [2]SignalHead
+	phases := [2]Phase{s.Phase1, s.Phase2}
+	streets := [2]string{s.Street1, s.Street2}
+
+	for i := 0; i < 2; i++ {
+		angle := s.DirAngle + float32(i)*math.Pi/2
+		ox := float32(math.Sin(float64(angle))) * ArmOffset
+		oz := float32(math.Cos(float64(angle))) * ArmOffset
+		heads[i] = SignalHead{
+			X:      s.Position.X + ox,
+			Z:      s.Position.Z + oz,
+			Phase:  phases[i],
+			Angle:  angle,
+			Street: streets[i],
+		}
+	}
+	return heads
 }
 
 func (s *Signal) advance(dt float32) bool {
 	s.timer += dt
-	oldPhase := s.Phase
-	for {
-		var dur float32
-		switch s.Phase {
-		case Green:
-			dur = greenDuration
-		case Yellow:
-			dur = yellowDuration
-		case Red:
-			dur = redDuration
-		}
-		if s.timer < dur {
-			break
-		}
-		s.timer -= dur
-		switch s.Phase {
-		case Green:
-			s.Phase = Yellow
-		case Yellow:
-			s.Phase = Red
-		case Red:
-			s.Phase = Green
-		}
+	for s.timer >= coordCycleDuration {
+		s.timer -= coordCycleDuration
 	}
-	return s.Phase != oldPhase
+
+	old1, old2 := s.Phase1, s.Phase2
+
+	t := s.timer
+	switch {
+	case t < greenDuration:
+		s.Phase1 = Green
+		s.Phase2 = Red
+	case t < greenDuration+yellowDuration:
+		s.Phase1 = Yellow
+		s.Phase2 = Red
+	case t < 2*greenDuration+yellowDuration:
+		s.Phase1 = Red
+		s.Phase2 = Green
+	default:
+		s.Phase1 = Red
+		s.Phase2 = Yellow
+	}
+
+	return s.Phase1 != old1 || s.Phase2 != old2
 }
 
 // IntersectionsFromSegments derives intersection points from street centerline
@@ -152,11 +192,55 @@ type System struct {
 	lightIntensity float32
 }
 
+// clusterPoints merges nearby points (within snapDist meters) into centroids.
+func clusterPoints(points []geojson.Point2D, snapDist float32) []geojson.Point2D {
+	type cluster struct {
+		sumX, sumZ float32
+		count      int
+	}
+	var clusters []cluster
+
+	for _, pt := range points {
+		merged := false
+		for i := range clusters {
+			cx := clusters[i].sumX / float32(clusters[i].count)
+			cz := clusters[i].sumZ / float32(clusters[i].count)
+			dx := cx - pt.X
+			dz := cz - pt.Z
+			if dx*dx+dz*dz < snapDist*snapDist {
+				clusters[i].sumX += pt.X
+				clusters[i].sumZ += pt.Z
+				clusters[i].count++
+				merged = true
+				break
+			}
+		}
+		if !merged {
+			clusters = append(clusters, cluster{sumX: pt.X, sumZ: pt.Z, count: 1})
+		}
+	}
+
+	result := make([]geojson.Point2D, len(clusters))
+	for i, c := range clusters {
+		result[i] = geojson.Point2D{
+			X: c.sumX / float32(c.count),
+			Z: c.sumZ / float32(c.count),
+		}
+	}
+	return result
+}
+
 // NewFromPoints creates a traffic system from raw point positions (e.g. OSM).
-// Street names are derived from the two nearest distinct-named centerline segments.
+// Nearby points are clustered into single intersections (OSM often has 2-4 nodes
+// per intersection, one per traffic direction). Street names are derived from
+// the two nearest distinct-named centerline segments.
 func NewFromPoints(points []geojson.Point2D, lightIntensity float32, streets []geojson.StreetSegment) *System {
-	signals := make([]Signal, len(points))
-	for i, pt := range points {
+	// Cluster nearby OSM nodes into single intersection points
+	merged := clusterPoints(points, 20)
+	fmt.Printf("Clustered %d OSM nodes into %d intersections\n", len(points), len(merged))
+
+	signals := make([]Signal, len(merged))
+	for i, pt := range merged {
 		pos := pt
 		var dirAngle float32
 		var street1, street2 string
@@ -166,7 +250,7 @@ func NewFromPoints(points []geojson.Point2D, lightIntensity float32, streets []g
 			street1, street2 = nearestStreetNames(pt, streets)
 		}
 
-		offset := rand.Float32() * cycleDuration
+		offset := rand.Float32() * coordCycleDuration
 		sig := Signal{
 			Position: pos,
 			Street1:  street1,
@@ -322,40 +406,47 @@ func (s *System) Dirty() bool {
 	return false
 }
 
-// Lights returns 3 point lights per signal (red, yellow, green positions).
-// Only the active light has intensity; the others are zero.
+// Lights returns 6 point lights per signal (3 per directional head).
+// Only the active light in each head has intensity; the others are zero.
 func (s *System) Lights() []scene.PointLight {
-	lights := make([]scene.PointLight, 0, len(s.Signals)*3)
+	lights := make([]scene.PointLight, 0, len(s.Signals)*6)
 	for _, sig := range s.Signals {
-		x, z := sig.Position.X, sig.Position.Z
+		heads := sig.Heads()
+		for _, h := range heads {
+			// Offset light position forward from housing
+			sinA := float32(math.Sin(float64(h.Angle)))
+			cosA := float32(math.Cos(float64(h.Angle)))
+			lx := h.X + sinA*LightForward
+			lz := h.Z + cosA*LightForward
 
-		var redI, yellowI, greenI float32
-		switch sig.Phase {
-		case Red:
-			redI = s.lightIntensity
-		case Yellow:
-			yellowI = s.lightIntensity
-		case Green:
-			greenI = s.lightIntensity
+			var redI, yellowI, greenI float32
+			switch h.Phase {
+			case Red:
+				redI = s.lightIntensity
+			case Yellow:
+				yellowI = s.lightIntensity
+			case Green:
+				greenI = s.lightIntensity
+			}
+
+			lights = append(lights,
+				scene.PointLight{
+					Position:  mgl32.Vec3{lx, RedY, lz},
+					Color:     mgl32.Vec3{1.0, 0.1, 0.0},
+					Intensity: redI,
+				},
+				scene.PointLight{
+					Position:  mgl32.Vec3{lx, YellowY, lz},
+					Color:     mgl32.Vec3{1.0, 0.9, 0.0},
+					Intensity: yellowI,
+				},
+				scene.PointLight{
+					Position:  mgl32.Vec3{lx, GreenY, lz},
+					Color:     mgl32.Vec3{0.0, 1.0, 0.3},
+					Intensity: greenI,
+				},
+			)
 		}
-
-		lights = append(lights,
-			scene.PointLight{
-				Position:  mgl32.Vec3{x, RedY, z},
-				Color:     mgl32.Vec3{1.0, 0.1, 0.0},
-				Intensity: redI,
-			},
-			scene.PointLight{
-				Position:  mgl32.Vec3{x, YellowY, z},
-				Color:     mgl32.Vec3{1.0, 0.9, 0.0},
-				Intensity: yellowI,
-			},
-			scene.PointLight{
-				Position:  mgl32.Vec3{x, GreenY, z},
-				Color:     mgl32.Vec3{0.0, 1.0, 0.3},
-				Intensity: greenI,
-			},
-		)
 	}
 	return lights
 }
