@@ -57,6 +57,8 @@ type LightUniforms struct {
 	AmbientColor   mgl32.Vec4
 	CameraPos      mgl32.Vec4
 	NumLights      mgl32.Vec4 // x=count
+	SunDirection   mgl32.Vec4 // xyz=direction (toward sun), w=unused
+	SunColor       mgl32.Vec4 // rgb=color, a=intensity
 }
 
 type PostProcessUniforms struct {
