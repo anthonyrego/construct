@@ -17,7 +17,14 @@
     "streetLightR": 1.0,
     "streetLightG": 0.85,
     "streetLightB": 0.5,
-    "streetLightIntensity": 3.2
+    "streetLightIntensity": 3.2,
+    "sunDirX": 0.3,
+    "sunDirY": 0.8,
+    "sunDirZ": 0.5,
+    "sunR": 1.0,
+    "sunG": 0.95,
+    "sunB": 0.9,
+    "sunIntensity": 0.3
   },
   "headlamp": {
     "r": 1.0,

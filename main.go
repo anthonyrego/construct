@@ -51,6 +51,13 @@ type SceneConfig struct {
 		StreetLightG         float32 `json:"streetLightG"`
 		StreetLightB         float32 `json:"streetLightB"`
 		StreetLightIntensity float32 `json:"streetLightIntensity"`
+		SunDirX              float32 `json:"sunDirX"`
+		SunDirY              float32 `json:"sunDirY"`
+		SunDirZ              float32 `json:"sunDirZ"`
+		SunR                 float32 `json:"sunR"`
+		SunG                 float32 `json:"sunG"`
+		SunB                 float32 `json:"sunB"`
+		SunIntensity         float32 `json:"sunIntensity"`
 	} `json:"lighting"`
 	Headlamp struct {
 		R         float32 `json:"r"`
@@ -352,6 +359,8 @@ func main() {
 	// Slot 0 = headlamp (updated each frame), scene lights start at slot 1
 	lightUniforms := renderer.LightUniforms{
 		AmbientColor: mgl32.Vec4{0.05, 0.03, 0.02, 1.0},
+		SunDirection: mgl32.Vec4{0.3, 0.8, 0.5, 0},  // default: angled from above-right
+		SunColor:     mgl32.Vec4{1.0, 0.95, 0.9, 0.3}, // warm white, moderate intensity
 	}
 	headlampColor := mgl32.Vec4{1.0, 0.95, 0.8, 8.0} // rgb + intensity
 
@@ -398,6 +407,12 @@ func main() {
 		postProcess.Tint = mgl32.Vec4{cfg.PostProcess.TintR, cfg.PostProcess.TintG, cfg.PostProcess.TintB, 0}
 
 		lightUniforms.AmbientColor = mgl32.Vec4{cfg.Lighting.AmbientR, cfg.Lighting.AmbientG, cfg.Lighting.AmbientB, 1.0}
+
+		// Sun (directional light)
+		if cfg.Lighting.SunIntensity > 0 {
+			lightUniforms.SunDirection = mgl32.Vec4{cfg.Lighting.SunDirX, cfg.Lighting.SunDirY, cfg.Lighting.SunDirZ, 0}
+			lightUniforms.SunColor = mgl32.Vec4{cfg.Lighting.SunR, cfg.Lighting.SunG, cfg.Lighting.SunB, cfg.Lighting.SunIntensity}
+		}
 
 		// Headlamp
 		if cfg.Headlamp.Intensity > 0 {
