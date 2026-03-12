@@ -44,11 +44,13 @@ type LitDrawCall struct {
 	IndexCount   uint32
 	MVP          mgl32.Mat4
 	Model        mgl32.Mat4
+	NoFog        bool
 }
 
 type LitVertexUniforms struct {
 	MVP   mgl32.Mat4
 	Model mgl32.Mat4
+	Flags mgl32.Vec4 // x=1 to skip fog
 }
 
 type LightUniforms struct {
@@ -59,6 +61,8 @@ type LightUniforms struct {
 	NumLights      mgl32.Vec4 // x=count
 	SunDirection   mgl32.Vec4 // xyz=direction (toward sun), w=unused
 	SunColor       mgl32.Vec4 // rgb=color, a=intensity
+	FogColor       mgl32.Vec4 // rgb=fog color (pre-post-process)
+	FogParams      mgl32.Vec4 // x=start distance, y=end distance
 }
 
 type PostProcessUniforms struct {
@@ -667,6 +671,9 @@ func (r *Renderer) DrawLit(cmdBuf *sdl.GPUCommandBuffer, renderPass *sdl.GPURend
 	uniforms := LitVertexUniforms{
 		MVP:   call.MVP,
 		Model: call.Model,
+	}
+	if call.NoFog {
+		uniforms.Flags = mgl32.Vec4{1, 0, 0, 0}
 	}
 	cmdBuf.PushVertexUniformData(0, unsafe.Slice(
 		(*byte)(unsafe.Pointer(&uniforms)), unsafe.Sizeof(uniforms),

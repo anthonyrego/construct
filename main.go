@@ -71,6 +71,13 @@ type SceneConfig struct {
 		WindStrength float32 `json:"windStrength"`
 		ParticleSize float32 `json:"particleSize"`
 	} `json:"snow"`
+	Fog struct {
+		R     float32 `json:"r"`
+		G     float32 `json:"g"`
+		B     float32 `json:"b"`
+		Start float32 `json:"start"`
+		End   float32 `json:"end"`
+	} `json:"fog"`
 }
 
 type ConfigWatcher struct {
@@ -478,6 +485,12 @@ func main() {
 		if cfg.Snow.ParticleSize > 0 {
 			snowSys.SetParticleSize(cfg.Snow.ParticleSize)
 		}
+
+		// Fog
+		if cfg.Fog.End > cfg.Fog.Start {
+			lightUniforms.FogColor = mgl32.Vec4{cfg.Fog.R, cfg.Fog.G, cfg.Fog.B, 0}
+			lightUniforms.FogParams = mgl32.Vec4{cfg.Fog.Start, cfg.Fog.End, 0, 0}
+		}
 	}
 
 	// Apply config on first load (already loaded above for window init)
@@ -571,6 +584,7 @@ func main() {
 				IndexCount:   skyDome.IndexCount,
 				MVP:          skyMVP,
 				Model:        skyModel,
+				NoFog:        true,
 			})
 		}
 
