@@ -350,16 +350,25 @@ func main() {
 		}
 	}
 
-
 	// --- Snow particle system ---
 	snowMesh := createLitCube("snow", 255, 255, 255)
 	snowSys := snow.New(200)
+
+	// --- Sky dome ---
+	skyDome, err := mesh.NewSkyDome(rend, 400,
+		15, 12, 22, // horizon: dark overcast gray
+		160, 150, 175, // zenith: lighter cloud gray
+	)
+	if err != nil {
+		panic("failed to create sky dome: " + err.Error())
+	}
+	defer skyDome.Destroy(rend)
 
 	// --- Build light uniforms ---
 	// Slot 0 = headlamp (updated each frame), scene lights start at slot 1
 	lightUniforms := renderer.LightUniforms{
 		AmbientColor: mgl32.Vec4{0.05, 0.03, 0.02, 1.0},
-		SunDirection: mgl32.Vec4{0.3, 0.8, 0.5, 0},  // default: angled from above-right
+		SunDirection: mgl32.Vec4{0.3, 0.8, 0.5, 0},    // default: angled from above-right
 		SunColor:     mgl32.Vec4{1.0, 0.95, 0.9, 0.3}, // warm white, moderate intensity
 	}
 	headlampColor := mgl32.Vec4{1.0, 0.95, 0.8, 8.0} // rgb + intensity
@@ -551,6 +560,19 @@ func main() {
 
 		scenePass := rend.BeginScenePass(cmdBuf)
 		rend.PushLightUniforms(cmdBuf, lightUniforms)
+
+		// Draw sky dome first (centered on camera, behind everything)
+		{
+			skyModel := mgl32.Translate3D(cam.Position.X(), cam.Position.Y(), cam.Position.Z())
+			skyMVP := viewProj.Mul4(skyModel)
+			rend.DrawLit(cmdBuf, scenePass, renderer.LitDrawCall{
+				VertexBuffer: skyDome.VertexBuffer,
+				IndexBuffer:  skyDome.IndexBuffer,
+				IndexCount:   skyDome.IndexCount,
+				MVP:          skyMVP,
+				Model:        skyModel,
+			})
+		}
 
 		for _, obj := range s.Objects {
 			model := mgl32.Translate3D(obj.Position.X(), obj.Position.Y(), obj.Position.Z())
