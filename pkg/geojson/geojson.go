@@ -98,9 +98,9 @@ type SurfacePolygon struct {
 
 // StreetSegment is a projected street centerline with traffic direction.
 type StreetSegment struct {
-	Points []Point2D
-	TwoWay bool   // true if "TW", false for one-way ("FT"/"TF")
-	Name   string // street name label
+	Points  []Point2D
+	TrafDir string // "FT" = from→to, "TF" = to→from, "TW" = two-way
+	Name    string // street name label
 }
 
 // FetchStreetSegments fetches LineString street centerline segments with
@@ -167,11 +167,9 @@ func FetchStreetSegments(cfg DatasetConfig, minLat, minLon, maxLat, maxLon float
 			pts[i] = proj.ToLocal(c[1], c[0])
 		}
 
-		twoWay := false
+		var trafDir string
 		if raw, ok := rec["trafdir"]; ok {
-			var td string
-			json.Unmarshal(raw, &td)
-			twoWay = (td == "TW")
+			json.Unmarshal(raw, &trafDir)
 		}
 
 		var name string
@@ -179,7 +177,7 @@ func FetchStreetSegments(cfg DatasetConfig, minLat, minLon, maxLat, maxLon float
 			json.Unmarshal(raw, &name)
 		}
 
-		segments = append(segments, StreetSegment{Points: pts, TwoWay: twoWay, Name: name})
+		segments = append(segments, StreetSegment{Points: pts, TrafDir: trafDir, Name: name})
 	}
 
 	return segments, nil
