@@ -12,6 +12,8 @@ struct LightUniforms
     float4 numLights;
     float4 sunDirection;  // xyz = direction toward sun, w = unused
     float4 sunColor;      // rgb = color, a = intensity
+    float4 fogColor;      // rgb = fog color
+    float4 fogParams;     // x = start distance, y = end distance
 };
 
 struct main0_out
@@ -24,6 +26,7 @@ struct main0_in
     float3 worldPosition [[user(locn0)]];
     float3 worldNormal [[user(locn1)]];
     float4 vertexColor [[user(locn2)]];
+    float4 flags [[user(locn3)]];
 };
 
 fragment main0_out main0(main0_in in [[stage_in]], constant LightUniforms& lights [[buffer(0)]])
@@ -56,6 +59,16 @@ fragment main0_out main0(main0_in in [[stage_in]], constant LightUniforms& light
         float attenuation = intensity / (1.0 + distance * distance);
 
         result += in.vertexColor.rgb * lightColor * NdotL * attenuation;
+    }
+
+    // Distance fog (skip for sky dome)
+    float fogStart = lights.fogParams.x;
+    float fogEnd = lights.fogParams.y;
+    if (fogEnd > fogStart && in.flags.x < 0.5)
+    {
+        float dist = length(in.worldPosition - lights.cameraPos.xyz);
+        float fogFactor = clamp((dist - fogStart) / (fogEnd - fogStart), 0.0, 1.0);
+        result = mix(result, lights.fogColor.rgb, fogFactor);
     }
 
     out.color = float4(clamp(result, 0.0, 1.0), 1.0);
