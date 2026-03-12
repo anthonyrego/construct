@@ -30,10 +30,10 @@
     "r": 1.0,
     "g": 0.95,
     "b": 0.8,
-    "intensity": 8.0
+    "intensity": 3.0
   },
   "snow": {
-    "count": 9000,
+    "count": 5000,
     "fallSpeed": 1.2,
     "windStrength": 0.4,
     "particleSize": 0.04

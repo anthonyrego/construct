@@ -1,6 +1,8 @@
 package mesh
 
 import (
+	"math"
+
 	"github.com/Zyko0/go-sdl3/sdl"
 
 	"github.com/anthonyrego/construct/pkg/renderer"
@@ -161,6 +163,74 @@ func NewGroundPlane(r *renderer.Renderer, size float32, red, green, blue uint8) 
 	}
 
 	indices := []uint16{0, 1, 2, 0, 2, 3}
+
+	vertexBuffer, err := r.CreateLitVertexBuffer(vertices)
+	if err != nil {
+		return nil, err
+	}
+
+	indexBuffer, err := r.CreateIndexBuffer(indices)
+	if err != nil {
+		r.ReleaseBuffer(vertexBuffer)
+		return nil, err
+	}
+
+	return &Mesh{
+		VertexBuffer: vertexBuffer,
+		IndexBuffer:  indexBuffer,
+		IndexCount:   uint32(len(indices)),
+	}, nil
+}
+
+// NewSkyDome creates an inverted sphere for use as a sky backdrop.
+// Vertex colors interpolate from horizon (bottom) to zenith (top).
+// All normals point (0,-1,0) so only ambient light contributes — no sun/point-light artifacts.
+func NewSkyDome(r *renderer.Renderer, radius float32, horizonR, horizonG, horizonB, zenithR, zenithG, zenithB uint8) (*Mesh, error) {
+	const rings = 16
+	const segments = 24
+
+	var vertices []renderer.LitVertex
+	var indices []uint16
+
+	// Generate vertices: rings from bottom (-Y) to top (+Y)
+	for ring := 0; ring <= rings; ring++ {
+		// phi goes from PI (bottom) to 0 (top)
+		phi := math.Pi * (1.0 - float64(ring)/float64(rings))
+		y := float64(radius) * math.Cos(phi)
+		ringRadius := float64(radius) * math.Sin(phi)
+
+		// t=0 at bottom (horizon), t=1 at top (zenith)
+		t := float64(ring) / float64(rings)
+		// Use smoothstep for a nicer gradient curve
+		t = t * t * (3 - 2*t)
+		cr := uint8(float64(horizonR)*(1-t) + float64(zenithR)*t)
+		cg := uint8(float64(horizonG)*(1-t) + float64(zenithG)*t)
+		cb := uint8(float64(horizonB)*(1-t) + float64(zenithB)*t)
+
+		for seg := 0; seg <= segments; seg++ {
+			theta := 2 * math.Pi * float64(seg) / float64(segments)
+			x := ringRadius * math.Sin(theta)
+			z := ringRadius * math.Cos(theta)
+
+			vertices = append(vertices, renderer.LitVertex{
+				X: float32(x), Y: float32(y), Z: float32(z),
+				NX: 0, NY: -1, NZ: 0, // all normals down — suppresses sun/point light
+				R: cr, G: cg, B: cb, A: 255,
+			})
+		}
+	}
+
+	// Generate indices (inverted winding for inside-facing triangles)
+	for ring := 0; ring < rings; ring++ {
+		for seg := 0; seg < segments; seg++ {
+			curr := uint16(ring*(segments+1) + seg)
+			next := curr + uint16(segments+1)
+
+			// Inward-facing winding (front faces visible from inside)
+			indices = append(indices, curr, next, curr+1)
+			indices = append(indices, curr+1, next, next+1)
+		}
+	}
 
 	vertexBuffer, err := r.CreateLitVertexBuffer(vertices)
 	if err != nil {
