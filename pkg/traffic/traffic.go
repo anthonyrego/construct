@@ -309,7 +309,7 @@ func nearestStreetNames(pt geojson.Point2D, streets []geojson.StreetSegment) (st
 func positionAndDirection(pt geojson.Point2D, streets []geojson.StreetSegment) (geojson.Point2D, float32) {
 	bestDist := float32(math.MaxFloat32)
 	var bestPerp geojson.Point2D
-	var bestTwoWay bool
+	var bestTrafDir string
 	var bestDirAngle float32
 
 	for _, seg := range streets {
@@ -321,8 +321,8 @@ func positionAndDirection(pt geojson.Point2D, streets []geojson.StreetSegment) (
 			if dist < bestDist {
 				bestDist = dist
 				bestPerp = perp
-				bestTwoWay = seg.TwoWay
-				// Segment direction angle
+				bestTrafDir = seg.TrafDir
+				// Segment direction angle (digitization direction: A→B)
 				dx := b.X - a.X
 				dz := b.Z - a.Z
 				bestDirAngle = float32(math.Atan2(float64(dx), float64(dz)))
@@ -334,8 +334,17 @@ func positionAndDirection(pt geojson.Point2D, streets []geojson.StreetSegment) (
 		return pt, 0
 	}
 
+	// Signal faces AGAINST traffic so approaching drivers see the bulbs.
+	// Digitization angle points A→B.
+	// "FT" traffic flows A→B → flip π to face B→A (against traffic)
+	// "TF" traffic flows B→A → A→B already faces against traffic, no flip
+	// "TW" two-way → flip π (arbitrary but consistent)
+	if bestTrafDir != "TF" {
+		bestDirAngle += math.Pi
+	}
+
 	off := oneWayOffset
-	if bestTwoWay {
+	if bestTrafDir == "TW" {
 		off = twoWayOffset
 	}
 
