@@ -148,7 +148,7 @@ func New(w *window.Window) (*Renderer, error) {
 		DepthStencilState: sdl.GPUDepthStencilState{
 			EnableDepthTest:  true,
 			EnableDepthWrite: true,
-			CompareOp:        sdl.GPU_COMPAREOP_LESS,
+			CompareOp:        sdl.GPU_COMPAREOP_GREATER_OR_EQUAL,
 		},
 		VertexInputState: sdl.GPUVertexInputState{
 			VertexBufferDescriptions: vertexBufferDescriptions,
@@ -225,7 +225,7 @@ func (r *Renderer) initLitPipeline() error {
 		DepthStencilState: sdl.GPUDepthStencilState{
 			EnableDepthTest:  true,
 			EnableDepthWrite: true,
-			CompareOp:        sdl.GPU_COMPAREOP_LESS,
+			CompareOp:        sdl.GPU_COMPAREOP_GREATER_OR_EQUAL,
 		},
 		VertexInputState: sdl.GPUVertexInputState{
 			VertexBufferDescriptions: []sdl.GPUVertexBufferDescription{
@@ -266,7 +266,7 @@ func (r *Renderer) initLitPipeline() error {
 		DepthStencilState: sdl.GPUDepthStencilState{
 			EnableDepthTest:  true,
 			EnableDepthWrite: false,
-			CompareOp:        sdl.GPU_COMPAREOP_LESS,
+			CompareOp:        sdl.GPU_COMPAREOP_GREATER_OR_EQUAL,
 		},
 		VertexInputState: sdl.GPUVertexInputState{
 			VertexBufferDescriptions: []sdl.GPUVertexBufferDescription{
@@ -307,7 +307,7 @@ func (r *Renderer) initLitPipeline() error {
 		DepthStencilState: sdl.GPUDepthStencilState{
 			EnableDepthTest:  true,
 			EnableDepthWrite: true,
-			CompareOp:        sdl.GPU_COMPAREOP_LESS,
+			CompareOp:        sdl.GPU_COMPAREOP_GREATER_OR_EQUAL,
 		},
 		VertexInputState: sdl.GPUVertexInputState{
 			VertexBufferDescriptions: []sdl.GPUVertexBufferDescription{
@@ -327,8 +327,8 @@ func (r *Renderer) initLitPipeline() error {
 			FillMode:                sdl.GPU_FILLMODE_FILL,
 			CullMode:                sdl.GPU_CULLMODE_BACK,
 			EnableDepthBias:         true,
-			DepthBiasConstantFactor: 4,
-			DepthBiasSlopeFactor:    2,
+			DepthBiasConstantFactor: -4,
+			DepthBiasSlopeFactor:    -2,
 		},
 		PrimitiveType:  sdl.GPU_PRIMITIVETYPE_TRIANGLELIST,
 		VertexShader:   litVert,
@@ -731,7 +731,7 @@ func (r *Renderer) BeginFrame() (*sdl.GPUCommandBuffer, *sdl.GPURenderPass, erro
 
 	depthStencilTargetInfo := sdl.GPUDepthStencilTargetInfo{
 		Texture:        r.depthTexture,
-		ClearDepth:     1.0,
+		ClearDepth:     0.0, // reversed-Z: far=0, near=1
 		LoadOp:         sdl.GPU_LOADOP_CLEAR,
 		StoreOp:        sdl.GPU_STOREOP_DONT_CARE,
 		StencilLoadOp:  sdl.GPU_LOADOP_DONT_CARE,
@@ -795,7 +795,7 @@ func (r *Renderer) BeginScenePass(cmdBuf *sdl.GPUCommandBuffer) *sdl.GPURenderPa
 
 	depthStencilTargetInfo := sdl.GPUDepthStencilTargetInfo{
 		Texture:        r.offscreenDepth,
-		ClearDepth:     1.0,
+		ClearDepth:     0.0, // reversed-Z: far=0, near=1
 		LoadOp:         sdl.GPU_LOADOP_CLEAR,
 		StoreOp:        sdl.GPU_STOREOP_DONT_CARE,
 		StencilLoadOp:  sdl.GPU_LOADOP_DONT_CARE,

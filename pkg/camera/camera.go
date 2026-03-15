@@ -84,12 +84,25 @@ func (c *Camera) ViewMatrix() mgl32.Mat4 {
 }
 
 func (c *Camera) ProjectionMatrix() mgl32.Mat4 {
-	return mgl32.Perspective(
+	return ReversedZPerspective(
 		mgl32.DegToRad(c.FOV),
 		c.AspectRatio,
 		c.Near,
 		c.Far,
 	)
+}
+
+// ReversedZPerspective creates a perspective projection matrix with reversed-Z
+// for [0,1] depth range. Near maps to z=1, far maps to z=0, giving much better
+// depth precision at large distances than standard projection.
+func ReversedZPerspective(fovy, aspect, near, far float32) mgl32.Mat4 {
+	f := float32(1.0 / math.Tan(float64(fovy/2)))
+	return mgl32.Mat4{
+		f / aspect, 0, 0, 0,
+		0, f, 0, 0,
+		0, 0, near / (far - near), -1,
+		0, 0, far * near / (far - near), 0,
+	}
 }
 
 func (c *Camera) ViewProjectionMatrix() mgl32.Mat4 {

@@ -41,9 +41,9 @@ func ExtractFrustum(vp mgl32.Mat4) Frustum {
 	f.Planes[3] = normalizePlane(
 		vp[3]-vp[1], vp[7]-vp[5], vp[11]-vp[9], vp[15]-vp[13],
 	)
-	// Near:   row3 + row2
+	// Near:   row2 (for [0,1] depth range)
 	f.Planes[4] = normalizePlane(
-		vp[3]+vp[2], vp[7]+vp[6], vp[11]+vp[10], vp[15]+vp[14],
+		vp[2], vp[6], vp[10], vp[14],
 	)
 	// Far:    row3 - row2
 	f.Planes[5] = normalizePlane(
