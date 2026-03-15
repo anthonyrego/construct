@@ -93,6 +93,11 @@ func (g *SpatialGrid) QueryCells(cx, cz, radius float32) []uint64 {
 	return result
 }
 
+// CellKeyFor returns the cell key for a world-space position.
+func (g *SpatialGrid) CellKeyFor(x, z float32) uint64 {
+	return g.cellKey(x, z)
+}
+
 // CellCenter returns the world-space center of a cell.
 func (g *SpatialGrid) CellCenter(key uint64) (float32, float32) {
 	cx := int32(uint32(key >> 32))

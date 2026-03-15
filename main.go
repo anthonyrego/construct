@@ -677,37 +677,44 @@ func main() {
 		// Two-tier rendering:
 		// - Near cells: individual objects with full lighting
 		// - Far cells: single merged mesh per cell (1 draw call instead of N)
+		// Decision is made per-cell to avoid gaps at the boundary.
 		frustum := camera.ExtractFrustum(viewProj)
 		cullDist := cam.Far * 0.90
 		cullDistSq := cullDist * cullDist
 		detailDistSq := cam.Far * 0.45 * cam.Far * 0.45 // near/far tier boundary
 
-		// Far tier: draw merged cell meshes for distant cells
-		farCells := grid.QueryCells(cam.Position.X(), cam.Position.Z(), cullDist)
-		for _, key := range farCells {
+		// Track which cells are rendered as merged (far tier)
+		farCellSet := make(map[uint64]bool)
+
+		// Iterate all cells with merged meshes and decide per-cell
+		allCells := grid.QueryCells(cam.Position.X(), cam.Position.Z(), cullDist)
+		for _, key := range allCells {
 			cellDistSq := grid.CellDistSq(key, cam.Position.X(), cam.Position.Z())
-			if cellDistSq < detailDistSq || cellDistSq > cullDistSq {
-				continue // near cells use individual objects; beyond cull = skip
-			}
-			cm := grid.CellMeshes[key]
-			// Frustum check using cell center + generous radius
-			ccx, ccz := grid.CellCenter(key)
-			if !frustum.SphereVisible(mgl32.Vec3{ccx, 50, ccz}, gridCellSize) {
+			if cellDistSq > cullDistSq {
 				continue
 			}
-			// Merged meshes are in world space — identity model
-			identity := mgl32.Ident4()
-			rend.DrawLit(cmdBuf, scenePass, renderer.LitDrawCall{
-				VertexBuffer: cm.Mesh.VertexBuffer,
-				IndexBuffer:  cm.Mesh.IndexBuffer,
-				IndexCount:   cm.Mesh.IndexCount,
-				MVP:          viewProj,
-				Model:        identity,
-				Index32:      true,
-			})
+			if cellDistSq >= detailDistSq {
+				// Far tier: draw merged mesh
+				cm := grid.CellMeshes[key]
+				ccx, ccz := grid.CellCenter(key)
+				if !frustum.SphereVisible(mgl32.Vec3{ccx, 50, ccz}, gridCellSize) {
+					continue
+				}
+				identity := mgl32.Ident4()
+				rend.DrawLit(cmdBuf, scenePass, renderer.LitDrawCall{
+					VertexBuffer: cm.Mesh.VertexBuffer,
+					IndexBuffer:  cm.Mesh.IndexBuffer,
+					IndexCount:   cm.Mesh.IndexCount,
+					MVP:          viewProj,
+					Model:        identity,
+					Index32:      true,
+				})
+				farCellSet[key] = true
+			}
+			// Near cells: individual objects rendered below
 		}
 
-		// Near tier: individual objects with full detail
+		// Near tier: individual objects (skip objects in far-tier cells)
 		nearby := grid.QueryRadius(cam.Position.X(), cam.Position.Z(), cullDist)
 		for _, idx := range nearby {
 			obj := s.Objects[idx]
@@ -717,8 +724,9 @@ func main() {
 			if distSq > cullDistSq {
 				continue
 			}
-			// Skip buildings in far cells (handled by merged meshes)
-			if distSq > detailDistSq {
+			// Skip objects whose cell is handled by the far tier
+			cellKey := grid.CellKeyFor(obj.Position.X(), obj.Position.Z())
+			if farCellSet[cellKey] {
 				continue
 			}
 			if obj.Radius > 0 && !frustum.SphereVisible(obj.Position, obj.Radius) {
