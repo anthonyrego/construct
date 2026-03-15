@@ -237,8 +237,8 @@ func main() {
 	s := &scene.Scene{}
 
 	// --- Fetch and extrude NYC building footprints ---
-	minLat, minLon, maxLat, maxLon := 40.735, -73.990, 40.740, -73.980 // Gramercy Park area bbox
-	footprints, proj, err := geojson.FetchFootprints(minLat, minLon, maxLat, maxLon, 3000)
+	minLat, minLon, maxLat, maxLon := 40.700, -74.020, 40.747, -73.970 // Below 30th St, Manhattan
+	footprints, proj, err := geojson.FetchFootprints(minLat, minLon, maxLat, maxLon, 50000)
 	if err != nil {
 		fmt.Println("Warning: could not fetch buildings:", err)
 	} else {
@@ -262,12 +262,12 @@ func main() {
 
 	for _, fp := range footprints {
 		c := building.StyleColor(fp.PLUTO)
-		m, pos, err := building.Extrude(rend, fp, c.R, c.G, c.B)
+		m, pos, radius, err := building.Extrude(rend, fp, c.R, c.G, c.B)
 		if err != nil {
 			continue
 		}
 		buildingMeshes = append(buildingMeshes, m)
-		s.Add(scene.Object{Mesh: m, Position: pos, Scale: mgl32.Vec3{1, 1, 1}})
+		s.Add(scene.Object{Mesh: m, Position: pos, Scale: mgl32.Vec3{1, 1, 1}, Radius: radius})
 	}
 
 	// --- Fetch and flatten ground surfaces ---
@@ -283,19 +283,19 @@ func main() {
 			{ground.ParkDataset, ground.Park, "park"},
 		}
 		for _, se := range surfaces {
-			polys, err := geojson.FetchSurfacePolygons(se.dataset, minLat, minLon, maxLat, maxLon, 5000, proj)
+			polys, err := geojson.FetchSurfacePolygons(se.dataset, minLat, minLon, maxLat, maxLon, 50000, proj)
 			if err != nil {
 				fmt.Printf("Warning: could not fetch %s polygons: %v\n", se.label, err)
 				continue
 			}
 			fmt.Printf("Fetched %d %s polygons\n", len(polys), se.label)
 			for _, poly := range polys {
-				m, pos, err := ground.Flatten(rend, poly, se.surfType)
+				m, pos, radius, err := ground.Flatten(rend, poly, se.surfType)
 				if err != nil {
 					continue
 				}
 				groundMeshes = append(groundMeshes, m)
-				s.Add(scene.Object{Mesh: m, Position: pos, Scale: mgl32.Vec3{1, 1, 1}})
+				s.Add(scene.Object{Mesh: m, Position: pos, Scale: mgl32.Vec3{1, 1, 1}, Radius: radius})
 			}
 		}
 	}
@@ -316,7 +316,7 @@ func main() {
 	if proj != nil {
 		// Fetch street centerlines for curb-edge offset and street name lookup
 		var streets []geojson.StreetSegment
-		segs, err := geojson.FetchStreetSegments(traffic.CenterlineDataset, minLat, minLon, maxLat, maxLon, 5000, proj)
+		segs, err := geojson.FetchStreetSegments(traffic.CenterlineDataset, minLat, minLon, maxLat, maxLon, 50000, proj)
 		if err != nil {
 			fmt.Println("Warning: could not fetch centerlines:", err)
 		} else {
@@ -356,6 +356,10 @@ func main() {
 			fmt.Printf("Created %d unique street sign meshes\n", len(signMeshes))
 		}
 	}
+
+	// --- Build spatial grid for frustum culling ---
+	grid := scene.NewSpatialGrid(s.Objects, 100)
+	fmt.Printf("Built spatial grid: %d objects\n", len(s.Objects))
 
 	// --- Snow particle system ---
 	snowMesh := createLitCube("snow", 255, 255, 255)
@@ -588,7 +592,14 @@ func main() {
 			})
 		}
 
-		for _, obj := range s.Objects {
+		// Query spatial grid for nearby objects, then frustum cull
+		frustum := camera.ExtractFrustum(viewProj)
+		nearby := grid.QueryRadius(cam.Position.X(), cam.Position.Z(), cam.Far)
+		for _, idx := range nearby {
+			obj := s.Objects[idx]
+			if obj.Radius > 0 && !frustum.SphereVisible(obj.Position, obj.Radius) {
+				continue
+			}
 			model := mgl32.Translate3D(obj.Position.X(), obj.Position.Y(), obj.Position.Z())
 			model = model.Mul4(mgl32.Scale3D(obj.Scale.X(), obj.Scale.Y(), obj.Scale.Z()))
 			mvp := viewProj.Mul4(model)
@@ -645,6 +656,11 @@ func main() {
 
 			for _, sig := range trafficSys.Signals {
 				x, z := sig.Position.X, sig.Position.Z
+
+				// Frustum cull entire intersection (generous 10m radius)
+				if !frustum.SphereVisible(mgl32.Vec3{x, traffic.PoleHeight / 2, z}, 10) {
+					continue
+				}
 
 				// Pole (one per intersection)
 				poleModel := mgl32.Translate3D(x, traffic.PoleHeight/2, z)

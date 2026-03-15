@@ -9,6 +9,7 @@ type Object struct {
 	Mesh     *mesh.Mesh
 	Position mgl32.Vec3
 	Scale    mgl32.Vec3
+	Radius   float32 // Bounding sphere radius for frustum culling
 }
 
 type PointLight struct {
