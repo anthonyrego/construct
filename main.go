@@ -376,6 +376,13 @@ func main() {
 	}
 	defer skyDome.Destroy(rend)
 
+	// --- Fallback ground plane (fills gaps in surface data) ---
+	groundPlane, err := mesh.NewGroundPlane(rend, 5000, 70, 65, 60)
+	if err != nil {
+		panic("failed to create ground plane: " + err.Error())
+	}
+	defer groundPlane.Destroy(rend)
+
 	// --- Build light uniforms ---
 	// Slot 0 = headlamp (updated each frame), scene lights start at slot 1
 	lightUniforms := renderer.LightUniforms{
@@ -596,6 +603,19 @@ func main() {
 				Model:        skyModel,
 				NoFog:        true,
 				NoDepthWrite: true,
+			})
+		}
+
+		// Fallback ground plane (follows camera, depth bias pushes it behind surface data)
+		{
+			gpModel := mgl32.Translate3D(cam.Position.X(), 0, cam.Position.Z())
+			rend.DrawLit(cmdBuf, scenePass, renderer.LitDrawCall{
+				VertexBuffer: groundPlane.VertexBuffer,
+				IndexBuffer:  groundPlane.IndexBuffer,
+				IndexCount:   groundPlane.IndexCount,
+				MVP:          viewProj.Mul4(gpModel),
+				Model:        gpModel,
+				DepthBias:    true,
 			})
 		}
 
