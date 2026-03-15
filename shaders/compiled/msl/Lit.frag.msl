@@ -29,9 +29,26 @@ struct main0_in
     float4 flags [[user(locn3)]];
 };
 
-fragment main0_out main0(main0_in in [[stage_in]], constant LightUniforms& lights [[buffer(0)]])
+fragment main0_out main0(main0_in in [[stage_in]], constant LightUniforms& lights [[buffer(0)]], float4 fragCoord [[position]])
 {
     main0_out out = {};
+
+    // Dithered fade-out: discard pixels based on 4x4 Bayer pattern
+    // flags.y = 0.0 (fully visible) to 1.0 (fully discarded)
+    float fadeFactor = in.flags.y;
+    if (fadeFactor > 0.0)
+    {
+        const float bayer[16] = {
+             0.0/16.0,  8.0/16.0,  2.0/16.0, 10.0/16.0,
+            12.0/16.0,  4.0/16.0, 14.0/16.0,  6.0/16.0,
+             3.0/16.0, 11.0/16.0,  1.0/16.0,  9.0/16.0,
+            15.0/16.0,  7.0/16.0, 13.0/16.0,  5.0/16.0
+        };
+        int2 pixel = int2(fragCoord.xy);
+        float threshold = bayer[(pixel.y % 4) * 4 + (pixel.x % 4)];
+        if (fadeFactor > threshold)
+            discard_fragment();
+    }
 
     float3 normal = normalize(in.worldNormal);
     float3 result = lights.ambientColor.rgb * in.vertexColor.rgb;

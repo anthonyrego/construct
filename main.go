@@ -681,6 +681,8 @@ func main() {
 		frustum := camera.ExtractFrustum(viewProj)
 		cullDist := cam.Far * 0.90
 		cullDistSq := cullDist * cullDist
+		fadeStart := cullDist * 0.80  // dithered fade-out begins here
+		fadeRange := cullDist - fadeStart
 		detailDistSq := cam.Far * 0.45 * cam.Far * 0.45 // near/far tier boundary
 
 		// Track which cells are rendered as merged (far tier)
@@ -700,6 +702,15 @@ func main() {
 				if !frustum.SphereVisible(mgl32.Vec3{ccx, 50, ccz}, gridCellSize) {
 					continue
 				}
+				// Dithered fade-out near cull boundary
+				cellDist := float32(math.Sqrt(float64(cellDistSq)))
+				var fade float32
+				if cellDist > fadeStart {
+					fade = (cellDist - fadeStart) / fadeRange
+					if fade > 1 {
+						fade = 1
+					}
+				}
 				identity := mgl32.Ident4()
 				rend.DrawLit(cmdBuf, scenePass, renderer.LitDrawCall{
 					VertexBuffer: cm.Mesh.VertexBuffer,
@@ -708,6 +719,7 @@ func main() {
 					MVP:          viewProj,
 					Model:        identity,
 					Index32:      true,
+					FadeFactor:   fade,
 				})
 				farCellSet[key] = true
 			}
@@ -732,6 +744,15 @@ func main() {
 			if obj.Radius > 0 && !frustum.SphereVisible(obj.Position, obj.Radius) {
 				continue
 			}
+			// Dithered fade-out near cull boundary
+			dist := float32(math.Sqrt(float64(distSq)))
+			var fade float32
+			if dist > fadeStart {
+				fade = (dist - fadeStart) / fadeRange
+				if fade > 1 {
+					fade = 1
+				}
+			}
 			model := mgl32.Translate3D(obj.Position.X(), obj.Position.Y(), obj.Position.Z())
 			model = model.Mul4(mgl32.Scale3D(obj.Scale.X(), obj.Scale.Y(), obj.Scale.Z()))
 			mvp := viewProj.Mul4(model)
@@ -742,6 +763,7 @@ func main() {
 				IndexCount:   obj.Mesh.IndexCount,
 				MVP:          mvp,
 				Model:        model,
+				FadeFactor:   fade,
 			})
 		}
 

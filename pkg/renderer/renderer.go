@@ -45,9 +45,10 @@ type LitDrawCall struct {
 	MVP          mgl32.Mat4
 	Model        mgl32.Mat4
 	NoFog        bool
-	NoDepthWrite bool // Use depth-test-only pipeline (for sky dome)
-	DepthBias    bool // Use depth bias pipeline (for ground plane behind coplanar surfaces)
-	Index32      bool // Use 32-bit index buffer (for merged meshes)
+	NoDepthWrite bool    // Use depth-test-only pipeline (for sky dome)
+	DepthBias    bool    // Use depth bias pipeline (for ground plane behind coplanar surfaces)
+	Index32      bool    // Use 32-bit index buffer (for merged meshes)
+	FadeFactor   float32 // 0=solid, 1=fully discarded (dithered fade-out)
 }
 
 type LitVertexUniforms struct {
@@ -830,9 +831,11 @@ func (r *Renderer) DrawLit(cmdBuf *sdl.GPUCommandBuffer, renderPass *sdl.GPURend
 		MVP:   call.MVP,
 		Model: call.Model,
 	}
+	var noFogFlag float32
 	if call.NoFog {
-		uniforms.Flags = mgl32.Vec4{1, 0, 0, 0}
+		noFogFlag = 1
 	}
+	uniforms.Flags = mgl32.Vec4{noFogFlag, call.FadeFactor, 0, 0}
 	cmdBuf.PushVertexUniformData(0, unsafe.Slice(
 		(*byte)(unsafe.Pointer(&uniforms)), unsafe.Sizeof(uniforms),
 	))
