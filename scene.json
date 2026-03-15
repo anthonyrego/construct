@@ -3,7 +3,7 @@
   "windowHeight": 2160,
   "fullscreen": true,
   "pixelScale": 3,
-  "renderDistance": 1000,
+  "renderDistance": 1200,
   "postProcess": {
     "ditherStrength": 0.985,
     "colorLevels": 8.0,
@@ -43,7 +43,7 @@
     "r": 0.096,
     "g": 0.03,
     "b": 0.136,
-    "start": 250,
+    "start": 300,
     "end": 550
   }
 }
