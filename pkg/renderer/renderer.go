@@ -45,6 +45,7 @@ type LitDrawCall struct {
 	MVP          mgl32.Mat4
 	Model        mgl32.Mat4
 	NoFog        bool
+	NoDepthWrite bool // Use depth-test-only pipeline (for sky dome)
 }
 
 type LitVertexUniforms struct {
@@ -78,7 +79,8 @@ type Renderer struct {
 	depthTexture *sdl.GPUTexture
 
 	// Lit rendering
-	litPipeline         *sdl.GPUGraphicsPipeline
+	litPipeline              *sdl.GPUGraphicsPipeline
+	litNoDepthWritePipeline  *sdl.GPUGraphicsPipeline
 	postProcessPipeline *sdl.GPUGraphicsPipeline
 	offscreenTexture    *sdl.GPUTexture
 	offscreenDepth      *sdl.GPUTexture
@@ -248,6 +250,47 @@ func (r *Renderer) initLitPipeline() error {
 		return errors.New("failed to create lit pipeline: " + err.Error())
 	}
 	r.litPipeline = litPipeline
+
+	// Lit pipeline variant: depth test only, no depth write (for sky dome)
+	litNoDepthWritePipeline, err := device.CreateGraphicsPipeline(&sdl.GPUGraphicsPipelineCreateInfo{
+		TargetInfo: sdl.GPUGraphicsPipelineTargetInfo{
+			ColorTargetDescriptions: []sdl.GPUColorTargetDescription{
+				{Format: sdl.GPU_TEXTUREFORMAT_R8G8B8A8_UNORM},
+			},
+			HasDepthStencilTarget: true,
+			DepthStencilFormat:    sdl.GPU_TEXTUREFORMAT_D32_FLOAT,
+		},
+		DepthStencilState: sdl.GPUDepthStencilState{
+			EnableDepthTest:  true,
+			EnableDepthWrite: false,
+			CompareOp:        sdl.GPU_COMPAREOP_LESS,
+		},
+		VertexInputState: sdl.GPUVertexInputState{
+			VertexBufferDescriptions: []sdl.GPUVertexBufferDescription{
+				{
+					Slot:      0,
+					InputRate: sdl.GPU_VERTEXINPUTRATE_VERTEX,
+					Pitch:     uint32(unsafe.Sizeof(LitVertex{})),
+				},
+			},
+			VertexAttributes: []sdl.GPUVertexAttribute{
+				{BufferSlot: 0, Format: sdl.GPU_VERTEXELEMENTFORMAT_FLOAT3, Location: 0, Offset: 0},
+				{BufferSlot: 0, Format: sdl.GPU_VERTEXELEMENTFORMAT_FLOAT3, Location: 1, Offset: 12},
+				{BufferSlot: 0, Format: sdl.GPU_VERTEXELEMENTFORMAT_UBYTE4_NORM, Location: 2, Offset: 24},
+			},
+		},
+		RasterizerState: sdl.GPURasterizerState{
+			FillMode: sdl.GPU_FILLMODE_FILL,
+			CullMode: sdl.GPU_CULLMODE_BACK,
+		},
+		PrimitiveType:  sdl.GPU_PRIMITIVETYPE_TRIANGLELIST,
+		VertexShader:   litVert,
+		FragmentShader: litFrag,
+	})
+	if err != nil {
+		return errors.New("failed to create lit no-depth-write pipeline: " + err.Error())
+	}
+	r.litNoDepthWritePipeline = litNoDepthWritePipeline
 
 	// --- Post-process pipeline ---
 	ppVert, err := shaders.LoadShader(device, "PostProcess.vert", 0, 0, 0, 0)
@@ -668,6 +711,10 @@ func (r *Renderer) PushLightUniforms(cmdBuf *sdl.GPUCommandBuffer, lights LightU
 }
 
 func (r *Renderer) DrawLit(cmdBuf *sdl.GPUCommandBuffer, renderPass *sdl.GPURenderPass, call LitDrawCall) {
+	if call.NoDepthWrite {
+		renderPass.BindGraphicsPipeline(r.litNoDepthWritePipeline)
+	}
+
 	uniforms := LitVertexUniforms{
 		MVP:   call.MVP,
 		Model: call.Model,
@@ -688,6 +735,10 @@ func (r *Renderer) DrawLit(cmdBuf *sdl.GPUCommandBuffer, renderPass *sdl.GPURend
 	}, sdl.GPU_INDEXELEMENTSIZE_16BIT)
 
 	renderPass.DrawIndexedPrimitives(call.IndexCount, 1, 0, 0, 0)
+
+	if call.NoDepthWrite {
+		renderPass.BindGraphicsPipeline(r.litPipeline)
+	}
 }
 
 func (r *Renderer) EndScenePass(renderPass *sdl.GPURenderPass) {

@@ -35,7 +35,8 @@ type SceneConfig struct {
 	WindowWidth  int  `json:"windowWidth"`
 	WindowHeight int  `json:"windowHeight"`
 	Fullscreen   bool `json:"fullscreen"`
-	PixelScale   int  `json:"pixelScale"`
+	PixelScale     int     `json:"pixelScale"`
+	RenderDistance float32 `json:"renderDistance"`
 	PostProcess  struct {
 		DitherStrength float32 `json:"ditherStrength"`
 		ColorLevels    float32 `json:"colorLevels"`
@@ -476,6 +477,11 @@ func main() {
 		// Update camera aspect ratio to match
 		cam.AspectRatio = float32(win.Width()) / float32(win.Height())
 
+		// Render distance (drives camera far plane, spatial grid query, and frustum culling)
+		if cfg.RenderDistance > 0 {
+			cam.Far = cfg.RenderDistance
+		}
+
 		// Snow parameters
 		if cfg.Snow.Count > 0 {
 			snowSys.SetCount(cfg.Snow.Count)
@@ -589,6 +595,7 @@ func main() {
 				MVP:          skyMVP,
 				Model:        skyModel,
 				NoFog:        true,
+				NoDepthWrite: true,
 			})
 		}
 
