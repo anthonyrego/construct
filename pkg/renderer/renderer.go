@@ -47,6 +47,7 @@ type LitDrawCall struct {
 	NoFog        bool
 	NoDepthWrite bool // Use depth-test-only pipeline (for sky dome)
 	DepthBias    bool // Use depth bias pipeline (for ground plane behind coplanar surfaces)
+	Index32      bool // Use 32-bit index buffer (for merged meshes)
 }
 
 type LitVertexUniforms struct {
@@ -639,6 +640,68 @@ func (r *Renderer) CreateIndexBuffer(indices []uint16) (*sdl.GPUBuffer, error) {
 	return buffer, nil
 }
 
+func (r *Renderer) CreateIndexBuffer32(indices []uint32) (*sdl.GPUBuffer, error) {
+	device := r.window.Device()
+
+	bufferSize := uint32(len(indices)) * uint32(unsafe.Sizeof(uint32(0)))
+
+	buffer, err := device.CreateBuffer(&sdl.GPUBufferCreateInfo{
+		Usage: sdl.GPU_BUFFERUSAGE_INDEX,
+		Size:  bufferSize,
+	})
+	if err != nil {
+		return nil, errors.New("failed to create index buffer: " + err.Error())
+	}
+
+	transferBuffer, err := device.CreateTransferBuffer(&sdl.GPUTransferBufferCreateInfo{
+		Usage: sdl.GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+		Size:  bufferSize,
+	})
+	if err != nil {
+		device.ReleaseBuffer(buffer)
+		return nil, errors.New("failed to create transfer buffer: " + err.Error())
+	}
+
+	transferDataPtr, err := device.MapTransferBuffer(transferBuffer, false)
+	if err != nil {
+		device.ReleaseBuffer(buffer)
+		device.ReleaseTransferBuffer(transferBuffer)
+		return nil, errors.New("failed to map transfer buffer: " + err.Error())
+	}
+
+	indexData := unsafe.Slice((*uint32)(unsafe.Pointer(transferDataPtr)), len(indices))
+	copy(indexData, indices)
+
+	device.UnmapTransferBuffer(transferBuffer)
+
+	cmdBuf, err := device.AcquireCommandBuffer()
+	if err != nil {
+		device.ReleaseBuffer(buffer)
+		device.ReleaseTransferBuffer(transferBuffer)
+		return nil, errors.New("failed to acquire command buffer: " + err.Error())
+	}
+
+	copyPass := cmdBuf.BeginCopyPass()
+	copyPass.UploadToGPUBuffer(
+		&sdl.GPUTransferBufferLocation{
+			TransferBuffer: transferBuffer,
+			Offset:         0,
+		},
+		&sdl.GPUBufferRegion{
+			Buffer: buffer,
+			Offset: 0,
+			Size:   bufferSize,
+		},
+		false,
+	)
+	copyPass.End()
+	cmdBuf.Submit()
+
+	device.ReleaseTransferBuffer(transferBuffer)
+
+	return buffer, nil
+}
+
 // --- Original rendering methods ---
 
 func (r *Renderer) BeginFrame() (*sdl.GPUCommandBuffer, *sdl.GPURenderPass, error) {
@@ -778,9 +841,13 @@ func (r *Renderer) DrawLit(cmdBuf *sdl.GPUCommandBuffer, renderPass *sdl.GPURend
 		{Buffer: call.VertexBuffer, Offset: 0},
 	})
 
+	indexSize := sdl.GPU_INDEXELEMENTSIZE_16BIT
+	if call.Index32 {
+		indexSize = sdl.GPU_INDEXELEMENTSIZE_32BIT
+	}
 	renderPass.BindIndexBuffer(&sdl.GPUBufferBinding{
 		Buffer: call.IndexBuffer, Offset: 0,
-	}, sdl.GPU_INDEXELEMENTSIZE_16BIT)
+	}, indexSize)
 
 	renderPass.DrawIndexedPrimitives(call.IndexCount, 1, 0, 0, 0)
 

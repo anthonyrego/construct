@@ -261,14 +261,31 @@ func main() {
 		}
 	}
 
+	// Generate raw building meshes (CPU-side), upload individual meshes,
+	// and collect raw data for per-cell merging.
+	type cellKey = uint64
+	cellRaws := make(map[cellKey][]*building.RawMesh)
+	const gridCellSize float32 = 100.0
+
 	for _, fp := range footprints {
 		c := building.StyleColor(fp.PLUTO)
-		m, pos, radius, err := building.Extrude(rend, fp, c.R, c.G, c.B)
+		raw, err := building.ExtrudeRaw(fp, c.R, c.G, c.B)
+		if err != nil {
+			continue
+		}
+
+		m, err := building.UploadMesh(rend, raw)
 		if err != nil {
 			continue
 		}
 		buildingMeshes = append(buildingMeshes, m)
-		s.Add(scene.Object{Mesh: m, Position: pos, Scale: mgl32.Vec3{1, 1, 1}, Radius: radius})
+		s.Add(scene.Object{Mesh: m, Position: raw.Position, Scale: mgl32.Vec3{1, 1, 1}, Radius: raw.Radius})
+
+		// Group raw meshes by grid cell for merging
+		cx := int32(math.Floor(float64(raw.Position.X() / gridCellSize)))
+		cz := int32(math.Floor(float64(raw.Position.Z() / gridCellSize)))
+		key := uint64(uint32(cx))<<32 | uint64(uint32(cz))
+		cellRaws[key] = append(cellRaws[key], raw)
 	}
 
 	// --- Fetch and flatten ground surfaces ---
@@ -359,8 +376,28 @@ func main() {
 	}
 
 	// --- Build spatial grid for frustum culling ---
-	grid := scene.NewSpatialGrid(s.Objects, 100)
+	grid := scene.NewSpatialGrid(s.Objects, gridCellSize)
 	fmt.Printf("Built spatial grid: %d objects\n", len(s.Objects))
+
+	// Build merged meshes per cell for efficient far rendering
+	var mergedMeshList []*mesh.Mesh
+	for key, raws := range cellRaws {
+		merged, err := building.MergeMeshes(rend, raws)
+		if err != nil {
+			continue
+		}
+		mergedMeshList = append(mergedMeshList, merged)
+		cx := int32(uint32(key >> 32))
+		cz := int32(uint32(key))
+		grid.CellMeshes[key] = &scene.CellMesh{Mesh: merged, CellX: cx, CellZ: cz}
+	}
+	fmt.Printf("Built %d merged cell meshes for far rendering\n", len(mergedMeshList))
+
+	defer func() {
+		for _, mm := range mergedMeshList {
+			mm.Destroy(rend)
+		}
+	}()
 
 	// --- Snow particle system ---
 	snowMesh := createLitCube("snow", 255, 255, 255)
@@ -624,18 +661,51 @@ func main() {
 			})
 		}
 
-		// Query spatial grid for nearby objects, then frustum cull.
-		// Shader fades from 70-90% of far; cull objects beyond 90% so
-		// no geometry reaches the GPU far plane.
+		// Two-tier rendering:
+		// - Near cells: individual objects with full lighting
+		// - Far cells: single merged mesh per cell (1 draw call instead of N)
 		frustum := camera.ExtractFrustum(viewProj)
 		cullDist := cam.Far * 0.90
 		cullDistSq := cullDist * cullDist
+		detailDistSq := cam.Far * 0.45 * cam.Far * 0.45 // near/far tier boundary
+
+		// Far tier: draw merged cell meshes for distant cells
+		farCells := grid.QueryCells(cam.Position.X(), cam.Position.Z(), cullDist)
+		for _, key := range farCells {
+			cellDistSq := grid.CellDistSq(key, cam.Position.X(), cam.Position.Z())
+			if cellDistSq < detailDistSq || cellDistSq > cullDistSq {
+				continue // near cells use individual objects; beyond cull = skip
+			}
+			cm := grid.CellMeshes[key]
+			// Frustum check using cell center + generous radius
+			ccx, ccz := grid.CellCenter(key)
+			if !frustum.SphereVisible(mgl32.Vec3{ccx, 50, ccz}, gridCellSize) {
+				continue
+			}
+			// Merged meshes are in world space — identity model
+			identity := mgl32.Ident4()
+			rend.DrawLit(cmdBuf, scenePass, renderer.LitDrawCall{
+				VertexBuffer: cm.Mesh.VertexBuffer,
+				IndexBuffer:  cm.Mesh.IndexBuffer,
+				IndexCount:   cm.Mesh.IndexCount,
+				MVP:          viewProj,
+				Model:        identity,
+				Index32:      true,
+			})
+		}
+
+		// Near tier: individual objects with full detail
 		nearby := grid.QueryRadius(cam.Position.X(), cam.Position.Z(), cullDist)
 		for _, idx := range nearby {
 			obj := s.Objects[idx]
 			dx := obj.Position.X() - cam.Position.X()
 			dz := obj.Position.Z() - cam.Position.Z()
-			if dx*dx+dz*dz > cullDistSq {
+			distSq := dx*dx + dz*dz
+			if distSq > cullDistSq {
+				continue
+			}
+			// Skip buildings in far cells (handled by merged meshes)
+			if distSq > detailDistSq {
 				continue
 			}
 			if obj.Radius > 0 && !frustum.SphereVisible(obj.Position, obj.Radius) {
