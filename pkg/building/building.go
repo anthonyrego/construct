@@ -13,12 +13,12 @@ import (
 
 // Extrude creates a lit mesh from a 2D footprint polygon + height.
 // Vertices are relative to the footprint centroid.
-// Returns the mesh and centroid position (for scene.Object.Position).
-func Extrude(r *renderer.Renderer, fp geojson.Footprint, red, green, blue uint8) (*mesh.Mesh, mgl32.Vec3, error) {
+// Returns the mesh, centroid position, and bounding sphere radius.
+func Extrude(r *renderer.Renderer, fp geojson.Footprint, red, green, blue uint8) (*mesh.Mesh, mgl32.Vec3, float32, error) {
 	outer := fp.Rings[0]
 	n := len(outer)
 	if n < 3 {
-		return nil, mgl32.Vec3{}, fmt.Errorf("footprint has fewer than 3 vertices")
+		return nil, mgl32.Vec3{}, 0, fmt.Errorf("footprint has fewer than 3 vertices")
 	}
 
 	// Compute centroid of outer ring
@@ -31,6 +31,20 @@ func Extrude(r *renderer.Renderer, fp geojson.Footprint, red, green, blue uint8)
 	cz /= float32(n)
 
 	height := fp.Height
+
+	// Compute bounding sphere radius (max XZ distance from centroid + height)
+	var maxDistSq float32
+	for _, p := range outer {
+		dx := p.X - cx
+		dz := p.Z - cz
+		distSq := dx*dx + dz*dz
+		if distSq > maxDistSq {
+			maxDistSq = distSq
+		}
+	}
+	// Bounding sphere encompasses XZ extent and height
+	xzRadius := float32(math.Sqrt(float64(maxDistSq)))
+	boundRadius := float32(math.Sqrt(float64(xzRadius*xzRadius + height*height)))
 
 	// Pre-allocate: walls = 4*n verts, 6*n indices; roof = n verts, 3*(n-2) indices
 	vertices := make([]renderer.LitVertex, 0, 5*n)
@@ -98,18 +112,18 @@ func Extrude(r *renderer.Renderer, fp geojson.Footprint, red, green, blue uint8)
 
 	// Check uint16 vertex limit
 	if len(vertices) > 65535 {
-		return nil, mgl32.Vec3{}, fmt.Errorf("building exceeds uint16 vertex limit (%d vertices)", len(vertices))
+		return nil, mgl32.Vec3{}, 0, fmt.Errorf("building exceeds uint16 vertex limit (%d vertices)", len(vertices))
 	}
 
 	vertexBuffer, err := r.CreateLitVertexBuffer(vertices)
 	if err != nil {
-		return nil, mgl32.Vec3{}, fmt.Errorf("failed to create vertex buffer: %w", err)
+		return nil, mgl32.Vec3{}, 0, fmt.Errorf("failed to create vertex buffer: %w", err)
 	}
 
 	indexBuffer, err := r.CreateIndexBuffer(indices)
 	if err != nil {
 		r.ReleaseBuffer(vertexBuffer)
-		return nil, mgl32.Vec3{}, fmt.Errorf("failed to create index buffer: %w", err)
+		return nil, mgl32.Vec3{}, 0, fmt.Errorf("failed to create index buffer: %w", err)
 	}
 
 	m := &mesh.Mesh{
@@ -119,5 +133,5 @@ func Extrude(r *renderer.Renderer, fp geojson.Footprint, red, green, blue uint8)
 	}
 
 	pos := mgl32.Vec3{cx, 0, cz}
-	return m, pos, nil
+	return m, pos, boundRadius, nil
 }
