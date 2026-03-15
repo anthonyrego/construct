@@ -25,7 +25,7 @@
     "sunR": 1.0,
     "sunG": 0.95,
     "sunB": 0.9,
-    "sunIntensity": 0.3
+    "sunIntensity": 0.5
   },
   "headlamp": {
     "r": 1.0,
@@ -34,7 +34,7 @@
     "intensity": 3.0
   },
   "snow": {
-    "count": 5000,
+    "count": 2000,
     "fallSpeed": 1.2,
     "windStrength": 0.4,
     "particleSize": 0.04
@@ -43,7 +43,7 @@
     "r": 0.096,
     "g": 0.03,
     "b": 0.136,
-    "start": 300,
-    "end": 550
+    "start": 350,
+    "end": 750
   }
 }
