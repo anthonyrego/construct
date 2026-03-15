@@ -506,7 +506,10 @@ func main() {
 		// Fog
 		if cfg.Fog.End > cfg.Fog.Start {
 			lightUniforms.FogColor = mgl32.Vec4{cfg.Fog.R, cfg.Fog.G, cfg.Fog.B, 0}
-			lightUniforms.FogParams = mgl32.Vec4{cfg.Fog.Start, cfg.Fog.End, 0, 0}
+			lightUniforms.FogParams = mgl32.Vec4{cfg.Fog.Start, cfg.Fog.End, cam.Far, 0}
+		} else {
+			// Even without fog, set render distance for far-plane fade
+			lightUniforms.FogParams[2] = cam.Far
 		}
 	}
 
@@ -575,6 +578,8 @@ func main() {
 		// Update camera position and headlamp in light uniforms
 		lightUniforms.CameraPos = mgl32.Vec4{cam.Position.X(), cam.Position.Y(), cam.Position.Z(), 0}
 		lightUniforms.LightPositions[0] = lightUniforms.CameraPos
+		// Keep render distance in sync for shader far-plane fade
+		lightUniforms.FogParams[2] = cam.Far
 
 		// Get view-projection matrix
 		viewProj := cam.ViewProjectionMatrix()
@@ -619,11 +624,20 @@ func main() {
 			})
 		}
 
-		// Query spatial grid for nearby objects, then frustum cull
+		// Query spatial grid for nearby objects, then frustum cull.
+		// Shader fades from 70-90% of far; cull objects beyond 90% so
+		// no geometry reaches the GPU far plane.
 		frustum := camera.ExtractFrustum(viewProj)
-		nearby := grid.QueryRadius(cam.Position.X(), cam.Position.Z(), cam.Far)
+		cullDist := cam.Far * 0.90
+		cullDistSq := cullDist * cullDist
+		nearby := grid.QueryRadius(cam.Position.X(), cam.Position.Z(), cullDist)
 		for _, idx := range nearby {
 			obj := s.Objects[idx]
+			dx := obj.Position.X() - cam.Position.X()
+			dz := obj.Position.Z() - cam.Position.Z()
+			if dx*dx+dz*dz > cullDistSq {
+				continue
+			}
 			if obj.Radius > 0 && !frustum.SphereVisible(obj.Position, obj.Radius) {
 				continue
 			}

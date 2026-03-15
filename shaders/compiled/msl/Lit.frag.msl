@@ -64,11 +64,22 @@ fragment main0_out main0(main0_in in [[stage_in]], constant LightUniforms& light
     // Distance fog (skip for sky dome)
     float fogStart = lights.fogParams.x;
     float fogEnd = lights.fogParams.y;
+    float renderDist = lights.fogParams.z;
+    float dist = length(in.worldPosition - lights.cameraPos.xyz);
+
     if (fogEnd > fogStart && in.flags.x < 0.5)
     {
-        float dist = length(in.worldPosition - lights.cameraPos.xyz);
         float fogFactor = clamp((dist - fogStart) / (fogEnd - fogStart), 0.0, 1.0);
         result = mix(result, lights.fogColor.rgb, fogFactor);
+    }
+
+    // Smooth fade to fog color near render distance (prevents far-plane tearing)
+    if (renderDist > 0.0 && in.flags.x < 0.5)
+    {
+        float fadeStart = renderDist * 0.70;
+        float fadeEnd = renderDist * 0.90;
+        float fadeFactor = clamp((dist - fadeStart) / (fadeEnd - fadeStart), 0.0, 1.0);
+        result = mix(result, lights.fogColor.rgb, fadeFactor);
     }
 
     out.color = float4(clamp(result, 0.0, 1.0), 1.0);

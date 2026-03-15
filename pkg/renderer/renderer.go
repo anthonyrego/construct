@@ -64,7 +64,7 @@ type LightUniforms struct {
 	SunDirection   mgl32.Vec4 // xyz=direction (toward sun), w=unused
 	SunColor       mgl32.Vec4 // rgb=color, a=intensity
 	FogColor       mgl32.Vec4 // rgb=fog color (pre-post-process)
-	FogParams      mgl32.Vec4 // x=start distance, y=end distance
+	FogParams      mgl32.Vec4 // x=start distance, y=end distance, z=render distance (far plane fade)
 }
 
 type PostProcessUniforms struct {
