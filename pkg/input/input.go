@@ -11,6 +11,7 @@ type Input struct {
 	mouseY       float32
 	mouseDeltaX  float32
 	mouseDeltaY  float32
+	scrollY      float32
 	quit         bool
 }
 
@@ -22,9 +23,10 @@ func New() *Input {
 }
 
 func (i *Input) Update() {
-	// Reset mouse delta each frame
+	// Reset per-frame deltas
 	i.mouseDeltaX = 0
 	i.mouseDeltaY = 0
+	i.scrollY = 0
 
 	// Copy current state to previous
 	for k, v := range i.keyState {
@@ -52,6 +54,10 @@ func (i *Input) Update() {
 			i.mouseY = motionEvent.Y
 			i.mouseDeltaX = motionEvent.Xrel
 			i.mouseDeltaY = motionEvent.Yrel
+
+		case sdl.EVENT_MOUSE_WHEEL:
+			wheelEvent := event.MouseWheelEvent()
+			i.scrollY += wheelEvent.Y
 		}
 	}
 }
@@ -74,6 +80,10 @@ func (i *Input) MousePosition() (float32, float32) {
 
 func (i *Input) MouseDelta() (float32, float32) {
 	return i.mouseDeltaX, i.mouseDeltaY
+}
+
+func (i *Input) ScrollY() float32 {
+	return i.scrollY
 }
 
 func (i *Input) ShouldQuit() bool {

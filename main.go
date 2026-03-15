@@ -557,9 +557,10 @@ func main() {
 	}
 
 	fmt.Println("\nControls:")
-	fmt.Println("  WASD  - Move")
-	fmt.Println("  Mouse - Look around")
-	fmt.Println("  ESC   - Quit")
+	fmt.Println("  WASD         - Move")
+	fmt.Println("  Mouse        - Look around")
+	fmt.Println("  Scroll Wheel - Throttle up/down")
+	fmt.Println("  ESC          - Quit")
 
 	// Main loop
 	lastTime := time.Now()
@@ -576,6 +577,18 @@ func main() {
 		// Hot-reload config
 		if cfg, ok := configWatcher.Load(); ok {
 			applyConfig(cfg)
+		}
+
+		// Throttle: scroll wheel adjusts move speed
+		if scroll := inp.ScrollY(); scroll != 0 {
+			cam.MoveSpeed *= 1 + scroll*0.1
+			if cam.MoveSpeed < 1 {
+				cam.MoveSpeed = 1
+			}
+			if cam.MoveSpeed > 500 {
+				cam.MoveSpeed = 500
+			}
+			fmt.Printf("Speed: %.0f\n", cam.MoveSpeed)
 		}
 
 		// Handle camera movement
