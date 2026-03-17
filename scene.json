@@ -2,7 +2,7 @@
   "windowWidth": 3456,
   "windowHeight": 2160,
   "fullscreen": true,
-  "pixelScale": 1,
+  "pixelScale": 3,
   "renderDistance": 1500,
   "postProcess": {
     "ditherStrength": 0.985,
@@ -12,9 +12,9 @@
     "tintB": 0.85
   },
   "lighting": {
-    "ambientR": 0.45,
-    "ambientG": 0.43,
-    "ambientB": 0.42,
+    "ambientR": 0.35,
+    "ambientG": 0.33,
+    "ambientB": 0.32,
     "streetLightR": 1.0,
     "streetLightG": 0.85,
     "streetLightB": 0.5,
@@ -34,7 +34,7 @@
     "intensity": 3.0
   },
   "snow": {
-    "count": 2000,
+    "count": 2500,
     "fallSpeed": 1.2,
     "windStrength": 0.4,
     "particleSize": 0.04
@@ -45,5 +45,9 @@
     "b": 0.136,
     "start": 350,
     "end": 1550
+  },
+  "textures": {
+    "groundScale": 3.0,
+    "groundStrength": 1
   }
 }

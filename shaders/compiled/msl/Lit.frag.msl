@@ -14,6 +14,7 @@ struct LightUniforms
     float4 sunColor;      // rgb = color, a = intensity
     float4 fogColor;      // rgb = fog color
     float4 fogParams;     // x = start distance, y = end distance
+    float4 textureParams; // x = scale (world meters per tile), y = strength
 };
 
 struct main0_out
@@ -29,7 +30,7 @@ struct main0_in
     float4 flags [[user(locn3)]];
 };
 
-fragment main0_out main0(main0_in in [[stage_in]], constant LightUniforms& lights [[buffer(0)]], float4 fragCoord [[position]])
+fragment main0_out main0(main0_in in [[stage_in]], constant LightUniforms& lights [[buffer(0)]], texture2d<float> groundTex [[texture(0)]], sampler groundSampler [[sampler(0)]], float4 fragCoord [[position]])
 {
     main0_out out = {};
 
@@ -76,6 +77,28 @@ fragment main0_out main0(main0_in in [[stage_in]], constant LightUniforms& light
         float attenuation = intensity / (1.0 + distance * distance);
 
         result += in.vertexColor.rgb * lightColor * NdotL * attenuation;
+    }
+
+    // Ground texture modulation (surfaceType > 0 means ground surface)
+    float surfaceType = in.flags.z;
+    if (surfaceType > 0.5)
+    {
+        float texScale = lights.textureParams.x;
+        float texStrength = lights.textureParams.y;
+        if (texScale > 0.0)
+        {
+            float2 uv = in.worldPosition.xz / texScale;
+            float4 texColor = groundTex.sample(groundSampler, uv);
+            // Select channel: 1=R(road), 2=G(sidewalk), 3=B(park)
+            float brightness;
+            if (surfaceType < 1.5)
+                brightness = texColor.r;
+            else if (surfaceType < 2.5)
+                brightness = texColor.g;
+            else
+                brightness = texColor.b;
+            result *= mix(1.0, brightness, texStrength);
+        }
     }
 
     // Distance fog (skip for sky dome)

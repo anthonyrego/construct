@@ -6,10 +6,11 @@ import (
 )
 
 type Object struct {
-	Mesh     *mesh.Mesh
-	Position mgl32.Vec3
-	Scale    mgl32.Vec3
-	Radius   float32 // Bounding sphere radius for frustum culling
+	Mesh        *mesh.Mesh
+	Position    mgl32.Vec3
+	Scale       mgl32.Vec3
+	Radius      float32 // Bounding sphere radius for frustum culling
+	SurfaceType int     // 0=none, 1=roadbed, 2=sidewalk, 3=park (for ground texturing)
 }
 
 type PointLight struct {

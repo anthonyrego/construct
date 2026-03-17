@@ -79,6 +79,10 @@ type SceneConfig struct {
 		Start float32 `json:"start"`
 		End   float32 `json:"end"`
 	} `json:"fog"`
+	Textures struct {
+		GroundScale    float32 `json:"groundScale"`
+		GroundStrength float32 `json:"groundStrength"`
+	} `json:"textures"`
 }
 
 type ConfigWatcher struct {
@@ -313,7 +317,7 @@ func main() {
 					continue
 				}
 				groundMeshes = append(groundMeshes, m)
-				s.Add(scene.Object{Mesh: m, Position: pos, Scale: mgl32.Vec3{1, 1, 1}, Radius: radius})
+				s.Add(scene.Object{Mesh: m, Position: pos, Scale: mgl32.Vec3{1, 1, 1}, Radius: radius, SurfaceType: int(se.surfType) + 1})
 			}
 		}
 	}
@@ -540,6 +544,11 @@ func main() {
 			snowSys.SetParticleSize(cfg.Snow.ParticleSize)
 		}
 
+		// Ground textures
+		if cfg.Textures.GroundScale > 0 {
+			lightUniforms.TextureParams = mgl32.Vec4{cfg.Textures.GroundScale, cfg.Textures.GroundStrength, 0, 0}
+		}
+
 		// Fog
 		if cfg.Fog.End > cfg.Fog.Start {
 			lightUniforms.FogColor = mgl32.Vec4{cfg.Fog.R, cfg.Fog.G, cfg.Fog.B, 0}
@@ -764,6 +773,7 @@ func main() {
 				MVP:          mvp,
 				Model:        model,
 				FadeFactor:   fade,
+				SurfaceType:  obj.SurfaceType,
 			})
 		}
 

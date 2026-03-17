@@ -49,6 +49,7 @@ type LitDrawCall struct {
 	DepthBias    bool    // Use depth bias pipeline (for ground plane behind coplanar surfaces)
 	Index32      bool    // Use 32-bit index buffer (for merged meshes)
 	FadeFactor   float32 // 0=solid, 1=fully discarded (dithered fade-out)
+	SurfaceType  int     // 0=none, 1=roadbed, 2=sidewalk, 3=park
 }
 
 type LitVertexUniforms struct {
@@ -67,6 +68,7 @@ type LightUniforms struct {
 	SunColor       mgl32.Vec4 // rgb=color, a=intensity
 	FogColor       mgl32.Vec4 // rgb=fog color (pre-post-process)
 	FogParams      mgl32.Vec4 // x=start distance, y=end distance, z=render distance (far plane fade)
+	TextureParams  mgl32.Vec4 // x=scale (world meters per tile), y=strength (0=off, 1=full)
 }
 
 type PostProcessUniforms struct {
@@ -89,6 +91,8 @@ type Renderer struct {
 	offscreenTexture    *sdl.GPUTexture
 	offscreenDepth      *sdl.GPUTexture
 	nearestSampler      *sdl.GPUSampler
+	groundTexture       *sdl.GPUTexture
+	repeatSampler       *sdl.GPUSampler
 	offscreenW          uint32
 	offscreenH          uint32
 }
@@ -209,7 +213,7 @@ func (r *Renderer) initLitPipeline() error {
 	}
 	defer device.ReleaseShader(litVert)
 
-	litFrag, err := shaders.LoadShader(device, "Lit.frag", 0, 1, 0, 0)
+	litFrag, err := shaders.LoadShader(device, "Lit.frag", 1, 1, 0, 0)
 	if err != nil {
 		return errors.New("failed to create lit fragment shader: " + err.Error())
 	}
@@ -390,6 +394,25 @@ func (r *Renderer) initLitPipeline() error {
 		return errors.New("failed to create nearest sampler: " + err.Error())
 	}
 	r.nearestSampler = nearestSampler
+
+	// --- Repeat sampler (for ground texture tiling) ---
+	repeatSampler, err := device.CreateSampler(&sdl.GPUSamplerCreateInfo{
+		MinFilter:    sdl.GPU_FILTER_NEAREST,
+		MagFilter:    sdl.GPU_FILTER_NEAREST,
+		MipmapMode:   sdl.GPU_SAMPLERMIPMAPMODE_NEAREST,
+		AddressModeU: sdl.GPU_SAMPLERADDRESSMODE_REPEAT,
+		AddressModeV: sdl.GPU_SAMPLERADDRESSMODE_REPEAT,
+		AddressModeW: sdl.GPU_SAMPLERADDRESSMODE_REPEAT,
+	})
+	if err != nil {
+		return errors.New("failed to create repeat sampler: " + err.Error())
+	}
+	r.repeatSampler = repeatSampler
+
+	// --- Ground texture ---
+	if err := r.createGroundTexture(); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -810,8 +833,15 @@ func (r *Renderer) BeginScenePass(cmdBuf *sdl.GPUCommandBuffer) *sdl.GPURenderPa
 	)
 
 	renderPass.BindGraphicsPipeline(r.litPipeline)
+	r.bindGroundTexture(renderPass)
 
 	return renderPass
+}
+
+func (r *Renderer) bindGroundTexture(renderPass *sdl.GPURenderPass) {
+	renderPass.BindFragmentSamplers([]sdl.GPUTextureSamplerBinding{
+		{Texture: r.groundTexture, Sampler: r.repeatSampler},
+	})
 }
 
 func (r *Renderer) PushLightUniforms(cmdBuf *sdl.GPUCommandBuffer, lights LightUniforms) {
@@ -823,8 +853,10 @@ func (r *Renderer) PushLightUniforms(cmdBuf *sdl.GPUCommandBuffer, lights LightU
 func (r *Renderer) DrawLit(cmdBuf *sdl.GPUCommandBuffer, renderPass *sdl.GPURenderPass, call LitDrawCall) {
 	if call.NoDepthWrite {
 		renderPass.BindGraphicsPipeline(r.litNoDepthWritePipeline)
+		r.bindGroundTexture(renderPass)
 	} else if call.DepthBias {
 		renderPass.BindGraphicsPipeline(r.litDepthBiasPipeline)
+		r.bindGroundTexture(renderPass)
 	}
 
 	uniforms := LitVertexUniforms{
@@ -835,7 +867,7 @@ func (r *Renderer) DrawLit(cmdBuf *sdl.GPUCommandBuffer, renderPass *sdl.GPURend
 	if call.NoFog {
 		noFogFlag = 1
 	}
-	uniforms.Flags = mgl32.Vec4{noFogFlag, call.FadeFactor, 0, 0}
+	uniforms.Flags = mgl32.Vec4{noFogFlag, call.FadeFactor, float32(call.SurfaceType), 0}
 	cmdBuf.PushVertexUniformData(0, unsafe.Slice(
 		(*byte)(unsafe.Pointer(&uniforms)), unsafe.Sizeof(uniforms),
 	))
@@ -856,6 +888,7 @@ func (r *Renderer) DrawLit(cmdBuf *sdl.GPUCommandBuffer, renderPass *sdl.GPURend
 
 	if call.NoDepthWrite || call.DepthBias {
 		renderPass.BindGraphicsPipeline(r.litPipeline)
+		r.bindGroundTexture(renderPass)
 	}
 }
 
@@ -906,6 +939,12 @@ func (r *Renderer) ReleaseBuffer(buffer *sdl.GPUBuffer) {
 func (r *Renderer) Destroy() {
 	device := r.window.Device()
 
+	if r.groundTexture != nil {
+		device.ReleaseTexture(r.groundTexture)
+	}
+	if r.repeatSampler != nil {
+		device.ReleaseSampler(r.repeatSampler)
+	}
 	if r.nearestSampler != nil {
 		device.ReleaseSampler(r.nearestSampler)
 	}
