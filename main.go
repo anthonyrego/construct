@@ -22,6 +22,7 @@ import (
 	"github.com/anthonyrego/construct/pkg/sign"
 	"github.com/anthonyrego/construct/pkg/snow"
 	"github.com/anthonyrego/construct/pkg/traffic"
+	"github.com/anthonyrego/construct/pkg/ui"
 	"github.com/anthonyrego/construct/pkg/window"
 )
 
@@ -193,6 +194,17 @@ func main() {
 		offH = 1
 	}
 	rend.SetOffscreenResolution(offW, offH)
+
+	// Create pause menu
+	pauseMenu := ui.NewPauseMenu(rend, pixelScale)
+	pauseMenu.Fullscreen = startFullscreen
+	for i, res := range ui.Resolutions {
+		if res.W == startWidth && res.H == startHeight {
+			pauseMenu.ResIndex = i
+			break
+		}
+	}
+	defer pauseMenu.Destroy(rend)
 
 	// Create input handler
 	inp := input.New()
@@ -542,12 +554,14 @@ func main() {
 	fmt.Println("  WASD         - Move")
 	fmt.Println("  Mouse        - Look around")
 	fmt.Println("  Scroll Wheel - Throttle up/down")
+	fmt.Println("  Tab          - Pause menu")
 	fmt.Println("  ESC          - Quit")
 
 	// Main loop
 	lastTime := time.Now()
+	running := true
 
-	for !inp.ShouldQuit() {
+	for running && !inp.ShouldQuit() {
 		// Calculate delta time
 		currentTime := time.Now()
 		deltaTime := float32(currentTime.Sub(lastTime).Seconds())
@@ -556,56 +570,112 @@ func main() {
 		// Update input
 		inp.Update()
 
+		// Handle pause menu input
+		wasActive := pauseMenu.IsActive()
+		action := pauseMenu.HandleInput(inp)
+
+		switch action {
+		case ui.ActionQuit:
+			running = false
+			continue
+		case ui.ActionToggleFullscreen:
+			newFS := !win.IsFullscreen()
+			if err := win.SetFullscreen(newFS); err != nil {
+				fmt.Println("Fullscreen error:", err)
+			}
+			pauseMenu.Fullscreen = win.IsFullscreen()
+			cam.AspectRatio = float32(win.Width()) / float32(win.Height())
+			newOffW := uint32(win.Width() / pixelScale)
+			newOffH := uint32(win.Height() / pixelScale)
+			if newOffW < 1 {
+				newOffW = 1
+			}
+			if newOffH < 1 {
+				newOffH = 1
+			}
+			rend.SetOffscreenResolution(newOffW, newOffH)
+		case ui.ActionSetResolution:
+			win.SetSize(pauseMenu.ResolutionW, pauseMenu.ResolutionH)
+			cam.AspectRatio = float32(win.Width()) / float32(win.Height())
+			newOffW := uint32(win.Width() / pixelScale)
+			newOffH := uint32(win.Height() / pixelScale)
+			if newOffW < 1 {
+				newOffW = 1
+			}
+			if newOffH < 1 {
+				newOffH = 1
+			}
+			rend.SetOffscreenResolution(newOffW, newOffH)
+		}
+
+		// Toggle mouse mode on pause state change
+		if pauseMenu.IsActive() && !wasActive {
+			win.SetRelativeMouseMode(false)
+		} else if !pauseMenu.IsActive() && wasActive {
+			win.SetRelativeMouseMode(true)
+		}
+
+		// Quit on Escape when not paused
+		if !wasActive && inp.IsKeyPressed(sdl.K_ESCAPE) {
+			break
+		}
+
 		// Hot-reload config
 		if cfg, ok := configWatcher.Load(); ok {
 			applyConfig(cfg)
-		}
-
-		// Throttle: scroll wheel adjusts move speed
-		if scroll := inp.ScrollY(); scroll != 0 {
-			cam.MoveSpeed *= 1 + scroll*0.1
-			if cam.MoveSpeed < 1 {
-				cam.MoveSpeed = 1
-			}
-			if cam.MoveSpeed > 500 {
-				cam.MoveSpeed = 500
-			}
-			fmt.Printf("Speed: %.0f\n", cam.MoveSpeed)
-		}
-
-		// Handle camera movement
-		var forward, right, up float32
-
-		if inp.IsKeyDown(sdl.K_W) {
-			forward = 1
-		}
-		if inp.IsKeyDown(sdl.K_S) {
-			forward = -1
-		}
-		if inp.IsKeyDown(sdl.K_D) {
-			right = 1
-		}
-		if inp.IsKeyDown(sdl.K_A) {
-			right = -1
-		}
-
-		cam.Move(forward, right, up, deltaTime)
-
-		// Handle camera look
-		mouseDX, mouseDY := inp.MouseDelta()
-		cam.Look(mouseDX, mouseDY)
-
-		// Update traffic lights
-		if trafficSys != nil {
-			trafficSys.Update(deltaTime)
-			if trafficSys.Dirty() {
-				rebuildLightUniforms()
+			pixelScale = cfg.PixelScale
+			if pixelScale < 1 {
+				pixelScale = defaultPixelScale
 			}
 		}
 
-		// Update snow particles (follow camera)
-		snowSys.SetCenter(cam.Position.X(), cam.Position.Y(), cam.Position.Z())
-		snowSys.Update(deltaTime)
+		if !pauseMenu.IsActive() {
+			// Throttle: scroll wheel adjusts move speed
+			if scroll := inp.ScrollY(); scroll != 0 {
+				cam.MoveSpeed *= 1 + scroll*0.1
+				if cam.MoveSpeed < 1 {
+					cam.MoveSpeed = 1
+				}
+				if cam.MoveSpeed > 500 {
+					cam.MoveSpeed = 500
+				}
+				fmt.Printf("Speed: %.0f\n", cam.MoveSpeed)
+			}
+
+			// Handle camera movement
+			var forward, right, up float32
+
+			if inp.IsKeyDown(sdl.K_W) {
+				forward = 1
+			}
+			if inp.IsKeyDown(sdl.K_S) {
+				forward = -1
+			}
+			if inp.IsKeyDown(sdl.K_D) {
+				right = 1
+			}
+			if inp.IsKeyDown(sdl.K_A) {
+				right = -1
+			}
+
+			cam.Move(forward, right, up, deltaTime)
+
+			// Handle camera look
+			mouseDX, mouseDY := inp.MouseDelta()
+			cam.Look(mouseDX, mouseDY)
+
+			// Update traffic lights
+			if trafficSys != nil {
+				trafficSys.Update(deltaTime)
+				if trafficSys.Dirty() {
+					rebuildLightUniforms()
+				}
+			}
+
+			// Update snow particles (follow camera)
+			snowSys.SetCenter(cam.Position.X(), cam.Position.Y(), cam.Position.Z())
+			snowSys.Update(deltaTime)
+		}
 
 		// Update camera position and headlamp in light uniforms
 		lightUniforms.CameraPos = mgl32.Vec4{cam.Position.X(), cam.Position.Y(), cam.Position.Z(), 0}
@@ -715,12 +785,15 @@ func main() {
 			dx := obj.Position.X() - cam.Position.X()
 			dz := obj.Position.Z() - cam.Position.Z()
 			distSq := dx*dx + dz*dz
-			if distSq > cullDistSq {
+			// Expand cull distance by bounding radius so long/thin
+			// geometry (roads, parks) stays visible when partially in range.
+			effectiveCull := cullDist + obj.Radius
+			if distSq > effectiveCull*effectiveCull {
 				continue
 			}
 			// Skip objects whose cell is handled by the far tier
 			cellKey := grid.CellKeyFor(obj.Position.X(), obj.Position.Z())
-			if farCellSet[cellKey] {
+			if farCellSet[cellKey] && obj.SurfaceType == 0 {
 				continue
 			}
 			if obj.Radius > 0 && !frustum.SphereVisible(obj.Position, obj.Radius) {
@@ -886,6 +959,9 @@ func main() {
 
 		if swapchain != nil {
 			rend.RunPostProcess(cmdBuf, swapchain.Texture, postProcess)
+			if pauseMenu.IsActive() {
+				pauseMenu.Render(rend, cmdBuf, swapchain.Texture, win.Width(), win.Height())
+			}
 		}
 
 		rend.EndLitFrame(cmdBuf)

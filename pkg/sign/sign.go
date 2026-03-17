@@ -8,17 +8,17 @@ import (
 )
 
 const (
-	charWidth  = 3
-	charHeight = 5
+	CharWidth  = 3
+	CharHeight = 5
 	PixelSize  = float32(0.04) // meters per font pixel
 	spacing    = 1             // pixels between characters
 	padding    = 1             // pixels of padding around text
 
-	SignHeight = float32(charHeight+2*padding) * PixelSize
+	SignHeight = float32(CharHeight+2*padding) * PixelSize
 )
 
 // 3x5 pixel font. Each row: bit2=left, bit1=mid, bit0=right. Rows top to bottom.
-var glyphs = map[byte][5]uint8{
+var Glyphs = map[byte][5]uint8{
 	'A': {0b010, 0b101, 0b111, 0b101, 0b101},
 	'B': {0b110, 0b101, 0b110, 0b101, 0b110},
 	'C': {0b011, 0b100, 0b100, 0b100, 0b011},
@@ -58,6 +58,7 @@ var glyphs = map[byte][5]uint8{
 	' ': {0b000, 0b000, 0b000, 0b000, 0b000},
 	'-': {0b000, 0b000, 0b111, 0b000, 0b000},
 	'.': {0b000, 0b000, 0b000, 0b000, 0b010},
+	'>': {0b100, 0b010, 0b001, 0b010, 0b100},
 }
 
 // NewMesh creates a flat sign mesh with pixel-font text.
@@ -72,9 +73,9 @@ func NewMesh(r *renderer.Renderer, text string) (*mesh.Mesh, float32, error) {
 		text = " "
 	}
 
-	textWidthPx := nChars*charWidth + (nChars-1)*spacing
+	textWidthPx := nChars*CharWidth + (nChars-1)*spacing
 	totalWidthPx := textWidthPx + 2*padding
-	totalHeightPx := charHeight + 2*padding
+	totalHeightPx := CharHeight + 2*padding
 
 	totalWidth := float32(totalWidthPx) * PixelSize
 	totalHeight := float32(totalHeightPx) * PixelSize
@@ -105,19 +106,19 @@ func NewMesh(r *renderer.Renderer, text string) (*mesh.Mesh, float32, error) {
 
 	for ci := 0; ci < len(text); ci++ {
 		ch := text[ci]
-		glyph, ok := glyphs[ch]
+		glyph, ok := Glyphs[ch]
 		if !ok {
 			continue
 		}
 
-		charX := startX + float32(ci*(charWidth+spacing))*PixelSize
+		charX := startX + float32(ci*(CharWidth+spacing))*PixelSize
 
-		for row := 0; row < charHeight; row++ {
+		for row := 0; row < CharHeight; row++ {
 			bits := glyph[row]
-			pixY := startY + float32(charHeight-1-row)*PixelSize
+			pixY := startY + float32(CharHeight-1-row)*PixelSize
 
-			for col := 0; col < charWidth; col++ {
-				if bits&(1<<(charWidth-1-col)) != 0 {
+			for col := 0; col < CharWidth; col++ {
+				if bits&(1<<(CharWidth-1-col)) != 0 {
 					pixX := charX + float32(col)*PixelSize
 					// Front text
 					addQuad(&vertices, &indices,

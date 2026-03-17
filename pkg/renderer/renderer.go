@@ -95,6 +95,9 @@ type Renderer struct {
 	repeatSampler       *sdl.GPUSampler
 	offscreenW          uint32
 	offscreenH          uint32
+
+	// UI overlay rendering
+	uiPipeline *sdl.GPUGraphicsPipeline
 }
 
 func New(w *window.Window) (*Renderer, error) {
@@ -196,6 +199,12 @@ func New(w *window.Window) (*Renderer, error) {
 
 	// Create lit rendering resources
 	if err := r.initLitPipeline(); err != nil {
+		r.Destroy()
+		return nil, err
+	}
+
+	// Create UI overlay pipeline
+	if err := r.initUIPipeline(); err != nil {
 		r.Destroy()
 		return nil, err
 	}
@@ -928,6 +937,100 @@ func (r *Renderer) EndLitFrame(cmdBuf *sdl.GPUCommandBuffer) {
 	cmdBuf.Submit()
 }
 
+// --- UI overlay rendering methods ---
+
+func (r *Renderer) initUIPipeline() error {
+	device := r.window.Device()
+
+	vertShader, err := shaders.LoadShader(device, "PositionColorTransform.vert", 0, 1, 0, 0)
+	if err != nil {
+		return errors.New("failed to create UI vertex shader: " + err.Error())
+	}
+	defer device.ReleaseShader(vertShader)
+
+	fragShader, err := shaders.LoadShader(device, "SolidColor.frag", 0, 0, 0, 0)
+	if err != nil {
+		return errors.New("failed to create UI fragment shader: " + err.Error())
+	}
+	defer device.ReleaseShader(fragShader)
+
+	pipeline, err := device.CreateGraphicsPipeline(&sdl.GPUGraphicsPipelineCreateInfo{
+		TargetInfo: sdl.GPUGraphicsPipelineTargetInfo{
+			ColorTargetDescriptions: []sdl.GPUColorTargetDescription{
+				{
+					Format: device.SwapchainTextureFormat(r.window.Handle()),
+					BlendState: sdl.GPUColorTargetBlendState{
+						EnableBlend:         true,
+						SrcColorBlendfactor: sdl.GPU_BLENDFACTOR_SRC_ALPHA,
+						DstColorBlendfactor: sdl.GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
+						ColorBlendOp:        sdl.GPU_BLENDOP_ADD,
+						SrcAlphaBlendfactor: sdl.GPU_BLENDFACTOR_ONE,
+						DstAlphaBlendfactor: sdl.GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
+						AlphaBlendOp:        sdl.GPU_BLENDOP_ADD,
+					},
+				},
+			},
+		},
+		VertexInputState: sdl.GPUVertexInputState{
+			VertexBufferDescriptions: []sdl.GPUVertexBufferDescription{
+				{
+					Slot:      0,
+					InputRate: sdl.GPU_VERTEXINPUTRATE_VERTEX,
+					Pitch:     uint32(unsafe.Sizeof(Vertex{})),
+				},
+			},
+			VertexAttributes: []sdl.GPUVertexAttribute{
+				{BufferSlot: 0, Format: sdl.GPU_VERTEXELEMENTFORMAT_FLOAT3, Location: 0, Offset: 0},
+				{BufferSlot: 0, Format: sdl.GPU_VERTEXELEMENTFORMAT_UBYTE4_NORM, Location: 1, Offset: uint32(unsafe.Sizeof(float32(0)) * 3)},
+			},
+		},
+		RasterizerState: sdl.GPURasterizerState{
+			FillMode: sdl.GPU_FILLMODE_FILL,
+			CullMode: sdl.GPU_CULLMODE_NONE,
+		},
+		PrimitiveType:  sdl.GPU_PRIMITIVETYPE_TRIANGLELIST,
+		VertexShader:   vertShader,
+		FragmentShader: fragShader,
+	})
+	if err != nil {
+		return errors.New("failed to create UI pipeline: " + err.Error())
+	}
+	r.uiPipeline = pipeline
+	return nil
+}
+
+func (r *Renderer) BeginUIPass(cmdBuf *sdl.GPUCommandBuffer, swapchainTexture *sdl.GPUTexture) *sdl.GPURenderPass {
+	renderPass := cmdBuf.BeginRenderPass(
+		[]sdl.GPUColorTargetInfo{
+			{
+				Texture: swapchainTexture,
+				LoadOp:  sdl.GPU_LOADOP_LOAD,
+				StoreOp: sdl.GPU_STOREOP_STORE,
+			},
+		},
+		nil,
+	)
+	renderPass.BindGraphicsPipeline(r.uiPipeline)
+	return renderPass
+}
+
+func (r *Renderer) DrawUI(cmdBuf *sdl.GPUCommandBuffer, renderPass *sdl.GPURenderPass, call DrawCall) {
+	cmdBuf.PushVertexUniformData(0, unsafe.Slice(
+		(*byte)(unsafe.Pointer(&call.Transform)), unsafe.Sizeof(call.Transform),
+	))
+	renderPass.BindVertexBuffers([]sdl.GPUBufferBinding{
+		{Buffer: call.VertexBuffer, Offset: 0},
+	})
+	renderPass.BindIndexBuffer(&sdl.GPUBufferBinding{
+		Buffer: call.IndexBuffer, Offset: 0,
+	}, sdl.GPU_INDEXELEMENTSIZE_16BIT)
+	renderPass.DrawIndexedPrimitives(call.IndexCount, 1, 0, 0, 0)
+}
+
+func (r *Renderer) EndUIPass(renderPass *sdl.GPURenderPass) {
+	renderPass.End()
+}
+
 func (r *Renderer) Window() *window.Window {
 	return r.window
 }
@@ -953,6 +1056,9 @@ func (r *Renderer) Destroy() {
 	}
 	if r.offscreenTexture != nil {
 		device.ReleaseTexture(r.offscreenTexture)
+	}
+	if r.uiPipeline != nil {
+		device.ReleaseGraphicsPipeline(r.uiPipeline)
 	}
 	if r.postProcessPipeline != nil {
 		device.ReleaseGraphicsPipeline(r.postProcessPipeline)

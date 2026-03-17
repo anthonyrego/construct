@@ -87,5 +87,5 @@ func (i *Input) ScrollY() float32 {
 }
 
 func (i *Input) ShouldQuit() bool {
-	return i.quit || i.keyState[sdl.K_ESCAPE]
+	return i.quit
 }
