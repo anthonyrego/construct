@@ -180,7 +180,7 @@ func (m *Mode) Update(cam *camera.Camera, grid *scene.SpatialGrid, objects []sce
 	if bestSel.Type == EntityBuilding {
 		b := reg.Get(bestSel.BuildingID)
 		if b != nil {
-			m.panel.setBuildingValues(m.rend, b.BBL, b.PLUTO.BldgClass, b.PLUTO.LandUse, b.PLUTO.YearBuilt, b.PLUTO.NumFloors)
+			m.panel.setBuildingValues(m.rend, b.BBL, b.PLUTO.Address, b.PLUTO.BldgClass, b.PLUTO.LandUse, b.PLUTO.YearBuilt, b.PLUTO.NumFloors)
 		}
 	} else if bestSel.Type == EntitySignal {
 		sig := trafficSys.Signals[bestSel.SignalIdx]

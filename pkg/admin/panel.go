@@ -23,6 +23,7 @@ type InfoPanel struct {
 
 	buildingLabel *mesh.Mesh
 	bblLabel      *mesh.Mesh
+	addressLabel  *mesh.Mesh
 	classLabel    *mesh.Mesh
 	landUseLabel  *mesh.Mesh
 	yearLabel     *mesh.Mesh
@@ -37,7 +38,9 @@ type InfoPanel struct {
 	valueMeshes []*mesh.Mesh
 	valueWidths []float32
 
-	modeLabelWidth float32
+	modeLabelWidth  float32
+	maxBldgLabelW   float32 // widest building label (including header)
+	maxSignalLabelW float32 // widest signal label (including header)
 }
 
 func newInfoPanel(r *renderer.Renderer, pixelScale int) *InfoPanel {
@@ -63,12 +66,12 @@ func newInfoPanel(r *renderer.Renderer, pixelScale int) *InfoPanel {
 	}
 
 	// Create static labels
-	mkLabel := func(text string) *mesh.Mesh {
-		m, _, err := ui.NewTextMesh(r, text, ps, 180, 180, 180, 255)
+	mkLabel := func(text string) (*mesh.Mesh, float32) {
+		m, w, err := ui.NewTextMesh(r, text, ps, 180, 180, 180, 255)
 		if err != nil {
-			return nil
+			return nil, 0
 		}
-		return m
+		return m, w
 	}
 
 	// Crosshair: small + shape centered at origin
@@ -105,17 +108,30 @@ func newInfoPanel(r *renderer.Renderer, pixelScale int) *InfoPanel {
 
 	p.modeLabel, p.modeLabelWidth, _ = ui.NewTextMesh(r, "ADMIN MODE", ps, 255, 200, 100, 255)
 
-	p.buildingLabel = mkLabel("BUILDING")
-	p.bblLabel = mkLabel("BBL")
-	p.classLabel = mkLabel("CLASS")
-	p.landUseLabel = mkLabel("LAND USE")
-	p.yearLabel = mkLabel("YEAR")
-	p.floorsLabel = mkLabel("FLOORS")
+	var w float32
+	p.buildingLabel, w = mkLabel("BUILDING")
+	p.maxBldgLabelW = w
+	p.bblLabel, w = mkLabel("BBL")
+	if w > p.maxBldgLabelW { p.maxBldgLabelW = w }
+	p.addressLabel, w = mkLabel("ADDRESS")
+	if w > p.maxBldgLabelW { p.maxBldgLabelW = w }
+	p.classLabel, w = mkLabel("CLASS")
+	if w > p.maxBldgLabelW { p.maxBldgLabelW = w }
+	p.landUseLabel, w = mkLabel("LAND USE")
+	if w > p.maxBldgLabelW { p.maxBldgLabelW = w }
+	p.yearLabel, w = mkLabel("YEAR")
+	if w > p.maxBldgLabelW { p.maxBldgLabelW = w }
+	p.floorsLabel, w = mkLabel("FLOORS")
+	if w > p.maxBldgLabelW { p.maxBldgLabelW = w }
 
-	p.signalLabel = mkLabel("SIGNAL")
-	p.street1Label = mkLabel("STREET 1")
-	p.street2Label = mkLabel("STREET 2")
-	p.dirLabel = mkLabel("DIRECTION")
+	p.signalLabel, w = mkLabel("SIGNAL")
+	p.maxSignalLabelW = w
+	p.street1Label, w = mkLabel("STREET 1")
+	if w > p.maxSignalLabelW { p.maxSignalLabelW = w }
+	p.street2Label, w = mkLabel("STREET 2")
+	if w > p.maxSignalLabelW { p.maxSignalLabelW = w }
+	p.dirLabel, w = mkLabel("DIRECTION")
+	if w > p.maxSignalLabelW { p.maxSignalLabelW = w }
 
 	return p
 }
@@ -171,9 +187,14 @@ func (p *InfoPanel) addValue(r *renderer.Renderer, text string) {
 	p.valueWidths = append(p.valueWidths, w)
 }
 
-func (p *InfoPanel) setBuildingValues(r *renderer.Renderer, bbl, class, landUse string, year int, floors float32) {
+func (p *InfoPanel) setBuildingValues(r *renderer.Renderer, bbl, address, class, landUse string, year int, floors float32) {
 	p.clearValues(r)
 	p.addValue(r, bbl)
+	if address != "" {
+		p.addValue(r, address)
+	} else {
+		p.addValue(r, "-")
+	}
 	p.addValue(r, class)
 	p.addValue(r, landUseName(landUse))
 	if year > 0 {
@@ -243,14 +264,29 @@ func (p *InfoPanel) render(r *renderer.Renderer, cmdBuf *sdl.GPUCommandBuffer, s
 	}
 
 	pad := p.ps * 3
-	panelW := p.ps * 50
+	valIndent := p.ps * 4
+
+	// Compute panel width from actual content
+	var maxLabelW float32
+	if sel.Type == EntityBuilding {
+		maxLabelW = p.maxBldgLabelW
+	} else {
+		maxLabelW = p.maxSignalLabelW
+	}
+	maxContentW := maxLabelW
+	for _, vw := range p.valueWidths {
+		if valIndent+vw > maxContentW {
+			maxContentW = valIndent + vw
+		}
+	}
+	panelW := maxContentW + pad*2
 	panelX := sw - panelW - margin
 	panelY := margin + lineH*2
 
 	// Count lines for panel height
 	var numLines float32
 	if sel.Type == EntityBuilding {
-		numLines = 1.5 + 5*2 // header + 5 label/value pairs
+		numLines = 1.5 + 6*2 // header + 6 label/value pairs
 	} else {
 		numLines = 1.5 + 3*2 // header + 3 label/value pairs
 	}
@@ -262,14 +298,14 @@ func (p *InfoPanel) render(r *renderer.Renderer, cmdBuf *sdl.GPUCommandBuffer, s
 	}
 
 	contentX := panelX + pad
-	valX := contentX + p.ps*4 // indent for values
+	valX := contentX + valIndent
 	y := panelY + pad
 
 	if sel.Type == EntityBuilding {
 		draw(p.buildingLabel, at(contentX, y))
 		y += lineH * 1.5
 
-		labels := []*mesh.Mesh{p.bblLabel, p.classLabel, p.landUseLabel, p.yearLabel, p.floorsLabel}
+		labels := []*mesh.Mesh{p.bblLabel, p.addressLabel, p.classLabel, p.landUseLabel, p.yearLabel, p.floorsLabel}
 		for i, label := range labels {
 			draw(label, at(contentX, y))
 			y += lineH
@@ -310,6 +346,7 @@ func (p *InfoPanel) destroy(r *renderer.Renderer) {
 	destroyMesh(p.modeLabel)
 	destroyMesh(p.buildingLabel)
 	destroyMesh(p.bblLabel)
+	destroyMesh(p.addressLabel)
 	destroyMesh(p.classLabel)
 	destroyMesh(p.landUseLabel)
 	destroyMesh(p.yearLabel)

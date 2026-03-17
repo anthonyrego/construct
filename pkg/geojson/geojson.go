@@ -21,6 +21,7 @@ type Point2D struct {
 
 // PLUTOData holds building attributes from the PLUTO dataset.
 type PLUTOData struct {
+	Address   string  // street address
 	BldgClass string  // e.g. "A1", "D3", "O4"
 	LandUse   string  // 1-11 land use category
 	YearBuilt int     // construction year
@@ -655,6 +656,7 @@ const plutoEndpoint = "https://data.cityofnewyork.us/resource/64uk-42ks.json"
 
 type plutoRecord struct {
 	BBL       string `json:"bbl"`
+	Address   string `json:"address"`
 	BldgClass string `json:"bldgclass"`
 	LandUse   string `json:"landuse"`
 	YearBuilt string `json:"yearbuilt"`
@@ -700,6 +702,7 @@ func FetchPLUTO(bbls []string) (map[string]PLUTOData, error) {
 		numFloors, _ := strconv.ParseFloat(rec.NumFloors, 32)
 
 		result[bbl] = PLUTOData{
+			Address:   rec.Address,
 			BldgClass: rec.BldgClass,
 			LandUse:   rec.LandUse,
 			YearBuilt: yearBuilt,
@@ -739,7 +742,7 @@ func loadOrFetchPLUTO(bbls []string) ([]byte, error) {
 		where := strings.Join(conditions[start:end], " OR ")
 		params := url.Values{}
 		params.Set("$where", where)
-		params.Set("$select", "bbl,bldgclass,landuse,yearbuilt,numfloors")
+		params.Set("$select", "bbl,address,bldgclass,landuse,yearbuilt,numfloors")
 		params.Set("$limit", "5000")
 
 		reqURL := plutoEndpoint + "?" + params.Encode()
