@@ -218,7 +218,6 @@ func main() {
 		return m
 	}
 
-	var buildingMeshes []*mesh.Mesh
 	var groundMeshes []*mesh.Mesh
 	signMeshes := make(map[string]*mesh.Mesh)
 	signWidths := make(map[string]float32)
@@ -226,9 +225,6 @@ func main() {
 	defer func() {
 		for _, nm := range meshes {
 			nm.mesh.Destroy(rend)
-		}
-		for _, bm := range buildingMeshes {
-			bm.Destroy(rend)
 		}
 		for _, gm := range groundMeshes {
 			gm.Destroy(rend)
@@ -265,31 +261,21 @@ func main() {
 		}
 	}
 
-	// Generate raw building meshes (CPU-side), upload individual meshes,
-	// and collect raw data for per-cell merging.
-	type cellKey = uint64
-	cellRaws := make(map[cellKey][]*building.RawMesh)
 	const gridCellSize float32 = 100.0
+	reg := building.NewRegistry(rend, gridCellSize)
+	defer reg.Destroy()
 
-	for _, fp := range footprints {
-		c := building.StyleColor(fp.PLUTO)
-		raw, err := building.ExtrudeRaw(fp, c.R, c.G, c.B)
-		if err != nil {
-			continue
-		}
+	count := reg.Ingest(footprints)
+	fmt.Printf("Registered %d buildings\n", count)
 
-		m, err := building.UploadMesh(rend, raw)
-		if err != nil {
-			continue
-		}
-		buildingMeshes = append(buildingMeshes, m)
-		s.Add(scene.Object{Mesh: m, Position: raw.Position, Scale: mgl32.Vec3{1, 1, 1}, Radius: raw.Radius})
-
-		// Group raw meshes by grid cell for merging
-		cx := int32(math.Floor(float64(raw.Position.X() / gridCellSize)))
-		cz := int32(math.Floor(float64(raw.Position.Z() / gridCellSize)))
-		key := uint64(uint32(cx))<<32 | uint64(uint32(cz))
-		cellRaws[key] = append(cellRaws[key], raw)
+	for _, b := range reg.Buildings() {
+		s.Add(scene.Object{
+			Mesh:       b.Mesh,
+			Position:   b.Position,
+			Scale:      mgl32.Vec3{1, 1, 1},
+			Radius:     b.Radius,
+			BuildingID: uint32(b.ID),
+		})
 	}
 
 	// --- Fetch and flatten ground surfaces ---
@@ -384,24 +370,11 @@ func main() {
 	fmt.Printf("Built spatial grid: %d objects\n", len(s.Objects))
 
 	// Build merged meshes per cell for efficient far rendering
-	var mergedMeshList []*mesh.Mesh
-	for key, raws := range cellRaws {
-		merged, err := building.MergeMeshes(rend, raws)
-		if err != nil {
-			continue
-		}
-		mergedMeshList = append(mergedMeshList, merged)
-		cx := int32(uint32(key >> 32))
-		cz := int32(uint32(key))
-		grid.CellMeshes[key] = &scene.CellMesh{Mesh: merged, CellX: cx, CellZ: cz}
+	cellMeshes := reg.BuildCellMeshes()
+	for key, cm := range cellMeshes {
+		grid.CellMeshes[key] = &scene.CellMesh{Mesh: cm.Mesh, CellX: cm.CellX, CellZ: cm.CellZ}
 	}
-	fmt.Printf("Built %d merged cell meshes for far rendering\n", len(mergedMeshList))
-
-	defer func() {
-		for _, mm := range mergedMeshList {
-			mm.Destroy(rend)
-		}
-	}()
+	fmt.Printf("Built %d merged cell meshes for far rendering\n", len(cellMeshes))
 
 	// --- Snow particle system ---
 	snowMesh := createLitCube("snow", 255, 255, 255)

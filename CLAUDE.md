@@ -22,7 +22,7 @@ construct/
 ├── .cache/                 # Cached API responses (gitignored)
 ├── docs/                   # Reference docs (NYC data APIs, reconstruction plan)
 ├── pkg/
-│   ├── building/           # Polygon extruder (footprint → 3D mesh), ear-clip triangulation, PLUTO-based styling
+│   ├── building/           # Building registry, polygon extruder (footprint → 3D mesh), ear-clip triangulation, PLUTO-based styling
 │   ├── camera/             # First-person camera + reversed-Z projection + frustum culling
 │   ├── engine/             # (placeholder)
 │   ├── geojson/            # NYC SODA API fetcher, GeoJSON parser, coordinate projection, PLUTO enrichment, OSM traffic signals
@@ -87,8 +87,8 @@ Uses reversed-Z projection (near=1.0, far=0.0) with GREATER_OR_EQUAL compare for
 - Warm color tint (configurable per-channel multipliers)
 
 ### Two-Tier LOD Rendering
-- **Near tier**: individual building meshes with full detail
-- **Far tier**: merged cell meshes (one draw call per 100m grid cell)
+- **Near tier**: individual building meshes with full detail (from `BuildingRegistry`)
+- **Far tier**: merged cell meshes with per-building span tracking (one draw call per 100m grid cell)
 - Tier decision made per-cell via spatial grid to avoid boundary gaps
 - Frustum culling on both tiers via extracted frustum planes
 
@@ -124,12 +124,13 @@ Current shaders:
 - Projects WGS84 lat/lon to local meters via equirectangular approximation
 - Enforces CCW winding on outer rings, converts height from feet to meters
 
-### Building Extruder (`pkg/building`)
-- Extrudes 2D footprint polygons into 3D `LitVertex` meshes
-- Walls: 4 vertices per edge with outward normals
-- Roof: ear-clipping triangulation with upward normal
+### Building Registry & Extruder (`pkg/building`)
+- `Registry` is the single owner of all building data and GPU resources
+- Each `Building` retains its identity (BBL, PLUTO metadata, footprint) and CPU-side `RawMesh` throughout its lifecycle
+- Lookup by `BuildingID` or BBL; supports per-building mesh replacement and per-cell re-merging
+- Extrudes 2D footprint polygons into 3D `LitVertex` meshes (walls + ear-clipped roof)
 - PLUTO-based color styling (land use classification → building color)
-- Supports merging multiple building meshes into a single mesh per grid cell
+- Merged cell meshes track per-building `BuildingSpan` (index offset/count) for future per-building operations
 
 ### Ground Surfaces (`pkg/ground`)
 - Flattens surface polygons into horizontal meshes at Y=0

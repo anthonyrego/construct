@@ -27,9 +27,9 @@ var surfaceColors = [3][3]uint8{
 }
 
 var surfaceYOffsets = [3]float32{
-	Roadbed:  0.01,
-	Sidewalk: 0.05,
-	Park:     0.10,
+	Roadbed:  0.06,
+	Sidewalk: 0.10,
+	Park:     0.01,
 }
 
 // Flatten creates a flat lit mesh from a surface polygon at the appropriate

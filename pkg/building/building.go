@@ -159,54 +159,71 @@ func Extrude(r *renderer.Renderer, fp geojson.Footprint, red, green, blue uint8)
 	return m, raw.Position, raw.Radius, nil
 }
 
-// MergeMeshes combines multiple RawMeshes into a single GPU mesh with
-// vertices transformed to world space. Uses uint32 indices to support
-// large merged meshes.
-func MergeMeshes(r *renderer.Renderer, raws []*RawMesh) (*mesh.Mesh, error) {
-	// Count totals
+// MergeEntry pairs a building ID with its raw mesh for span-tracked merging.
+type MergeEntry struct {
+	ID  BuildingID
+	Raw *RawMesh
+}
+
+// BuildingSpan records a building's index range within a merged mesh.
+type BuildingSpan struct {
+	BuildingID  BuildingID
+	IndexOffset uint32
+	IndexCount  uint32
+}
+
+// MergeMeshesWithSpans combines raw meshes into a single GPU mesh and records
+// per-building index ranges. Vertices are transformed to world space.
+func MergeMeshesWithSpans(r *renderer.Renderer, entries []MergeEntry) (*mesh.Mesh, []BuildingSpan, error) {
 	var totalVerts, totalIndices int
-	for _, raw := range raws {
-		totalVerts += len(raw.Vertices)
-		totalIndices += len(raw.Indices)
+	for _, e := range entries {
+		totalVerts += len(e.Raw.Vertices)
+		totalIndices += len(e.Raw.Indices)
 	}
 	if totalVerts == 0 {
-		return nil, fmt.Errorf("no vertices to merge")
+		return nil, nil, fmt.Errorf("no vertices to merge")
 	}
 
 	vertices := make([]renderer.LitVertex, 0, totalVerts)
 	indices := make([]uint32, 0, totalIndices)
+	spans := make([]BuildingSpan, 0, len(entries))
 
-	for _, raw := range raws {
+	for _, e := range entries {
 		baseVertex := uint32(len(vertices))
+		indexOffset := uint32(len(indices))
 
-		// Transform vertices to world space (add centroid position)
-		cx, cz := raw.Position.X(), raw.Position.Z()
-		for _, v := range raw.Vertices {
+		cx, cz := e.Raw.Position.X(), e.Raw.Position.Z()
+		for _, v := range e.Raw.Vertices {
 			v.X += cx
 			v.Z += cz
 			vertices = append(vertices, v)
 		}
 
-		// Offset indices
-		for _, idx := range raw.Indices {
+		for _, idx := range e.Raw.Indices {
 			indices = append(indices, baseVertex+uint32(idx))
 		}
+
+		spans = append(spans, BuildingSpan{
+			BuildingID:  e.ID,
+			IndexOffset: indexOffset,
+			IndexCount:  uint32(len(e.Raw.Indices)),
+		})
 	}
 
 	vertexBuffer, err := r.CreateLitVertexBuffer(vertices)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create merged vertex buffer: %w", err)
+		return nil, nil, fmt.Errorf("failed to create merged vertex buffer: %w", err)
 	}
 
 	indexBuffer, err := r.CreateIndexBuffer32(indices)
 	if err != nil {
 		r.ReleaseBuffer(vertexBuffer)
-		return nil, fmt.Errorf("failed to create merged index buffer: %w", err)
+		return nil, nil, fmt.Errorf("failed to create merged index buffer: %w", err)
 	}
 
 	return &mesh.Mesh{
 		VertexBuffer: vertexBuffer,
 		IndexBuffer:  indexBuffer,
 		IndexCount:   uint32(len(indices)),
-	}, nil
+	}, spans, nil
 }
