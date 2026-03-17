@@ -122,6 +122,12 @@ fragment main0_out main0(main0_in in [[stage_in]], constant LightUniforms& light
         result = mix(result, lights.fogColor.rgb, fadeFactor);
     }
 
+    // Selection highlight (flags.w > 0)
+    if (in.flags.w > 0.0)
+    {
+        result = mix(result, float3(1.0), 0.15 * in.flags.w);
+    }
+
     out.color = float4(clamp(result, 0.0, 1.0), 1.0);
     return out;
 }

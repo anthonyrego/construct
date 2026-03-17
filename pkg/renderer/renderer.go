@@ -50,6 +50,7 @@ type LitDrawCall struct {
 	Index32      bool    // Use 32-bit index buffer (for merged meshes)
 	FadeFactor   float32 // 0=solid, 1=fully discarded (dithered fade-out)
 	SurfaceType  int     // 0=none, 1=roadbed, 2=sidewalk, 3=park
+	Highlight    float32 // 0=none, 1=full highlight (admin mode selection)
 }
 
 type LitVertexUniforms struct {
@@ -876,7 +877,7 @@ func (r *Renderer) DrawLit(cmdBuf *sdl.GPUCommandBuffer, renderPass *sdl.GPURend
 	if call.NoFog {
 		noFogFlag = 1
 	}
-	uniforms.Flags = mgl32.Vec4{noFogFlag, call.FadeFactor, float32(call.SurfaceType), 0}
+	uniforms.Flags = mgl32.Vec4{noFogFlag, call.FadeFactor, float32(call.SurfaceType), call.Highlight}
 	cmdBuf.PushVertexUniformData(0, unsafe.Slice(
 		(*byte)(unsafe.Pointer(&uniforms)), unsafe.Sizeof(uniforms),
 	))

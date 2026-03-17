@@ -11,6 +11,7 @@ import (
 	"github.com/Zyko0/go-sdl3/sdl"
 	"github.com/go-gl/mathgl/mgl32"
 
+	"github.com/anthonyrego/construct/pkg/admin"
 	"github.com/anthonyrego/construct/pkg/building"
 	"github.com/anthonyrego/construct/pkg/camera"
 	"github.com/anthonyrego/construct/pkg/geojson"
@@ -214,6 +215,10 @@ func main() {
 	pauseMenu.SetAppliedState(startFullscreen, startResIdx, startPSIdx, startRDIdx)
 	defer pauseMenu.Destroy(rend)
 
+	// Create admin mode
+	adminMode := admin.New(rend, pixelScale)
+	defer adminMode.Destroy(rend)
+
 	// Create input handler
 	inp := input.New()
 
@@ -295,7 +300,7 @@ func main() {
 			Position:   b.Position,
 			Scale:      mgl32.Vec3{1, 1, 1},
 			Radius:     b.Radius,
-			BuildingID: uint32(b.ID),
+			BuildingID: uint32(b.ID) + 1,
 		})
 	}
 
@@ -606,6 +611,11 @@ func main() {
 			win.SetRelativeMouseMode(true)
 		}
 
+		// Admin mode toggle (backtick, only when pause menu inactive)
+		if !pauseMenu.IsActive() && inp.IsKeyPressed(sdl.K_GRAVE) {
+			adminMode.Toggle()
+		}
+
 		// Hot-reload config
 		if cfg, ok := configWatcher.Load(); ok {
 			applyConfig(cfg)
@@ -642,9 +652,14 @@ func main() {
 
 			cam.Move(forward, right, up, deltaTime)
 
-			// Handle camera look
+			// Handle camera look (always active, including admin mode)
 			mouseDX, mouseDY := inp.MouseDelta()
 			cam.Look(mouseDX, mouseDY)
+
+			// Admin mode: raycast from screen center to select what you're looking at
+			if adminMode.IsActive() {
+				adminMode.Update(cam, grid, s.Objects, reg, trafficSys)
+			}
 
 			// Update traffic lights
 			if trafficSys != nil {
@@ -794,6 +809,12 @@ func main() {
 			model = model.Mul4(mgl32.Scale3D(obj.Scale.X(), obj.Scale.Y(), obj.Scale.Z()))
 			mvp := viewProj.Mul4(model)
 
+			var highlight float32
+			if adminMode.IsActive() && obj.BuildingID > 0 &&
+				building.BuildingID(obj.BuildingID-1) == adminMode.SelectedBuildingID() {
+				highlight = 1.0
+			}
+
 			rend.DrawLit(cmdBuf, scenePass, renderer.LitDrawCall{
 				VertexBuffer: obj.Mesh.VertexBuffer,
 				IndexBuffer:  obj.Mesh.IndexBuffer,
@@ -802,6 +823,7 @@ func main() {
 				Model:        model,
 				FadeFactor:   fade,
 				SurfaceType:  obj.SurfaceType,
+				Highlight:    highlight,
 			})
 		}
 
@@ -834,6 +856,7 @@ func main() {
 
 		// Draw traffic signals (pole + 2 directional signal heads per intersection)
 		if trafficSys != nil {
+			var sigHighlight float32
 			drawBox := func(m *mesh.Mesh, x, y, z float32) {
 				model := mgl32.Translate3D(x, y, z)
 				model = model.Mul4(mgl32.Scale3D(traffic.LightBoxSize, traffic.LightBoxSize, traffic.LightBoxSize))
@@ -843,15 +866,21 @@ func main() {
 					IndexCount:   m.IndexCount,
 					MVP:          viewProj.Mul4(model),
 					Model:        model,
+					Highlight:    sigHighlight,
 				})
 			}
 
-			for _, sig := range trafficSys.Signals {
+			for sigIdx, sig := range trafficSys.Signals {
 				x, z := sig.Position.X, sig.Position.Z
 
 				// Frustum cull entire intersection (generous 10m radius)
 				if !frustum.SphereVisible(mgl32.Vec3{x, traffic.PoleHeight / 2, z}, 10) {
 					continue
+				}
+
+				sigHighlight = 0
+				if adminMode.IsActive() && sigIdx == adminMode.SelectedSignalIdx() {
+					sigHighlight = 1.0
 				}
 
 				// Pole (one per intersection)
@@ -863,6 +892,7 @@ func main() {
 					IndexCount:   poleMesh.IndexCount,
 					MVP:          viewProj.Mul4(poleModel),
 					Model:        poleModel,
+					Highlight:    sigHighlight,
 				})
 
 				// Two directional signal heads per intersection
@@ -882,6 +912,7 @@ func main() {
 						IndexCount:   housingMesh.IndexCount,
 						MVP:          viewProj.Mul4(hModel),
 						Model:        hModel,
+						Highlight:    sigHighlight,
 					})
 
 					// Light cubes offset forward from housing
@@ -943,6 +974,9 @@ func main() {
 			rend.RunPostProcess(cmdBuf, swapchain.Texture, postProcess)
 			if pauseMenu.IsActive() {
 				pauseMenu.Render(rend, cmdBuf, swapchain.Texture, win.Width(), win.Height())
+			}
+			if adminMode.IsActive() && !pauseMenu.IsActive() {
+				adminMode.Render(rend, cmdBuf, swapchain.Texture, win.Width(), win.Height())
 			}
 		}
 
