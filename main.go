@@ -19,6 +19,7 @@ import (
 	"github.com/anthonyrego/construct/pkg/mesh"
 	"github.com/anthonyrego/construct/pkg/renderer"
 	"github.com/anthonyrego/construct/pkg/scene"
+	"github.com/anthonyrego/construct/pkg/settings"
 	"github.com/anthonyrego/construct/pkg/sign"
 	"github.com/anthonyrego/construct/pkg/snow"
 	"github.com/anthonyrego/construct/pkg/traffic"
@@ -134,23 +135,14 @@ func main() {
 
 	fmt.Println("SDL Version:", sdl.GetVersion())
 
-	// Load initial config for window settings
-	startWidth := defaultWindowWidth
-	startHeight := defaultWindowHeight
-	startFullscreen := false
-	pixelScale := defaultPixelScale
+	// Load display settings from settings.json (separate from scene.json)
+	displaySettings := settings.Load("settings.json")
+	startWidth := displaySettings.WindowWidth
+	startHeight := displaySettings.WindowHeight
+	startFullscreen := displaySettings.Fullscreen
+	pixelScale := displaySettings.PixelScale
 
 	configWatcher := &ConfigWatcher{path: "scene.json"}
-	if cfg, ok := configWatcher.Load(); ok {
-		if cfg.WindowWidth > 0 && cfg.WindowHeight > 0 {
-			startWidth = cfg.WindowWidth
-			startHeight = cfg.WindowHeight
-		}
-		startFullscreen = cfg.Fullscreen
-		if cfg.PixelScale > 0 {
-			pixelScale = cfg.PixelScale
-		}
-	}
 
 	// Create window
 	win, err := window.New(window.Config{
@@ -195,15 +187,31 @@ func main() {
 	}
 	rend.SetOffscreenResolution(offW, offH)
 
-	// Create pause menu
-	pauseMenu := ui.NewPauseMenu(rend, pixelScale)
-	pauseMenu.Fullscreen = startFullscreen
-	for i, res := range ui.Resolutions {
+	// Create pause menu with SDL3-queried resolutions
+	resolutions := win.DisplayModes()
+	pauseMenu := ui.NewPauseMenu(rend, pixelScale, resolutions)
+	startResIdx := 0
+	for i, res := range resolutions {
 		if res.W == startWidth && res.H == startHeight {
-			pauseMenu.ResIndex = i
+			startResIdx = i
 			break
 		}
 	}
+	startPSIdx := 0
+	for i, v := range ui.PixelScales {
+		if v == pixelScale {
+			startPSIdx = i
+			break
+		}
+	}
+	startRDIdx := 0
+	for i, v := range ui.RenderDistances {
+		if float32(v) == displaySettings.RenderDistance {
+			startRDIdx = i
+			break
+		}
+	}
+	pauseMenu.SetAppliedState(startFullscreen, startResIdx, startPSIdx, startRDIdx)
 	defer pauseMenu.Destroy(rend)
 
 	// Create input handler
@@ -213,6 +221,7 @@ func main() {
 	cam := camera.New(float32(win.Width()) / float32(win.Height()))
 	cam.Position = mgl32.Vec3{-10, 2, 2}
 	cam.Yaw = -90 // Looking toward -Z
+	cam.Far = displaySettings.RenderDistance
 
 	// --- Create meshes ---
 	type namedMesh struct {
@@ -482,21 +491,9 @@ func main() {
 		}
 		rebuildLightUniforms()
 
-		// Window / fullscreen
-		if err := win.SetFullscreen(cfg.Fullscreen); err != nil {
-			fmt.Println("Fullscreen error:", err)
-		}
-		if !cfg.Fullscreen && cfg.WindowWidth > 0 && cfg.WindowHeight > 0 {
-			win.SetSize(cfg.WindowWidth, cfg.WindowHeight)
-		}
-
-		// Derive offscreen resolution from pixel scale
-		scale := cfg.PixelScale
-		if scale < 1 {
-			scale = defaultPixelScale
-		}
-		newOffW := uint32(win.Width() / scale)
-		newOffH := uint32(win.Height() / scale)
+		// Derive offscreen resolution from current window size and pixel scale
+		newOffW := uint32(win.Width() / pixelScale)
+		newOffH := uint32(win.Height() / pixelScale)
 		if newOffW < 1 {
 			newOffW = 1
 		}
@@ -505,14 +502,6 @@ func main() {
 		}
 		if err := rend.SetOffscreenResolution(newOffW, newOffH); err != nil {
 			fmt.Println("Error changing resolution:", err)
-		}
-
-		// Update camera aspect ratio to match
-		cam.AspectRatio = float32(win.Width()) / float32(win.Height())
-
-		// Render distance (drives camera far plane, spatial grid query, and frustum culling)
-		if cfg.RenderDistance > 0 {
-			cam.Far = cfg.RenderDistance
 		}
 
 		// Snow parameters
@@ -578,12 +567,17 @@ func main() {
 		case ui.ActionQuit:
 			running = false
 			continue
-		case ui.ActionToggleFullscreen:
-			newFS := !win.IsFullscreen()
-			if err := win.SetFullscreen(newFS); err != nil {
+		case ui.ActionApplySettings:
+			fs := pauseMenu.PendingFullscreen()
+			w, h := pauseMenu.PendingResolution()
+			pixelScale = pauseMenu.PendingPixelScale()
+			cam.Far = pauseMenu.PendingRenderDistance()
+			if err := win.SetFullscreen(fs); err != nil {
 				fmt.Println("Fullscreen error:", err)
 			}
-			pauseMenu.Fullscreen = win.IsFullscreen()
+			if !fs {
+				win.SetSize(w, h)
+			}
 			cam.AspectRatio = float32(win.Width()) / float32(win.Height())
 			newOffW := uint32(win.Width() / pixelScale)
 			newOffH := uint32(win.Height() / pixelScale)
@@ -594,18 +588,15 @@ func main() {
 				newOffH = 1
 			}
 			rend.SetOffscreenResolution(newOffW, newOffH)
-		case ui.ActionSetResolution:
-			win.SetSize(pauseMenu.ResolutionW, pauseMenu.ResolutionH)
-			cam.AspectRatio = float32(win.Width()) / float32(win.Height())
-			newOffW := uint32(win.Width() / pixelScale)
-			newOffH := uint32(win.Height() / pixelScale)
-			if newOffW < 1 {
-				newOffW = 1
-			}
-			if newOffH < 1 {
-				newOffH = 1
-			}
-			rend.SetOffscreenResolution(newOffW, newOffH)
+			lightUniforms.FogParams[2] = cam.Far
+			pauseMenu.ConfirmApply()
+			settings.Save("settings.json", settings.Settings{
+				WindowWidth:    w,
+				WindowHeight:   h,
+				Fullscreen:     fs,
+				PixelScale:     pixelScale,
+				RenderDistance:  cam.Far,
+			})
 		}
 
 		// Toggle mouse mode on pause state change
@@ -615,18 +606,9 @@ func main() {
 			win.SetRelativeMouseMode(true)
 		}
 
-		// Quit on Escape when not paused
-		if !wasActive && inp.IsKeyPressed(sdl.K_ESCAPE) {
-			break
-		}
-
 		// Hot-reload config
 		if cfg, ok := configWatcher.Load(); ok {
 			applyConfig(cfg)
-			pixelScale = cfg.PixelScale
-			if pixelScale < 1 {
-				pixelScale = defaultPixelScale
-			}
 		}
 
 		if !pauseMenu.IsActive() {

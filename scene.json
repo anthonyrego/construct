@@ -1,9 +1,4 @@
 {
-  "windowWidth": 3456,
-  "windowHeight": 2160,
-  "fullscreen": true,
-  "pixelScale": 3,
-  "renderDistance": 1500,
   "postProcess": {
     "ditherStrength": 0.985,
     "colorLevels": 8.0,
