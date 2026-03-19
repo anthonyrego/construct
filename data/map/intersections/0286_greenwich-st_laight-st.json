@@ -1,0 +1,12 @@
+{
+  "id": "0286_greenwich-st_laight-st",
+  "position": [
+    1339.6401,
+    -588.3212
+  ],
+  "street1": "GREENWICH ST",
+  "street2": "LAIGHT ST",
+  "directionDeg": -7.5746026,
+  "cycleOffsetSec": 41.11265,
+  "features": []
+}

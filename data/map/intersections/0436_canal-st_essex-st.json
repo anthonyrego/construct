@@ -1,0 +1,12 @@
+{
+  "id": "0436_canal-st_essex-st",
+  "position": [
+    -300.6605,
+    -1447.3207
+  ],
+  "street1": "ESSEX ST",
+  "street2": "CANAL ST",
+  "directionDeg": 3.6914616,
+  "cycleOffsetSec": 69.65274,
+  "features": []
+}

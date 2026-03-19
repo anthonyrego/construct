@@ -1,0 +1,12 @@
+{
+  "id": "0624_greene-st_prince-st",
+  "position": [
+    467.85535,
+    -266.32224
+  ],
+  "street1": "GREENE ST",
+  "street2": "PRINCE ST",
+  "directionDeg": 147.2695,
+  "cycleOffsetSec": 11.788516,
+  "features": []
+}

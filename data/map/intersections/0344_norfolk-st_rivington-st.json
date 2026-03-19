@@ -1,0 +1,12 @@
+{
+  "id": "0344_norfolk-st_rivington-st",
+  "position": [
+    -593.99603,
+    -870.0481
+  ],
+  "street1": "NORFOLK ST",
+  "street2": "RIVINGTON ST",
+  "directionDeg": 159.33286,
+  "cycleOffsetSec": 14.010247,
+  "features": []
+}

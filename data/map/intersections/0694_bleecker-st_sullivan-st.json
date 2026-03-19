@@ -1,0 +1,12 @@
+{
+  "id": "0694_bleecker-st_sullivan-st",
+  "position": [
+    559.4567,
+    155.8551
+  ],
+  "street1": "SULLIVAN ST",
+  "street2": "BLEECKER ST",
+  "directionDeg": 147.34685,
+  "cycleOffsetSec": 52.84901,
+  "features": []
+}

@@ -1,0 +1,12 @@
+{
+  "id": "0161_church-st_duane-st",
+  "position": [
+    1113.5244,
+    -1272.8141
+  ],
+  "street1": "CHURCH ST",
+  "street2": "DUANE ST",
+  "directionDeg": 149.00908,
+  "cycleOffsetSec": 45.877247,
+  "features": []
+}

@@ -1,0 +1,12 @@
+{
+  "id": "0647_front-st_washington-st",
+  "position": [
+    -355.25296,
+    -2775.514
+  ],
+  "street1": "FRONT ST",
+  "street2": "WASHINGTON ST",
+  "directionDeg": 88.70117,
+  "cycleOffsetSec": 61.85154,
+  "features": []
+}

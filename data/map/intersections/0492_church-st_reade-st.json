@@ -1,0 +1,12 @@
+{
+  "id": "0492_church-st_reade-st",
+  "position": [
+    1153.1729,
+    -1331.0026
+  ],
+  "street1": "READE ST",
+  "street2": "CHURCH ST",
+  "directionDeg": 238.93887,
+  "cycleOffsetSec": 30.17013,
+  "features": []
+}

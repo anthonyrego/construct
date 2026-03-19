@@ -1,0 +1,12 @@
+{
+  "id": "0396_astor-pl_lafayette-st",
+  "position": [
+    -190.83902,
+    270.45782
+  ],
+  "street1": "LAFAYETTE ST",
+  "street2": "ASTOR PL",
+  "directionDeg": 146.98167,
+  "cycleOffsetSec": 60.1988,
+  "features": []
+}

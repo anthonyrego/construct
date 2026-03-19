@@ -1,0 +1,12 @@
+{
+  "id": "0636_barclay-st_washington-st",
+  "position": [
+    1551.782,
+    -1502.4037
+  ],
+  "street1": "WASHINGTON ST",
+  "street2": "BARCLAY ST",
+  "directionDeg": 167.86644,
+  "cycleOffsetSec": 17.513468,
+  "features": []
+}

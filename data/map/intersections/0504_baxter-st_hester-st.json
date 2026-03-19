@@ -1,0 +1,12 @@
+{
+  "id": "0504_baxter-st_hester-st",
+  "position": [
+    418.06732,
+    -997.0774
+  ],
+  "street1": "BAXTER ST",
+  "street2": "HESTER ST",
+  "directionDeg": -26.577988,
+  "cycleOffsetSec": 66.443344,
+  "features": []
+}

@@ -1,0 +1,12 @@
+{
+  "id": "0331_thompson-st_w-houston-st",
+  "position": [
+    576.0651,
+    -11.707904
+  ],
+  "street1": "THOMPSON ST",
+  "street2": "W HOUSTON ST",
+  "directionDeg": -32.493973,
+  "cycleOffsetSec": 3.8580751,
+  "features": []
+}

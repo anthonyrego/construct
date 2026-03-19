@@ -1,0 +1,12 @@
+{
+  "id": "0906_bethune-st_washington-st",
+  "position": [
+    1205.7109,
+    1068.7067
+  ],
+  "street1": "WASHINGTON ST",
+  "street2": "BETHUNE ST",
+  "directionDeg": -3.4472954,
+  "cycleOffsetSec": 28.300833,
+  "features": []
+}

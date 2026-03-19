@@ -1,0 +1,12 @@
+{
+  "id": "0372_grand-st_madison-st",
+  "position": [
+    -1210.0106,
+    -1503.6918
+  ],
+  "street1": "GRAND ST",
+  "street2": "MADISON ST",
+  "directionDeg": 67.50068,
+  "cycleOffsetSec": 49.563557,
+  "features": []
+}

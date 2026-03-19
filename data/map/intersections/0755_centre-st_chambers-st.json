@@ -1,0 +1,12 @@
+{
+  "id": "0755_centre-st_chambers-st",
+  "position": [
+    854.73285,
+    -1594.3942
+  ],
+  "street1": "CENTRE ST",
+  "street2": "CHAMBERS ST",
+  "directionDeg": 145.90063,
+  "cycleOffsetSec": 35.848846,
+  "features": []
+}

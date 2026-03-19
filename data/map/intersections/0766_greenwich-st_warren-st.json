@@ -1,0 +1,12 @@
+{
+  "id": "0766_greenwich-st_warren-st",
+  "position": [
+    1452.7216,
+    -1316.1307
+  ],
+  "street1": "GREENWICH ST",
+  "street2": "WARREN ST",
+  "directionDeg": -8.846886,
+  "cycleOffsetSec": 20.432428,
+  "features": []
+}

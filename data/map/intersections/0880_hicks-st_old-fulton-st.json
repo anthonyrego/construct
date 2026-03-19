@@ -1,0 +1,12 @@
+{
+  "id": "0880_hicks-st_old-fulton-st",
+  "position": [
+    -93.7709,
+    -2815.916
+  ],
+  "street1": "OLD FULTON ST",
+  "street2": "HICKS ST",
+  "directionDeg": 54.19285,
+  "cycleOffsetSec": 48.569305,
+  "features": []
+}

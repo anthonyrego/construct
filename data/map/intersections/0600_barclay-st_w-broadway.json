@@ -1,0 +1,12 @@
+{
+  "id": "0600_barclay-st_w-broadway",
+  "position": [
+    1446.3538,
+    -1564.2107
+  ],
+  "street1": "BARCLAY ST",
+  "street2": "W BROADWAY",
+  "directionDeg": 238.83775,
+  "cycleOffsetSec": 48.035347,
+  "features": []
+}

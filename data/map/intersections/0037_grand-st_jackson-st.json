@@ -1,0 +1,12 @@
+{
+  "id": "0037_grand-st_jackson-st",
+  "position": [
+    -1089.0931,
+    -1473.3805
+  ],
+  "street1": "GRAND ST",
+  "street2": "JACKSON ST",
+  "directionDeg": 68.17198,
+  "cycleOffsetSec": 13.1660795,
+  "features": []
+}

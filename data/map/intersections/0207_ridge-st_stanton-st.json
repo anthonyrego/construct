@@ -1,0 +1,12 @@
+{
+  "id": "0207_ridge-st_stanton-st",
+  "position": [
+    -932.97015,
+    -852.92926
+  ],
+  "street1": "STANTON ST",
+  "street2": "RIDGE ST",
+  "directionDeg": 68.22139,
+  "cycleOffsetSec": 15.475874,
+  "features": []
+}

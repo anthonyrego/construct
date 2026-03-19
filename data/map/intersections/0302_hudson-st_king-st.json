@@ -1,0 +1,12 @@
+{
+  "id": "0302_hudson-st_king-st",
+  "position": [
+    1127.0277,
+    66.071884
+  ],
+  "street1": "KING ST",
+  "street2": "HUDSON ST",
+  "directionDeg": 82.71872,
+  "cycleOffsetSec": 16.080738,
+  "features": []
+}

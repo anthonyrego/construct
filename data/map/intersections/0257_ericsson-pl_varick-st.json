@@ -1,0 +1,12 @@
+{
+  "id": "0257_ericsson-pl_varick-st",
+  "position": [
+    1080.2958,
+    -776.0551
+  ],
+  "street1": "VARICK ST",
+  "street2": "ERICSSON PL",
+  "directionDeg": -7.3281703,
+  "cycleOffsetSec": 3.0360181,
+  "features": []
+}

@@ -1,0 +1,12 @@
+{
+  "id": "0502_vandam-st_varick-st",
+  "position": [
+    997.54236,
+    -113.60176
+  ],
+  "street1": "VANDAM ST",
+  "street2": "VARICK ST",
+  "directionDeg": 262.97772,
+  "cycleOffsetSec": 39.48788,
+  "features": []
+}

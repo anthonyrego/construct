@@ -1,0 +1,12 @@
+{
+  "id": "0371_madison-st_montgomery-st",
+  "position": [
+    -732.4658,
+    -1596.689
+  ],
+  "street1": "MONTGOMERY ST",
+  "street2": "MADISON ST",
+  "directionDeg": 3.447456,
+  "cycleOffsetSec": 42.44819,
+  "features": []
+}

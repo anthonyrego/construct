@@ -1,0 +1,12 @@
+{
+  "id": "0057_broadway_pine-st",
+  "position": [
+    1473.8849,
+    -2123.6199
+  ],
+  "street1": "BROADWAY",
+  "street2": "PINE ST",
+  "directionDeg": -31.760738,
+  "cycleOffsetSec": 57.278393,
+  "features": []
+}

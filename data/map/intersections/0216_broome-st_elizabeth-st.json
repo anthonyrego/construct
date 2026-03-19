@@ -1,0 +1,12 @@
+{
+  "id": "0216_broome-st_elizabeth-st",
+  "position": [
+    115.79105,
+    -841.4415
+  ],
+  "street1": "ELIZABETH ST",
+  "street2": "BROOME ST",
+  "directionDeg": 163.78416,
+  "cycleOffsetSec": 53.28512,
+  "features": []
+}

@@ -1,0 +1,12 @@
+{
+  "id": "0716_manhattan-bridge-pedestrian-path_sands-st",
+  "position": [
+    -594.2335,
+    -3034.177
+  ],
+  "street1": "MANHATTAN BRIDGE PEDESTRIAN PATH",
+  "street2": "SANDS ST",
+  "directionDeg": 22.975609,
+  "cycleOffsetSec": 0.932305,
+  "features": []
+}

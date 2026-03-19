@@ -1,0 +1,12 @@
+{
+  "id": "0779_canal-st_eldridge-st",
+  "position": [
+    -40.86066,
+    -1344.2805
+  ],
+  "street1": "ELDRIDGE ST",
+  "street2": "CANAL ST",
+  "directionDeg": 158.68181,
+  "cycleOffsetSec": 42.685814,
+  "features": []
+}

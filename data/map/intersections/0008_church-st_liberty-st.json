@@ -1,0 +1,12 @@
+{
+  "id": "0008_church-st_liberty-st",
+  "position": [
+    1503.6124,
+    -1969.407
+  ],
+  "street1": "LIBERTY ST",
+  "street2": "CHURCH ST",
+  "directionDeg": 238.47173,
+  "cycleOffsetSec": 60.596733,
+  "features": []
+}

@@ -1,0 +1,12 @@
+{
+  "id": "0081_astor-pl_broadway",
+  "position": [
+    -80.82452,
+    298.28888
+  ],
+  "street1": "BROADWAY",
+  "street2": "ASTOR PL",
+  "directionDeg": -32.649513,
+  "cycleOffsetSec": 14.98526,
+  "features": []
+}

@@ -1,0 +1,12 @@
+{
+  "id": "0163_duane-st_hudson-st",
+  "position": [
+    1284.1134,
+    -1168.4045
+  ],
+  "street1": "HUDSON ST",
+  "street2": "DUANE ST",
+  "directionDeg": 173.48454,
+  "cycleOffsetSec": 20.267504,
+  "features": []
+}

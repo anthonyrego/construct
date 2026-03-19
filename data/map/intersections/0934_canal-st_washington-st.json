@@ -1,0 +1,12 @@
+{
+  "id": "0934_canal-st_washington-st",
+  "position": [
+    1355.39,
+    -245.16484
+  ],
+  "street1": "CANAL ST",
+  "street2": "WASHINGTON ST",
+  "directionDeg": 223.83061,
+  "cycleOffsetSec": 6.789248,
+  "features": []
+}

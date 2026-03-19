@@ -1,0 +1,12 @@
+{
+  "id": "0359_albany-st_west-st",
+  "position": [
+    1771.9169,
+    -1973.9232
+  ],
+  "street1": "WEST ST",
+  "street2": "ALBANY ST",
+  "directionDeg": 162.58554,
+  "cycleOffsetSec": 7.0092688,
+  "features": []
+}

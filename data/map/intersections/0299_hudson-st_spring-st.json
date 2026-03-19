@@ -1,0 +1,12 @@
+{
+  "id": "0299_hudson-st_spring-st",
+  "position": [
+    1153.0631,
+    -174.81941
+  ],
+  "street1": "HUDSON ST",
+  "street2": "SPRING ST",
+  "directionDeg": 172.96802,
+  "cycleOffsetSec": 10.095471,
+  "features": []
+}

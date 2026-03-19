@@ -1,0 +1,12 @@
+{
+  "id": "0706_cortlandt-st_greenwich-st",
+  "position": [
+    1578.8468,
+    -1851.2201
+  ],
+  "street1": "GREENWICH ST",
+  "street2": "CORTLANDT ST",
+  "directionDeg": 164.5774,
+  "cycleOffsetSec": 13.963976,
+  "features": []
+}

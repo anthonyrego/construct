@@ -1,0 +1,12 @@
+{
+  "id": "0474_manhattan-br_south-st",
+  "position": [
+    -163.62102,
+    -1952.2538
+  ],
+  "street1": "SOUTH ST",
+  "street2": "MANHATTAN BR",
+  "directionDeg": 102.28749,
+  "cycleOffsetSec": 65.917015,
+  "features": []
+}

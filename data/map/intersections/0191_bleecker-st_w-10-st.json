@@ -1,0 +1,12 @@
+{
+  "id": "0191_bleecker-st_w-10-st",
+  "position": [
+    905.3018,
+    737.5401
+  ],
+  "street1": "W 10 ST",
+  "street2": "BLEECKER ST",
+  "directionDeg": 101.37723,
+  "cycleOffsetSec": 42.443016,
+  "features": []
+}

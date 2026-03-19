@@ -1,0 +1,12 @@
+{
+  "id": "0684_battery-pl_washington-st",
+  "position": [
+    1847.3074,
+    -2511.9329
+  ],
+  "street1": "BATTERY PL",
+  "street2": "WASHINGTON ST",
+  "directionDeg": 267.39005,
+  "cycleOffsetSec": 55.735622,
+  "features": []
+}

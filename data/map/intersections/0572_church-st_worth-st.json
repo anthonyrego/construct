@@ -1,0 +1,12 @@
+{
+  "id": "0572_church-st_worth-st",
+  "position": [
+    1042.4502,
+    -1153.2529
+  ],
+  "street1": "CHURCH ST",
+  "street2": "WORTH ST",
+  "directionDeg": 149.25262,
+  "cycleOffsetSec": 48.564857,
+  "features": []
+}

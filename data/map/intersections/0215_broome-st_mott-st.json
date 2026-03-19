@@ -1,0 +1,12 @@
+{
+  "id": "0215_broome-st_mott-st",
+  "position": [
+    182.72375,
+    -802.3684
+  ],
+  "street1": "BROOME ST",
+  "street2": "MOTT ST",
+  "directionDeg": 241.77655,
+  "cycleOffsetSec": 44.58116,
+  "features": []
+}

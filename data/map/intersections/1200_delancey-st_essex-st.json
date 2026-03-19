@@ -1,0 +1,12 @@
+{
+  "id": "1200_delancey-st_essex-st",
+  "position": [
+    -477.54108,
+    -958.7569
+  ],
+  "street1": "ESSEX ST",
+  "street2": "DELANCEY ST",
+  "directionDeg": 158.61292,
+  "cycleOffsetSec": 10.051864,
+  "features": []
+}

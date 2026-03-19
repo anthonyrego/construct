@@ -1,0 +1,12 @@
+{
+  "id": "0360_albany-st_south-end-av",
+  "position": [
+    1893.379,
+    -1931.4402
+  ],
+  "street1": "SOUTH END AV",
+  "street2": "ALBANY ST",
+  "directionDeg": 163.1495,
+  "cycleOffsetSec": 68.62552,
+  "features": []
+}

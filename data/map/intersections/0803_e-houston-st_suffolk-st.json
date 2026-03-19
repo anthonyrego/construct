@@ -1,0 +1,12 @@
+{
+  "id": "0803_e-houston-st_suffolk-st",
+  "position": [
+    -760.76794,
+    -631.8816
+  ],
+  "street1": "E HOUSTON ST",
+  "street2": "SUFFOLK ST",
+  "directionDeg": 67.782745,
+  "cycleOffsetSec": 33.427044,
+  "features": []
+}

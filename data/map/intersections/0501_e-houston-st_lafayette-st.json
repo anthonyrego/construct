@@ -1,0 +1,12 @@
+{
+  "id": "0501_e-houston-st_lafayette-st",
+  "position": [
+    128.52806,
+    -256.93176
+  ],
+  "street1": "LAFAYETTE ST",
+  "street2": "E HOUSTON ST",
+  "directionDeg": 148.6567,
+  "cycleOffsetSec": 30.348816,
+  "features": []
+}

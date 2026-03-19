@@ -1,0 +1,12 @@
+{
+  "id": "0067_broadway_franklin-st",
+  "position": [
+    814.43616,
+    -1112.1274
+  ],
+  "street1": "BROADWAY",
+  "street2": "FRANKLIN ST",
+  "directionDeg": -32.684544,
+  "cycleOffsetSec": 12.789203,
+  "features": []
+}

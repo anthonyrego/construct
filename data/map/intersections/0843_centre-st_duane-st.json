@@ -1,0 +1,12 @@
+{
+  "id": "0843_centre-st_duane-st",
+  "position": [
+    797.4864,
+    -1503.4769
+  ],
+  "street1": "CENTRE ST",
+  "street2": "DUANE ST",
+  "directionDeg": 128.9955,
+  "cycleOffsetSec": 61.264416,
+  "features": []
+}

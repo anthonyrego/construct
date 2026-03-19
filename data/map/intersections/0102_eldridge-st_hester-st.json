@@ -1,0 +1,12 @@
+{
+  "id": "0102_eldridge-st_hester-st",
+  "position": [
+    -81.920395,
+    -1215.7678
+  ],
+  "street1": "ELDRIDGE ST",
+  "street2": "HESTER ST",
+  "directionDeg": 158.88086,
+  "cycleOffsetSec": 23.769867,
+  "features": []
+}

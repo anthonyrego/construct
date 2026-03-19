@@ -1,0 +1,12 @@
+{
+  "id": "0707_broadway_warren-st",
+  "position": [
+    1086.0648,
+    -1538.5742
+  ],
+  "street1": "BROADWAY",
+  "street2": "WARREN ST",
+  "directionDeg": -32.596855,
+  "cycleOffsetSec": 22.630863,
+  "features": []
+}

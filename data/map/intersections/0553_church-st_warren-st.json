@@ -1,0 +1,12 @@
+{
+  "id": "0553_church-st_warren-st",
+  "position": [
+    1228.6354,
+    -1457.4827
+  ],
+  "street1": "WARREN ST",
+  "street2": "CHURCH ST",
+  "directionDeg": 58.131355,
+  "cycleOffsetSec": 2.3516622,
+  "features": []
+}

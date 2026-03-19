@@ -1,0 +1,12 @@
+{
+  "id": "0687_gansevoort-st_washington-st",
+  "position": [
+    1189.2994,
+    1338.7587
+  ],
+  "street1": "WASHINGTON ST",
+  "street2": "GANSEVOORT ST",
+  "directionDeg": -5.193765,
+  "cycleOffsetSec": 32.130863,
+  "features": []
+}

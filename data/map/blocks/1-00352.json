@@ -1,0 +1,39 @@
+{
+  "block": "1-00352",
+  "buildings": [
+    {
+      "bbl": "1003520001",
+      "address": "ESSEX STREET",
+      "height": 95.7072,
+      "color": [
+        110,
+        108,
+        105
+      ],
+      "buildingClass": "U7",
+      "landUse": "7",
+      "yearBuilt": 0,
+      "floors": 0,
+      "visible": true,
+      "footprint": [
+        [
+          -499.17334,
+          -1100.9161
+        ],
+        [
+          -451.81152,
+          -1082.7645
+        ],
+        [
+          -478.62723,
+          -1012.23303
+        ],
+        [
+          -525.98944,
+          -1030.3849
+        ]
+      ],
+      "holes": null
+    }
+  ]
+}

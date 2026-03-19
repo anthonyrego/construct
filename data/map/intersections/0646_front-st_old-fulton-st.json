@@ -1,0 +1,12 @@
+{
+  "id": "0646_front-st_old-fulton-st",
+  "position": [
+    -45.28979,
+    -2771.2275
+  ],
+  "street1": "OLD FULTON ST",
+  "street2": "FRONT ST",
+  "directionDeg": 59.82754,
+  "cycleOffsetSec": 11.666631,
+  "features": []
+}

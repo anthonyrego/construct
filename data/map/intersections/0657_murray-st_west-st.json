@@ -1,0 +1,12 @@
+{
+  "id": "0657_murray-st_west-st",
+  "position": [
+    1656.5782,
+    -1352.4376
+  ],
+  "street1": "WEST ST",
+  "street2": "MURRAY ST",
+  "directionDeg": -10.871959,
+  "cycleOffsetSec": 10.13725,
+  "features": []
+}

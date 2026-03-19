@@ -1,0 +1,12 @@
+{
+  "id": "0006_pedestrian-opas_west-st",
+  "position": [
+    1738.1724,
+    -1826.4102
+  ],
+  "street1": "WEST ST",
+  "street2": "PEDESTRIAN OPAS",
+  "directionDeg": 166.67563,
+  "cycleOffsetSec": 22.814758,
+  "features": []
+}

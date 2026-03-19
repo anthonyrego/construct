@@ -1,0 +1,12 @@
+{
+  "id": "1240_bayard-st_bowery",
+  "position": [
+    257.85303,
+    -1363.8439
+  ],
+  "street1": "BAYARD ST",
+  "street2": "BOWERY",
+  "directionDeg": 65.18856,
+  "cycleOffsetSec": 6.974028,
+  "features": []
+}

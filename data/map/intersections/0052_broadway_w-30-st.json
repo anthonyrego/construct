@@ -1,0 +1,12 @@
+{
+  "id": "0052_broadway_w-30-st",
+  "position": [
+    -449.12225,
+    2158.7446
+  ],
+  "street1": "W 30 ST",
+  "street2": "BROADWAY",
+  "directionDeg": 60.935966,
+  "cycleOffsetSec": 51.960876,
+  "features": []
+}

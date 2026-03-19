@@ -1,0 +1,12 @@
+{
+  "id": "0473_market-slip_south-st",
+  "position": [
+    7.6389284,
+    -1992.526
+  ],
+  "street1": "MARKET SLIP",
+  "street2": "SOUTH ST",
+  "directionDeg": 5.777343,
+  "cycleOffsetSec": 9.264789,
+  "features": []
+}

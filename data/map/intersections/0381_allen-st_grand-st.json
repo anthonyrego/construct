@@ -1,0 +1,12 @@
+{
+  "id": "0381_allen-st_grand-st",
+  "position": [
+    -204.32985,
+    -1104.0122
+  ],
+  "street1": "GRAND ST",
+  "street2": "ALLEN ST",
+  "directionDeg": 68.28032,
+  "cycleOffsetSec": 48.148907,
+  "features": []
+}

@@ -1,0 +1,12 @@
+{
+  "id": "0815_delancey-st_eldridge-st",
+  "position": [
+    -201.0215,
+    -894.9424
+  ],
+  "street1": "ELDRIDGE ST",
+  "street2": "DELANCEY ST",
+  "directionDeg": 158.68675,
+  "cycleOffsetSec": 25.59876,
+  "features": []
+}

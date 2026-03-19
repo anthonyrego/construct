@@ -1,0 +1,12 @@
+{
+  "id": "0308_grove-st_hudson-st",
+  "position": [
+    1066.7667,
+    561.1569
+  ],
+  "street1": "GROVE ST",
+  "street2": "HUDSON ST",
+  "directionDeg": 84.29425,
+  "cycleOffsetSec": 59.52865,
+  "features": []
+}

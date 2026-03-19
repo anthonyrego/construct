@@ -1,0 +1,12 @@
+{
+  "id": "0656_liberty-st_west-st",
+  "position": [
+    1760.0396,
+    -1822.0264
+  ],
+  "street1": "LIBERTY ST",
+  "street2": "WEST ST",
+  "directionDeg": 242.66484,
+  "cycleOffsetSec": 26.624868,
+  "features": []
+}

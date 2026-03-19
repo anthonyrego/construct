@@ -1,0 +1,12 @@
+{
+  "id": "0196_broad-st_stone-st",
+  "position": [
+    1497.0826,
+    -2600.1904
+  ],
+  "street1": "STONE ST",
+  "street2": "BROAD ST",
+  "directionDeg": 88.908394,
+  "cycleOffsetSec": 62.252327,
+  "features": []
+}

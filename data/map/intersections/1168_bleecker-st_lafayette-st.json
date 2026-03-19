@@ -1,0 +1,12 @@
+{
+  "id": "1168_bleecker-st_lafayette-st",
+  "position": [
+    83.56805,
+    -160.93797
+  ],
+  "street1": "BLEECKER ST",
+  "street2": "LAFAYETTE ST",
+  "directionDeg": 56.595142,
+  "cycleOffsetSec": 68.85315,
+  "features": []
+}

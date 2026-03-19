@@ -1,0 +1,12 @@
+{
+  "id": "1209_delancey-st_ludlow-st",
+  "position": [
+    -396.15417,
+    -960.1369
+  ],
+  "street1": "DELANCEY ST",
+  "street2": "LUDLOW ST",
+  "directionDeg": 68.404,
+  "cycleOffsetSec": 30.596682,
+  "features": []
+}

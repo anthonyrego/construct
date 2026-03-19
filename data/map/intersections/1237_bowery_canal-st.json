@@ -1,0 +1,12 @@
+{
+  "id": "1237_bowery_canal-st",
+  "position": [
+    213.73122,
+    -1249.3323
+  ],
+  "street1": "CANAL ST",
+  "street2": "BOWERY",
+  "directionDeg": 246.21902,
+  "cycleOffsetSec": 11.284012,
+  "features": []
+}

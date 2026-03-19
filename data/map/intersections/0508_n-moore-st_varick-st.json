@@ -1,0 +1,12 @@
+{
+  "id": "0508_n-moore-st_varick-st",
+  "position": [
+    1098.6566,
+    -849.42346
+  ],
+  "street1": "VARICK ST",
+  "street2": "N MOORE ST",
+  "directionDeg": -7.4525456,
+  "cycleOffsetSec": 4.726215,
+  "features": []
+}

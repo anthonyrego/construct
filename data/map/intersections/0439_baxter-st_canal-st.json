@@ -1,0 +1,12 @@
+{
+  "id": "0439_baxter-st_canal-st",
+  "position": [
+    457.8234,
+    -1100.0027
+  ],
+  "street1": "BAXTER ST",
+  "street2": "CANAL ST",
+  "directionDeg": -25.386986,
+  "cycleOffsetSec": 20.535496,
+  "features": []
+}

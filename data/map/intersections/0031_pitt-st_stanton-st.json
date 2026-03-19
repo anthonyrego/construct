@@ -1,0 +1,12 @@
+{
+  "id": "0031_pitt-st_stanton-st",
+  "position": [
+    -1002.2039,
+    -889.6044
+  ],
+  "street1": "STANTON ST",
+  "street2": "PITT ST",
+  "directionDeg": 68.22139,
+  "cycleOffsetSec": 31.444626,
+  "features": []
+}

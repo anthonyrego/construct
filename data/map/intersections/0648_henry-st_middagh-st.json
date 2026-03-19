@@ -1,0 +1,12 @@
+{
+  "id": "0648_henry-st_middagh-st",
+  "position": [
+    -174.02937,
+    -3050.4304
+  ],
+  "street1": "MIDDAGH ST",
+  "street2": "HENRY ST",
+  "directionDeg": -109.6746,
+  "cycleOffsetSec": 8.652122,
+  "features": []
+}

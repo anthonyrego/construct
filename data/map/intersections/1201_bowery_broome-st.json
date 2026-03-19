@@ -1,0 +1,12 @@
+{
+  "id": "1201_bowery_broome-st",
+  "position": [
+    34.676598,
+    -873.89813
+  ],
+  "street1": "BOWERY",
+  "street2": "BROOME ST",
+  "directionDeg": 162.51422,
+  "cycleOffsetSec": 7.9725842,
+  "features": []
+}

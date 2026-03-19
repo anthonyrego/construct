@@ -1,0 +1,12 @@
+{
+  "id": "1177_broome-st_mercer-st",
+  "position": [
+    564.50934,
+    -581.98047
+  ],
+  "street1": "MERCER ST",
+  "street2": "BROOME ST",
+  "directionDeg": -32.61698,
+  "cycleOffsetSec": 37.592762,
+  "features": []
+}

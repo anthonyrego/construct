@@ -1,0 +1,12 @@
+{
+  "id": "0346_allen-st_rivington-st",
+  "position": [
+    -358.00833,
+    -771.26697
+  ],
+  "street1": "RIVINGTON ST",
+  "street2": "ALLEN ST",
+  "directionDeg": -112.27884,
+  "cycleOffsetSec": 29.102045,
+  "features": []
+}

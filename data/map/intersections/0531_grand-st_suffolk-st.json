@@ -1,0 +1,12 @@
+{
+  "id": "0531_grand-st_suffolk-st",
+  "position": [
+    -535.9493,
+    -1250.414
+  ],
+  "street1": "SUFFOLK ST",
+  "street2": "GRAND ST",
+  "directionDeg": -21.341497,
+  "cycleOffsetSec": 62.780445,
+  "features": []
+}

@@ -1,0 +1,12 @@
+{
+  "id": "0095_church-st_murray-st",
+  "position": [
+    1261.9908,
+    -1513.4657
+  ],
+  "street1": "MURRAY ST",
+  "street2": "CHURCH ST",
+  "directionDeg": 238.6994,
+  "cycleOffsetSec": 45.276196,
+  "features": []
+}

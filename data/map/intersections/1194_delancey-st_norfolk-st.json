@@ -1,0 +1,12 @@
+{
+  "id": "1194_delancey-st_norfolk-st",
+  "position": [
+    -536.37067,
+    -1013.1763
+  ],
+  "street1": "NORFOLK ST",
+  "street2": "DELANCEY ST",
+  "directionDeg": 161.41617,
+  "cycleOffsetSec": 57.897064,
+  "features": []
+}

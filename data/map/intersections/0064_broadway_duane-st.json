@@ -1,0 +1,12 @@
+{
+  "id": "0064_broadway_duane-st",
+  "position": [
+    979.03986,
+    -1359.7336
+  ],
+  "street1": "DUANE ST",
+  "street2": "BROADWAY",
+  "directionDeg": 59.0515,
+  "cycleOffsetSec": 67.425186,
+  "features": []
+}

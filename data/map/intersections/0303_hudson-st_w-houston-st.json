@@ -1,0 +1,12 @@
+{
+  "id": "0303_hudson-st_w-houston-st",
+  "position": [
+    1117.051,
+    145.90886
+  ],
+  "street1": "W HOUSTON ST",
+  "street2": "HUDSON ST",
+  "directionDeg": 262.89706,
+  "cycleOffsetSec": 63.55922,
+  "features": []
+}

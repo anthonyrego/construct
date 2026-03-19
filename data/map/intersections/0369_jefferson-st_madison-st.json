@@ -1,0 +1,12 @@
+{
+  "id": "0369_jefferson-st_madison-st",
+  "position": [
+    -447.0712,
+    -1629.9872
+  ],
+  "street1": "JEFFERSON ST",
+  "street2": "MADISON ST",
+  "directionDeg": 6.7606983,
+  "cycleOffsetSec": 2.8678467,
+  "features": []
+}

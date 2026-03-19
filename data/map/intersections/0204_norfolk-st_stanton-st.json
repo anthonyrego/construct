@@ -1,0 +1,12 @@
+{
+  "id": "0204_norfolk-st_stanton-st",
+  "position": [
+    -644.33453,
+    -741.21686
+  ],
+  "street1": "NORFOLK ST",
+  "street2": "STANTON ST",
+  "directionDeg": 158.61823,
+  "cycleOffsetSec": 13.424766,
+  "features": []
+}

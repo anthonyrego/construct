@@ -1,0 +1,12 @@
+{
+  "id": "0127_cleveland-pl_kenmare-st",
+  "position": [
+    304.94812,
+    -665.6155
+  ],
+  "street1": "CLEVELAND PL",
+  "street2": "KENMARE ST",
+  "directionDeg": 162.46664,
+  "cycleOffsetSec": 15.938587,
+  "features": []
+}

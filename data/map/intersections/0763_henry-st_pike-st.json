@@ -1,0 +1,12 @@
+{
+  "id": "0763_henry-st_pike-st",
+  "position": [
+    -98.65941,
+    -1578.4441
+  ],
+  "street1": "HENRY ST",
+  "street2": "PIKE ST",
+  "directionDeg": 95.87565,
+  "cycleOffsetSec": 47.40312,
+  "features": []
+}

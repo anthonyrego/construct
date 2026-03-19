@@ -1,0 +1,12 @@
+{
+  "id": "0909_charles-st_washington-st",
+  "position": [
+    1226.2902,
+    750.7352
+  ],
+  "street1": "WASHINGTON ST",
+  "street2": "CHARLES ST",
+  "directionDeg": -3.325052,
+  "cycleOffsetSec": 9.355516,
+  "features": []
+}

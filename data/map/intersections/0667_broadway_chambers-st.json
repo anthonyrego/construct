@@ -1,0 +1,12 @@
+{
+  "id": "0667_broadway_chambers-st",
+  "position": [
+    1054.9579,
+    -1472.4845
+  ],
+  "street1": "BROADWAY",
+  "street2": "CHAMBERS ST",
+  "directionDeg": -31.967691,
+  "cycleOffsetSec": 0.14055139,
+  "features": []
+}

@@ -1,0 +1,12 @@
+{
+  "id": "0632_perry-st_washington-st",
+  "position": [
+    1236.0662,
+    828.8264
+  ],
+  "street1": "PERRY ST",
+  "street2": "WASHINGTON ST",
+  "directionDeg": 100.468285,
+  "cycleOffsetSec": 44.573174,
+  "features": []
+}

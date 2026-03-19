@@ -1,0 +1,12 @@
+{
+  "id": "1225_bowery_rivington-st",
+  "position": [
+    -19.618517,
+    -630.38336
+  ],
+  "street1": "BOWERY",
+  "street2": "RIVINGTON ST",
+  "directionDeg": -15.706913,
+  "cycleOffsetSec": 0.81353295,
+  "features": []
+}

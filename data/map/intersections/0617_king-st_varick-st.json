@@ -1,0 +1,12 @@
+{
+  "id": "0617_king-st_varick-st",
+  "position": [
+    973.5751,
+    50.821125
+  ],
+  "street1": "VARICK ST",
+  "street2": "KING ST",
+  "directionDeg": -6.749655,
+  "cycleOffsetSec": 59.868168,
+  "features": []
+}

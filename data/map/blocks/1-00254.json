@@ -1,0 +1,39 @@
+{
+  "block": "1-00254",
+  "buildings": [
+    {
+      "bbl": "1002540001",
+      "address": "166 MARKET STREET",
+      "height": 3.892296,
+      "color": [
+        110,
+        120,
+        100
+      ],
+      "buildingClass": "Q2",
+      "landUse": "9",
+      "yearBuilt": 0,
+      "floors": 0,
+      "visible": true,
+      "footprint": [
+        [
+          -35.995026,
+          -1843.991
+        ],
+        [
+          -30.285662,
+          -1845.2756
+        ],
+        [
+          -28.93207,
+          -1839.2106
+        ],
+        [
+          -34.64134,
+          -1837.9258
+        ]
+      ],
+      "holes": null
+    }
+  ]
+}

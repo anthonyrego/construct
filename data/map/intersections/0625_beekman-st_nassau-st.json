@@ -1,0 +1,12 @@
+{
+  "id": "0625_beekman-st_nassau-st",
+  "position": [
+    1068.8522,
+    -1799.1147
+  ],
+  "street1": "NASSAU ST",
+  "street2": "BEEKMAN ST",
+  "directionDeg": 130.84888,
+  "cycleOffsetSec": 19.309185,
+  "features": []
+}

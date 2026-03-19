@@ -1,0 +1,12 @@
+{
+  "id": "0087_broadway_whitehall-st",
+  "position": [
+    1637.7347,
+    -2599.7087
+  ],
+  "street1": "BROADWAY",
+  "street2": "WHITEHALL ST",
+  "directionDeg": 6.9491525,
+  "cycleOffsetSec": 67.07004,
+  "features": []
+}

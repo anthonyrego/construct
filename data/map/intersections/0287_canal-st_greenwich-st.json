@@ -1,0 +1,12 @@
+{
+  "id": "0287_canal-st_greenwich-st",
+  "position": [
+    1301.0573,
+    -300.80035
+  ],
+  "street1": "GREENWICH ST",
+  "street2": "CANAL ST",
+  "directionDeg": 172.49207,
+  "cycleOffsetSec": 9.362029,
+  "features": []
+}

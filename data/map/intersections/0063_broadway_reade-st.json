@@ -1,0 +1,12 @@
+{
+  "id": "0063_broadway_reade-st",
+  "position": [
+    1019.7205,
+    -1415.9296
+  ],
+  "street1": "BROADWAY",
+  "street2": "READE ST",
+  "directionDeg": -32.460045,
+  "cycleOffsetSec": 8.565605,
+  "features": []
+}

@@ -1,0 +1,12 @@
+{
+  "id": "0644_furman-st_old-fulton-st",
+  "position": [
+    75.80025,
+    -2728.163
+  ],
+  "street1": "OLD FULTON ST",
+  "street2": "FURMAN ST",
+  "directionDeg": 66.42587,
+  "cycleOffsetSec": 10.538014,
+  "features": []
+}

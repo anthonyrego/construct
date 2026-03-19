@@ -1,0 +1,12 @@
+{
+  "id": "0472_rutgers-slip_south-st",
+  "position": [
+    -345.91968,
+    -1925.3733
+  ],
+  "street1": "RUTGERS SLIP",
+  "street2": "SOUTH ST",
+  "directionDeg": -174.27446,
+  "cycleOffsetSec": 21.09641,
+  "features": []
+}

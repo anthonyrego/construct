@@ -1,0 +1,12 @@
+{
+  "id": "0291_albany-st_greenwich-st",
+  "position": [
+    1627.7439,
+    -2033.8376
+  ],
+  "street1": "GREENWICH ST",
+  "street2": "ALBANY ST",
+  "directionDeg": -18.219732,
+  "cycleOffsetSec": 29.613548,
+  "features": []
+}

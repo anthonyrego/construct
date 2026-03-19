@@ -1,0 +1,12 @@
+{
+  "id": "0056_broadway_wall-st",
+  "position": [
+    1512.1559,
+    -2185.3943
+  ],
+  "street1": "BROADWAY",
+  "street2": "WALL ST",
+  "directionDeg": -32.083805,
+  "cycleOffsetSec": 16.834188,
+  "features": []
+}

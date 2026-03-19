@@ -1,0 +1,12 @@
+{
+  "id": "0924_barrow-st_washington-st",
+  "position": [
+    1251.6941,
+    502.34332
+  ],
+  "street1": "WASHINGTON ST",
+  "street2": "BARROW ST",
+  "directionDeg": -8.427575,
+  "cycleOffsetSec": 45.087803,
+  "features": []
+}

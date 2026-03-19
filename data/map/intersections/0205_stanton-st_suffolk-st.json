@@ -1,0 +1,12 @@
+{
+  "id": "0205_stanton-st_suffolk-st",
+  "position": [
+    -722.6972,
+    -772.47656
+  ],
+  "street1": "SUFFOLK ST",
+  "street2": "STANTON ST",
+  "directionDeg": -21.395096,
+  "cycleOffsetSec": 43.71728,
+  "features": []
+}

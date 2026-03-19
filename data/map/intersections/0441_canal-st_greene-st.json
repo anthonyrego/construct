@@ -1,0 +1,12 @@
+{
+  "id": "0441_canal-st_greene-st",
+  "position": [
+    797.27014,
+    -780.38025
+  ],
+  "street1": "GREENE ST",
+  "street2": "CANAL ST",
+  "directionDeg": 147.36269,
+  "cycleOffsetSec": 25.73965,
+  "features": []
+}

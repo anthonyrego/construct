@@ -1,0 +1,12 @@
+{
+  "id": "0316_hudson-st_jane-st",
+  "position": [
+    993.01337,
+    1197.3362
+  ],
+  "street1": "JANE ST",
+  "street2": "HUDSON ST",
+  "directionDeg": 270.06027,
+  "cycleOffsetSec": 34.32454,
+  "features": []
+}

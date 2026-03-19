@@ -1,0 +1,12 @@
+{
+  "id": "0748_morton-st_west-st",
+  "position": [
+    1414.0443,
+    449.13702
+  ],
+  "street1": "WEST ST",
+  "street2": "MORTON ST",
+  "directionDeg": -4.4294906,
+  "cycleOffsetSec": 62.10733,
+  "features": []
+}

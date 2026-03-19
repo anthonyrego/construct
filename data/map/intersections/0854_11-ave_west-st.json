@@ -1,0 +1,12 @@
+{
+  "id": "0854_11-ave_west-st",
+  "position": [
+    1286.1993,
+    1667.6941
+  ],
+  "street1": "WEST ST",
+  "street2": "11 AVE",
+  "directionDeg": -9.842889,
+  "cycleOffsetSec": 18.710844,
+  "features": []
+}

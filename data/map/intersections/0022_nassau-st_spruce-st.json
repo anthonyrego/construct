@@ -1,0 +1,12 @@
+{
+  "id": "0022_nassau-st_spruce-st",
+  "position": [
+    1009.7576,
+    -1748.9442
+  ],
+  "street1": "SPRUCE ST",
+  "street2": "NASSAU ST",
+  "directionDeg": 34.916977,
+  "cycleOffsetSec": 59.97212,
+  "features": []
+}

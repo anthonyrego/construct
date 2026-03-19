@@ -1,0 +1,12 @@
+{
+  "id": "0661_holland-tun-exit_west-st",
+  "position": [
+    1465.3182,
+    -159.33203
+  ],
+  "street1": "WEST ST",
+  "street2": "HOLLAND TUN EXIT",
+  "directionDeg": -7.886065,
+  "cycleOffsetSec": 67.810356,
+  "features": []
+}

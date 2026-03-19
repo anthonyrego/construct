@@ -1,0 +1,12 @@
+{
+  "id": "0030_pitt-st_rivington-st",
+  "position": [
+    -956.32153,
+    -1009.9385
+  ],
+  "street1": "RIVINGTON ST",
+  "street2": "PITT ST",
+  "directionDeg": -111.91074,
+  "cycleOffsetSec": 60.651985,
+  "features": []
+}

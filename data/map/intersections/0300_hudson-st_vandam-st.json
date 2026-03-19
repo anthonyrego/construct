@@ -1,0 +1,12 @@
+{
+  "id": "0300_hudson-st_vandam-st",
+  "position": [
+    1146.1339,
+    -87.10394
+  ],
+  "street1": "VANDAM ST",
+  "street2": "HUDSON ST",
+  "directionDeg": 262.97772,
+  "cycleOffsetSec": 67.17685,
+  "features": []
+}

@@ -1,0 +1,12 @@
+{
+  "id": "0285_greenwich-st_hubert-st",
+  "position": [
+    1352.9387,
+    -658.58215
+  ],
+  "street1": "HUBERT ST",
+  "street2": "GREENWICH ST",
+  "directionDeg": 83.62798,
+  "cycleOffsetSec": 62.249916,
+  "features": []
+}

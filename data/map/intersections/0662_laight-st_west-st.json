@@ -1,0 +1,12 @@
+{
+  "id": "0662_laight-st_west-st",
+  "position": [
+    1521.4531,
+    -547.914
+  ],
+  "street1": "WEST ST",
+  "street2": "LAIGHT ST",
+  "directionDeg": -9.377564,
+  "cycleOffsetSec": 19.255775,
+  "features": []
+}

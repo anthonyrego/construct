@@ -1,0 +1,12 @@
+{
+  "id": "0926_greenwich-st_w-houston-st",
+  "position": [
+    1238.906,
+    155.59424
+  ],
+  "street1": "W HOUSTON ST",
+  "street2": "GREENWICH ST",
+  "directionDeg": 262.84055,
+  "cycleOffsetSec": 21.642418,
+  "features": []
+}

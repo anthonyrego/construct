@@ -1,0 +1,12 @@
+{
+  "id": "0936_canal-st_holland-tun-exit",
+  "position": [
+    1383.0238,
+    -255.23875
+  ],
+  "street1": "CANAL ST",
+  "street2": "HOLLAND TUN EXIT",
+  "directionDeg": 82.073006,
+  "cycleOffsetSec": 11.20476,
+  "features": []
+}

@@ -1,0 +1,12 @@
+{
+  "id": "0735_fdr-dr-vi_south-st",
+  "position": [
+    1530.5103,
+    -2880.185
+  ],
+  "street1": "FDR DR VI",
+  "street2": "SOUTH ST",
+  "directionDeg": -73.777435,
+  "cycleOffsetSec": 1.7623253,
+  "features": []
+}

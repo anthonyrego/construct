@@ -1,0 +1,12 @@
+{
+  "id": "0126_kenmare-st_mulberry-st",
+  "position": [
+    234.61884,
+    -694.1871
+  ],
+  "street1": "MULBERRY ST",
+  "street2": "KENMARE ST",
+  "directionDeg": 163.4034,
+  "cycleOffsetSec": 45.948185,
+  "features": []
+}

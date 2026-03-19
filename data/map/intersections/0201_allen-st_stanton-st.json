@@ -1,0 +1,12 @@
+{
+  "id": "0201_allen-st_stanton-st",
+  "position": [
+    -383.19284,
+    -642.1077
+  ],
+  "street1": "STANTON ST",
+  "street2": "ALLEN ST",
+  "directionDeg": 68.353,
+  "cycleOffsetSec": 20.379953,
+  "features": []
+}

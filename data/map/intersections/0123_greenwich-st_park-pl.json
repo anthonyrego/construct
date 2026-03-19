@@ -1,0 +1,12 @@
+{
+  "id": "0123_greenwich-st_park-pl",
+  "position": [
+    1495.4639,
+    -1456.757
+  ],
+  "street1": "GREENWICH ST",
+  "street2": "PARK PL",
+  "directionDeg": -12.39183,
+  "cycleOffsetSec": 19.30775,
+  "features": []
+}

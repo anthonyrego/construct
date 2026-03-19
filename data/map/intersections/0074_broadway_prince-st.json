@@ -1,0 +1,12 @@
+{
+  "id": "0074_broadway_prince-st",
+  "position": [
+    336.21564,
+    -352.31616
+  ],
+  "street1": "BROADWAY",
+  "street2": "PRINCE ST",
+  "directionDeg": -32.680637,
+  "cycleOffsetSec": 15.421638,
+  "features": []
+}

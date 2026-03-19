@@ -1,0 +1,12 @@
+{
+  "id": "0185_chambers-st_hudson-st",
+  "position": [
+    1295.709,
+    -1316.7756
+  ],
+  "street1": "CHAMBERS ST",
+  "street2": "HUDSON ST",
+  "directionDeg": 239.12982,
+  "cycleOffsetSec": 44.71839,
+  "features": []
+}

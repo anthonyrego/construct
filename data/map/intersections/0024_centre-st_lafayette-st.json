@@ -1,0 +1,12 @@
+{
+  "id": "0024_centre-st_lafayette-st",
+  "position": [
+    818.39264,
+    -1529.7844
+  ],
+  "street1": "LAFAYETTE ST",
+  "street2": "CENTRE ST",
+  "directionDeg": -16.639038,
+  "cycleOffsetSec": 6.5285316,
+  "features": []
+}

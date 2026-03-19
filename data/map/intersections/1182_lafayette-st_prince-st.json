@@ -1,0 +1,12 @@
+{
+  "id": "1182_lafayette-st_prince-st",
+  "position": [
+    220.30334,
+    -427.33588
+  ],
+  "street1": "PRINCE ST",
+  "street2": "LAFAYETTE ST",
+  "directionDeg": 241.33492,
+  "cycleOffsetSec": 59.392834,
+  "features": []
+}

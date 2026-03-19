@@ -1,0 +1,12 @@
+{
+  "id": "0751_w-11-st_west-st",
+  "position": [
+    1383.3241,
+    896.39856
+  ],
+  "street1": "WEST ST",
+  "street2": "W 11 ST",
+  "directionDeg": -3.6270318,
+  "cycleOffsetSec": 16.04377,
+  "features": []
+}

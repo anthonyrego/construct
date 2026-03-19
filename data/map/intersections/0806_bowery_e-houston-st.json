@@ -1,0 +1,12 @@
+{
+  "id": "0806_bowery_e-houston-st",
+  "position": [
+    -130.2473,
+    -362.57718
+  ],
+  "street1": "E HOUSTON ST",
+  "street2": "BOWERY",
+  "directionDeg": -111.828285,
+  "cycleOffsetSec": 12.9448805,
+  "features": []
+}

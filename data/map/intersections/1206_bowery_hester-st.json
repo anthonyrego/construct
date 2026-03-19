@@ -1,0 +1,12 @@
+{
+  "id": "1206_bowery_hester-st",
+  "position": [
+    137.63153,
+    -1114.1985
+  ],
+  "street1": "BOWERY",
+  "street2": "HESTER ST",
+  "directionDeg": 158.2275,
+  "cycleOffsetSec": 62.79127,
+  "features": []
+}

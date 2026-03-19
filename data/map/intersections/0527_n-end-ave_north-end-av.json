@@ -1,0 +1,12 @@
+{
+  "id": "0527_n-end-ave_north-end-av",
+  "position": [
+    1891.857,
+    -1402.0885
+  ],
+  "street1": "NORTH END AV",
+  "street2": "N END AVE",
+  "directionDeg": 150.1363,
+  "cycleOffsetSec": 30.395206,
+  "features": []
+}

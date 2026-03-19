@@ -1,0 +1,12 @@
+{
+  "id": "1255_centre-st_hester-st",
+  "position": [
+    469.0297,
+    -984.0377
+  ],
+  "street1": "HESTER ST",
+  "street2": "CENTRE ST",
+  "directionDeg": 245.10493,
+  "cycleOffsetSec": 52.01941,
+  "features": []
+}

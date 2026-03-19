@@ -1,0 +1,12 @@
+{
+  "id": "0062_broadway_vesey-st",
+  "position": [
+    1251.9788,
+    -1787.3063
+  ],
+  "street1": "VESEY ST",
+  "street2": "BROADWAY",
+  "directionDeg": 58.21895,
+  "cycleOffsetSec": 52.80936,
+  "features": []
+}

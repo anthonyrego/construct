@@ -1,0 +1,12 @@
+{
+  "id": "0189_bleecker-st_grove-st",
+  "position": [
+    851.5245,
+    614.56537
+  ],
+  "street1": "BLEECKER ST",
+  "street2": "GROVE ST",
+  "directionDeg": 25.620596,
+  "cycleOffsetSec": 29.105177,
+  "features": []
+}

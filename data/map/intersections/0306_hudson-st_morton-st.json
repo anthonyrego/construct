@@ -1,0 +1,12 @@
+{
+  "id": "0306_hudson-st_morton-st",
+  "position": [
+    1087.2754,
+    388.4032
+  ],
+  "street1": "MORTON ST",
+  "street2": "HUDSON ST",
+  "directionDeg": 82.21375,
+  "cycleOffsetSec": 65.2417,
+  "features": []
+}

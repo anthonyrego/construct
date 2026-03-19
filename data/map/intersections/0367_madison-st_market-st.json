@@ -1,0 +1,12 @@
+{
+  "id": "0367_madison-st_market-st",
+  "position": [
+    39.400112,
+    -1680.7059
+  ],
+  "street1": "MARKET ST",
+  "street2": "MADISON ST",
+  "directionDeg": -173.99283,
+  "cycleOffsetSec": 9.331944,
+  "features": []
+}

@@ -1,0 +1,12 @@
+{
+  "id": "0419_fulton-st_nassau-st",
+  "position": [
+    1176.1797,
+    -1911.8768
+  ],
+  "street1": "NASSAU ST",
+  "street2": "FULTON ST",
+  "directionDeg": 141.98932,
+  "cycleOffsetSec": 42.32214,
+  "features": []
+}

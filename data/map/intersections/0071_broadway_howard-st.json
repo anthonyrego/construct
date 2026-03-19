@@ -1,0 +1,12 @@
+{
+  "id": "0071_broadway_howard-st",
+  "position": [
+    643.4531,
+    -830.90314
+  ],
+  "street1": "BROADWAY",
+  "street2": "HOWARD ST",
+  "directionDeg": -32.90279,
+  "cycleOffsetSec": 18.963392,
+  "features": []
+}

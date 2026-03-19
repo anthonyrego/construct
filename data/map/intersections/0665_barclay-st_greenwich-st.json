@@ -1,0 +1,12 @@
+{
+  "id": "0665_barclay-st_greenwich-st",
+  "position": [
+    1497.6887,
+    -1533.0787
+  ],
+  "street1": "BARCLAY ST",
+  "street2": "GREENWICH ST",
+  "directionDeg": 238.7169,
+  "cycleOffsetSec": 16.338392,
+  "features": []
+}

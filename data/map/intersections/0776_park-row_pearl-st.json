@@ -1,0 +1,12 @@
+{
+  "id": "0776_park-row_pearl-st",
+  "position": [
+    591.7134,
+    -1588.7161
+  ],
+  "street1": "PARK ROW",
+  "street2": "PEARL ST",
+  "directionDeg": 103.03169,
+  "cycleOffsetSec": 61.188675,
+  "features": []
+}

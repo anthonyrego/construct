@@ -1,0 +1,12 @@
+{
+  "id": "0198_broad-st_water-st",
+  "position": [
+    1498.9387,
+    -2723.3303
+  ],
+  "street1": "BROAD ST",
+  "street2": "WATER ST",
+  "directionDeg": 8.053203,
+  "cycleOffsetSec": 40.3448,
+  "features": []
+}

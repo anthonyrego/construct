@@ -1,0 +1,12 @@
+{
+  "id": "0368_madison-st_rutgers-st",
+  "position": [
+    -321.7105,
+    -1635.8184
+  ],
+  "street1": "MADISON ST",
+  "street2": "RUTGERS ST",
+  "directionDeg": 95.86635,
+  "cycleOffsetSec": 40.70853,
+  "features": []
+}

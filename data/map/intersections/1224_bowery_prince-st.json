@@ -1,0 +1,12 @@
+{
+  "id": "1224_bowery_prince-st",
+  "position": [
+    -46.25629,
+    -572.7625
+  ],
+  "street1": "BOWERY",
+  "street2": "PRINCE ST",
+  "directionDeg": 164.93681,
+  "cycleOffsetSec": 13.259817,
+  "features": []
+}

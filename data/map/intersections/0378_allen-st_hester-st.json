@@ -1,0 +1,12 @@
+{
+  "id": "0378_allen-st_hester-st",
+  "position": [
+    -176.40076,
+    -1253.1033
+  ],
+  "street1": "ALLEN ST",
+  "street2": "HESTER ST",
+  "directionDeg": 158.16936,
+  "cycleOffsetSec": 53.117764,
+  "features": []
+}

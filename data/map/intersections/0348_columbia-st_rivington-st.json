@@ -1,0 +1,12 @@
+{
+  "id": "0348_columbia-st_rivington-st",
+  "position": [
+    -1160.3336,
+    -1095.5679
+  ],
+  "street1": "COLUMBIA ST",
+  "street2": "RIVINGTON ST",
+  "directionDeg": 160.47452,
+  "cycleOffsetSec": 50.81688,
+  "features": []
+}

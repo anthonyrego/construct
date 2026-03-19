@@ -1,0 +1,12 @@
+{
+  "id": "0058_broadway_cedar-st",
+  "position": [
+    1433.8396,
+    -2067.0608
+  ],
+  "street1": "CEDAR ST",
+  "street2": "BROADWAY",
+  "directionDeg": 238.35757,
+  "cycleOffsetSec": 12.338657,
+  "features": []
+}

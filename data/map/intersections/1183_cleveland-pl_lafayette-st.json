@@ -1,0 +1,12 @@
+{
+  "id": "1183_cleveland-pl_lafayette-st",
+  "position": [
+    274.02536,
+    -582.60565
+  ],
+  "street1": "CLEVELAND PL",
+  "street2": "LAFAYETTE ST",
+  "directionDeg": 166.17899,
+  "cycleOffsetSec": 40.40832,
+  "features": []
+}

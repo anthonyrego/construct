@@ -1,0 +1,12 @@
+{
+  "id": "0479_beekman-st_pearl-st",
+  "position": [
+    816.9542,
+    -2150.246
+  ],
+  "street1": "PEARL ST",
+  "street2": "BEEKMAN ST",
+  "directionDeg": 142.52188,
+  "cycleOffsetSec": 39.243767,
+  "features": []
+}

@@ -1,0 +1,12 @@
+{
+  "id": "0025_centre-st_pearl-st",
+  "position": [
+    736.447,
+    -1463.9966
+  ],
+  "street1": "CENTRE ST",
+  "street2": "PEARL ST",
+  "directionDeg": 133.3765,
+  "cycleOffsetSec": 57.33796,
+  "features": []
+}

@@ -1,0 +1,12 @@
+{
+  "id": "0361_cherry-st_pike-st",
+  "position": [
+    -145.88388,
+    -1831.931
+  ],
+  "street1": "CHERRY ST",
+  "street2": "PIKE ST",
+  "directionDeg": -81.49152,
+  "cycleOffsetSec": 37.323463,
+  "features": []
+}

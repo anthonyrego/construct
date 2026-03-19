@@ -1,0 +1,12 @@
+{
+  "id": "1212_delancey-st_orchard-st",
+  "position": [
+    -356.65936,
+    -925.50433
+  ],
+  "street1": "DELANCEY ST",
+  "street2": "ORCHARD ST",
+  "directionDeg": -111.11995,
+  "cycleOffsetSec": 23.647758,
+  "features": []
+}

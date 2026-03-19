@@ -1,0 +1,12 @@
+{
+  "id": "0197_bridge-st_broad-st",
+  "position": [
+    1489.8518,
+    -2659.813
+  ],
+  "street1": "BROAD ST",
+  "street2": "BRIDGE ST",
+  "directionDeg": 359.0388,
+  "cycleOffsetSec": 59.874092,
+  "features": []
+}

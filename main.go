@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"math"
 	"os"
@@ -17,7 +18,9 @@ import (
 	"github.com/anthonyrego/construct/pkg/geojson"
 	"github.com/anthonyrego/construct/pkg/ground"
 	"github.com/anthonyrego/construct/pkg/input"
+	"github.com/anthonyrego/construct/pkg/mapdata"
 	"github.com/anthonyrego/construct/pkg/mesh"
+	"github.com/anthonyrego/construct/pkg/ramp"
 	"github.com/anthonyrego/construct/pkg/renderer"
 	"github.com/anthonyrego/construct/pkg/scene"
 	"github.com/anthonyrego/construct/pkg/settings"
@@ -119,7 +122,353 @@ func (cw *ConfigWatcher) Load() (*SceneConfig, bool) {
 	return &cfg, true
 }
 
+const mapDataDir = "data/map"
+
+// MapWorld consolidates all map-data-dependent state for clean reload.
+type MapWorld struct {
+	rend         *renderer.Renderer
+	gridCellSize float32
+	reg          *building.Registry
+	scene        *scene.Scene
+	grid         *scene.SpatialGrid
+	groundMeshes []*mesh.Mesh
+	trafficSys   *traffic.System
+	signMeshes   map[string]*mesh.Mesh
+	signWidths   map[string]float32
+	rampSys      *ramp.System
+	store        *mapdata.Store
+}
+
+func newMapWorld(rend *renderer.Renderer, cellSize float32) *MapWorld {
+	return &MapWorld{
+		rend:         rend,
+		gridCellSize: cellSize,
+		signMeshes:   make(map[string]*mesh.Mesh),
+		signWidths:   make(map[string]float32),
+	}
+}
+
+// destroyResources releases all GPU resources and nils pointers. Idempotent.
+func (w *MapWorld) destroyResources() {
+	if w.reg != nil {
+		w.reg.Destroy()
+		w.reg = nil
+	}
+	for _, gm := range w.groundMeshes {
+		gm.Destroy(w.rend)
+	}
+	w.groundMeshes = nil
+	for _, sm := range w.signMeshes {
+		sm.Destroy(w.rend)
+	}
+	w.signMeshes = make(map[string]*mesh.Mesh)
+	w.signWidths = make(map[string]float32)
+	if w.rampSys != nil {
+		w.rampSys.Destroy(w.rend)
+		w.rampSys = nil
+	}
+	w.trafficSys = nil
+	w.scene = nil
+	w.grid = nil
+}
+
+// Destroy releases all resources. Used by defer.
+func (w *MapWorld) Destroy() {
+	w.destroyResources()
+}
+
+// Reload destroys current resources and reloads from map data.
+func (w *MapWorld) Reload(dir string) error {
+	w.destroyResources()
+
+	store, err := mapdata.Load(dir)
+	if err != nil {
+		return err
+	}
+	w.store = store
+
+	w.reg = building.NewRegistry(w.rend, w.gridCellSize)
+	w.scene = &scene.Scene{}
+
+	loadFromMapData(w.rend, store, w.reg, w.scene, &w.groundMeshes, &w.trafficSys, w.signMeshes, w.signWidths, &w.rampSys)
+
+	w.grid = scene.NewSpatialGrid(w.scene.Objects, w.gridCellSize)
+	cellMeshes := w.reg.BuildCellMeshes()
+	for key, cm := range cellMeshes {
+		w.grid.CellMeshes[key] = &scene.CellMesh{Mesh: cm.Mesh, CellX: cm.CellX, CellZ: cm.CellZ}
+	}
+	fmt.Printf("Reload complete: %d objects, %d cell meshes\n", len(w.scene.Objects), len(cellMeshes))
+	return nil
+}
+
+func loadFromAPIs(
+	rend *renderer.Renderer, reg *building.Registry, s *scene.Scene,
+	groundMeshes *[]*mesh.Mesh, trafficSys **traffic.System,
+	signMeshes map[string]*mesh.Mesh, signWidths map[string]float32,
+	rampSys **ramp.System,
+	minLat, minLon, maxLat, maxLon float64,
+) {
+	footprints, proj, err := geojson.FetchFootprints(minLat, minLon, maxLat, maxLon, 50000)
+	if err != nil {
+		fmt.Println("Warning: could not fetch buildings:", err)
+	} else {
+		fmt.Printf("Fetched %d building footprints\n", len(footprints))
+	}
+
+	if len(footprints) > 0 {
+		var bbls []string
+		for _, fp := range footprints {
+			bbls = append(bbls, fp.BBL)
+		}
+		pluto, err := geojson.FetchPLUTO(bbls)
+		if err != nil {
+			fmt.Println("Warning: could not fetch PLUTO data:", err)
+		} else {
+			fmt.Printf("Fetched PLUTO data for %d lots\n", len(pluto))
+			geojson.EnrichFootprints(footprints, pluto)
+		}
+	}
+
+	count := reg.Ingest(footprints)
+	fmt.Printf("Registered %d buildings\n", count)
+
+	for _, b := range reg.Buildings() {
+		s.Add(scene.Object{
+			Mesh:       b.Mesh,
+			Position:   b.Position,
+			Scale:      mgl32.Vec3{1, 1, 1},
+			Radius:     b.Radius,
+			BuildingID: uint32(b.ID) + 1,
+		})
+	}
+
+	if proj != nil {
+		type surfaceEntry struct {
+			dataset  geojson.DatasetConfig
+			surfType ground.SurfaceType
+			label    string
+		}
+		surfaces := []surfaceEntry{
+			{ground.RoadbedDataset, ground.Roadbed, "roadbed"},
+			{ground.SidewalkDataset, ground.Sidewalk, "sidewalk"},
+			{ground.ParkDataset, ground.Park, "park"},
+		}
+		for _, se := range surfaces {
+			polys, err := geojson.FetchSurfacePolygons(se.dataset, minLat, minLon, maxLat, maxLon, 50000, proj)
+			if err != nil {
+				fmt.Printf("Warning: could not fetch %s polygons: %v\n", se.label, err)
+				continue
+			}
+			fmt.Printf("Fetched %d %s polygons\n", len(polys), se.label)
+			for _, poly := range polys {
+				m, pos, radius, err := ground.Flatten(rend, poly, se.surfType)
+				if err != nil {
+					continue
+				}
+				*groundMeshes = append(*groundMeshes, m)
+				s.Add(scene.Object{Mesh: m, Position: pos, Scale: mgl32.Vec3{1, 1, 1}, Radius: radius, SurfaceType: int(se.surfType) + 1})
+			}
+		}
+	}
+
+	var streets []geojson.StreetSegment
+	if proj != nil {
+		segs, err := geojson.FetchStreetSegments(traffic.CenterlineDataset, minLat, minLon, maxLat, maxLon, 50000, proj)
+		if err != nil {
+			fmt.Println("Warning: could not fetch centerlines:", err)
+		} else {
+			fmt.Printf("Fetched %d street centerline segments\n", len(segs))
+			streets = segs
+		}
+
+		signalPts, err := geojson.FetchOSMTrafficSignals(minLat, minLon, maxLat, maxLon, proj)
+		if err != nil {
+			fmt.Println("Warning: could not fetch OSM traffic signals:", err)
+		} else {
+			fmt.Printf("Fetched %d traffic signals from OpenStreetMap\n", len(signalPts))
+		}
+
+		if len(signalPts) > 0 {
+			*trafficSys = traffic.NewFromPoints(signalPts, 2.0, streets)
+
+			for _, sig := range (*trafficSys).Signals {
+				for _, name := range []string{sig.Street1, sig.Street2} {
+					if name == "" {
+						continue
+					}
+					if _, exists := signMeshes[name]; exists {
+						continue
+					}
+					m, w, err := sign.NewMesh(rend, name)
+					if err != nil {
+						fmt.Printf("Warning: could not create sign mesh for %q: %v\n", name, err)
+						continue
+					}
+					signMeshes[name] = m
+					signWidths[name] = w
+				}
+			}
+			fmt.Printf("Created %d unique street sign meshes\n", len(signMeshes))
+		}
+	}
+
+	if proj != nil {
+		ramps := ramp.LoadCSV("data/Pedestrian_Ramp_Locations_20260317.csv", proj,
+			minLat, minLon, maxLat, maxLon)
+		if len(ramps) > 0 {
+			if len(streets) > 0 {
+				ramp.Orient(ramps, streets)
+			}
+			rs, err := ramp.New(rend, ramps, 0.14)
+			if err != nil {
+				fmt.Println("Warning: could not create ramp system:", err)
+			} else {
+				fmt.Printf("Loaded %d pedestrian ramps\n", len(ramps))
+				*rampSys = rs
+			}
+		}
+	}
+}
+
+func loadFromMapData(
+	rend *renderer.Renderer, store *mapdata.Store, reg *building.Registry, s *scene.Scene,
+	groundMeshes *[]*mesh.Mesh, trafficSys **traffic.System,
+	signMeshes map[string]*mesh.Mesh, signWidths map[string]float32,
+	rampSys **ramp.System,
+) {
+	// --- Buildings ---
+	var allFootprints []geojson.Footprint
+	for _, block := range store.Blocks {
+		for i := range block.Buildings {
+			b := &block.Buildings[i]
+			if !b.Visible {
+				continue
+			}
+			fp := b.ToFootprint()
+			// Override PLUTO-computed color with stored color if present
+			if b.Color != nil {
+				fp.PLUTO.BldgClass = b.BuildingClass
+				fp.PLUTO.LandUse = b.LandUse
+			}
+			allFootprints = append(allFootprints, fp)
+		}
+	}
+
+	count := reg.Ingest(allFootprints)
+	fmt.Printf("Loaded %d buildings from map data\n", count)
+
+	for _, b := range reg.Buildings() {
+		s.Add(scene.Object{
+			Mesh:       b.Mesh,
+			Position:   b.Position,
+			Scale:      mgl32.Vec3{1, 1, 1},
+			Radius:     b.Radius,
+			BuildingID: uint32(b.ID) + 1,
+		})
+	}
+
+	// --- Surfaces ---
+	surfTypeMap := map[string]ground.SurfaceType{
+		"road":     ground.Roadbed,
+		"sidewalk": ground.Sidewalk,
+		"park":     ground.Park,
+	}
+	for typeName, surfType := range surfTypeMap {
+		sfd, ok := store.Surfaces[typeName]
+		if !ok {
+			continue
+		}
+		loaded := 0
+		for _, sp := range sfd.Polygons {
+			if !sp.Visible {
+				continue
+			}
+			poly := sp.ToSurfacePolygon()
+			m, pos, radius, err := ground.Flatten(rend, poly, surfType)
+			if err != nil {
+				continue
+			}
+			*groundMeshes = append(*groundMeshes, m)
+			s.Add(scene.Object{Mesh: m, Position: pos, Scale: mgl32.Vec3{1, 1, 1}, Radius: radius, SurfaceType: int(surfType) + 1})
+			loaded++
+		}
+		fmt.Printf("Loaded %d %s polygons from map data\n", loaded, typeName)
+	}
+
+	// --- Traffic signals ---
+	if len(store.Intersections) > 0 {
+		var intersections []traffic.MapIntersection
+		for _, d := range store.Intersections {
+			intersections = append(intersections, traffic.MapIntersection{
+				ID:             d.ID,
+				Position:       d.Position,
+				Street1:        d.Street1,
+				Street2:        d.Street2,
+				DirectionDeg:   d.DirectionDeg,
+				CycleOffsetSec: d.CycleOffsetSec,
+			})
+		}
+		*trafficSys = traffic.NewFromMapData(intersections, 2.0)
+		fmt.Printf("Loaded %d intersections from map data\n", len(intersections))
+
+		for _, sig := range (*trafficSys).Signals {
+			for _, name := range []string{sig.Street1, sig.Street2} {
+				if name == "" {
+					continue
+				}
+				if _, exists := signMeshes[name]; exists {
+					continue
+				}
+				m, w, err := sign.NewMesh(rend, name)
+				if err != nil {
+					continue
+				}
+				signMeshes[name] = m
+				signWidths[name] = w
+			}
+		}
+		fmt.Printf("Created %d unique street sign meshes\n", len(signMeshes))
+	}
+
+	// --- Ramps ---
+	if rampData, ok := store.Doodads["ramp"]; ok && len(rampData.Items) > 0 {
+		var items []ramp.MapDoodad
+		for _, d := range rampData.Items {
+			if !d.Visible {
+				continue
+			}
+			items = append(items, ramp.MapDoodad{
+				Position: d.Position,
+				AngleDeg: d.AngleDeg,
+				Width:    d.Width,
+				Length:   d.Length,
+			})
+		}
+		rs, err := ramp.NewFromMapData(rend, items, 0.14)
+		if err != nil {
+			fmt.Println("Warning: could not create ramp system:", err)
+		} else {
+			*rampSys = rs
+			fmt.Printf("Loaded %d ramps from map data\n", len(items))
+		}
+	}
+}
+
 func main() {
+	doImport := flag.Bool("import", false, "Import .cache/ data into data/map/ and exit")
+	useFetch := flag.Bool("fetch", false, "Use old fetch-from-API pipeline instead of map data")
+	flag.Parse()
+
+	minLat, minLon, maxLat, maxLon := 40.700, -74.020, 40.747, -73.970
+
+	if *doImport {
+		if err := mapdata.Import(mapDataDir, minLat, minLon, maxLat, maxLon); err != nil {
+			fmt.Println("Import failed:", err)
+			os.Exit(1)
+		}
+		return
+	}
+
 	// Try to load system SDL3, fall back to embedded
 	err := sdl.LoadLibrary(sdl.Path())
 	if err != nil {
@@ -244,161 +593,55 @@ func main() {
 		return m
 	}
 
-	var groundMeshes []*mesh.Mesh
-	signMeshes := make(map[string]*mesh.Mesh)
-	signWidths := make(map[string]float32)
-
 	defer func() {
 		for _, nm := range meshes {
 			nm.mesh.Destroy(rend)
 		}
-		for _, gm := range groundMeshes {
-			gm.Destroy(rend)
-		}
-		for _, sm := range signMeshes {
-			sm.Destroy(rend)
-		}
 	}()
 
 	// --- Build the scene ---
-	s := &scene.Scene{}
-
-	// --- Fetch and extrude NYC building footprints ---
-	minLat, minLon, maxLat, maxLon := 40.700, -74.020, 40.747, -73.970 // Below 30th St, Manhattan
-	footprints, proj, err := geojson.FetchFootprints(minLat, minLon, maxLat, maxLon, 50000)
-	if err != nil {
-		fmt.Println("Warning: could not fetch buildings:", err)
-	} else {
-		fmt.Printf("Fetched %d building footprints\n", len(footprints))
-	}
-
-	// Enrich with PLUTO data for building style/color
-	if len(footprints) > 0 {
-		var bbls []string
-		for _, fp := range footprints {
-			bbls = append(bbls, fp.BBL)
-		}
-		pluto, err := geojson.FetchPLUTO(bbls)
-		if err != nil {
-			fmt.Println("Warning: could not fetch PLUTO data:", err)
-		} else {
-			fmt.Printf("Fetched PLUTO data for %d lots\n", len(pluto))
-			geojson.EnrichFootprints(footprints, pluto)
-		}
-	}
-
 	const gridCellSize float32 = 100.0
-	reg := building.NewRegistry(rend, gridCellSize)
-	defer reg.Destroy()
+	world := newMapWorld(rend, gridCellSize)
+	defer world.Destroy()
 
-	count := reg.Ingest(footprints)
-	fmt.Printf("Registered %d buildings\n", count)
-
-	for _, b := range reg.Buildings() {
-		s.Add(scene.Object{
-			Mesh:       b.Mesh,
-			Position:   b.Position,
-			Scale:      mgl32.Vec3{1, 1, 1},
-			Radius:     b.Radius,
-			BuildingID: uint32(b.ID) + 1,
-		})
-	}
-
-	// --- Fetch and flatten ground surfaces ---
-	if proj != nil {
-		type surfaceEntry struct {
-			dataset  geojson.DatasetConfig
-			surfType ground.SurfaceType
-			label    string
-		}
-		surfaces := []surfaceEntry{
-			{ground.RoadbedDataset, ground.Roadbed, "roadbed"},
-			{ground.SidewalkDataset, ground.Sidewalk, "sidewalk"},
-			{ground.ParkDataset, ground.Park, "park"},
-		}
-		for _, se := range surfaces {
-			polys, err := geojson.FetchSurfacePolygons(se.dataset, minLat, minLon, maxLat, maxLon, 50000, proj)
-			if err != nil {
-				fmt.Printf("Warning: could not fetch %s polygons: %v\n", se.label, err)
-				continue
-			}
-			fmt.Printf("Fetched %d %s polygons\n", len(polys), se.label)
-			for _, poly := range polys {
-				m, pos, radius, err := ground.Flatten(rend, poly, se.surfType)
-				if err != nil {
-					continue
-				}
-				groundMeshes = append(groundMeshes, m)
-				s.Add(scene.Object{Mesh: m, Position: pos, Scale: mgl32.Vec3{1, 1, 1}, Radius: radius, SurfaceType: int(se.surfType) + 1})
-			}
-		}
-	}
-
-	// --- Fetch traffic signal locations ---
-	var trafficSys *traffic.System
 	poleMesh := createLitCube("pole", 30, 30, 30)
 	housingMesh := createLitCube("housing", 20, 20, 20)
-	// Lit (active) light meshes
 	greenOn := createLitCube("greenOn", 0, 255, 76)
 	yellowOn := createLitCube("yellowOn", 255, 230, 0)
 	redOn := createLitCube("redOn", 255, 25, 0)
-	// Dim (inactive) light meshes
 	greenOff := createLitCube("greenOff", 0, 30, 9)
 	yellowOff := createLitCube("yellowOff", 30, 27, 0)
 	redOff := createLitCube("redOff", 30, 3, 0)
 
-	if proj != nil {
-		// Fetch street centerlines for curb-edge offset and street name lookup
-		var streets []geojson.StreetSegment
-		segs, err := geojson.FetchStreetSegments(traffic.CenterlineDataset, minLat, minLon, maxLat, maxLon, 50000, proj)
+	if *useFetch {
+		// --- Old path: fetch from APIs / cache ---
+		world.reg = building.NewRegistry(rend, gridCellSize)
+		world.scene = &scene.Scene{}
+		loadFromAPIs(rend, world.reg, world.scene, &world.groundMeshes, &world.trafficSys, world.signMeshes, world.signWidths, &world.rampSys, minLat, minLon, maxLat, maxLon)
+	} else {
+		// --- New path: load from map data ---
+		store, err := mapdata.Load(mapDataDir)
 		if err != nil {
-			fmt.Println("Warning: could not fetch centerlines:", err)
+			fmt.Println("Warning: could not load map data, falling back to API fetch:", err)
+			world.reg = building.NewRegistry(rend, gridCellSize)
+			world.scene = &scene.Scene{}
+			loadFromAPIs(rend, world.reg, world.scene, &world.groundMeshes, &world.trafficSys, world.signMeshes, world.signWidths, &world.rampSys, minLat, minLon, maxLat, maxLon)
 		} else {
-			fmt.Printf("Fetched %d street centerline segments\n", len(segs))
-			streets = segs
-		}
-
-		// Fetch traffic signal positions from OpenStreetMap
-		signalPts, err := geojson.FetchOSMTrafficSignals(minLat, minLon, maxLat, maxLon, proj)
-		if err != nil {
-			fmt.Println("Warning: could not fetch OSM traffic signals:", err)
-		} else {
-			fmt.Printf("Fetched %d traffic signals from OpenStreetMap\n", len(signalPts))
-		}
-
-		if len(signalPts) > 0 {
-			trafficSys = traffic.NewFromPoints(signalPts, 2.0, streets)
-
-			// Create sign meshes for unique street names
-			for _, sig := range trafficSys.Signals {
-				for _, name := range []string{sig.Street1, sig.Street2} {
-					if name == "" {
-						continue
-					}
-					if _, exists := signMeshes[name]; exists {
-						continue
-					}
-					m, w, err := sign.NewMesh(rend, name)
-					if err != nil {
-						fmt.Printf("Warning: could not create sign mesh for %q: %v\n", name, err)
-						continue
-					}
-					signMeshes[name] = m
-					signWidths[name] = w
-				}
-			}
-			fmt.Printf("Created %d unique street sign meshes\n", len(signMeshes))
+			world.store = store
+			world.reg = building.NewRegistry(rend, gridCellSize)
+			world.scene = &scene.Scene{}
+			loadFromMapData(rend, store, world.reg, world.scene, &world.groundMeshes, &world.trafficSys, world.signMeshes, world.signWidths, &world.rampSys)
 		}
 	}
 
 	// --- Build spatial grid for frustum culling ---
-	grid := scene.NewSpatialGrid(s.Objects, gridCellSize)
-	fmt.Printf("Built spatial grid: %d objects\n", len(s.Objects))
+	world.grid = scene.NewSpatialGrid(world.scene.Objects, gridCellSize)
+	fmt.Printf("Built spatial grid: %d objects\n", len(world.scene.Objects))
 
 	// Build merged meshes per cell for efficient far rendering
-	cellMeshes := reg.BuildCellMeshes()
+	cellMeshes := world.reg.BuildCellMeshes()
 	for key, cm := range cellMeshes {
-		grid.CellMeshes[key] = &scene.CellMesh{Mesh: cm.Mesh, CellX: cm.CellX, CellZ: cm.CellZ}
+		world.grid.CellMeshes[key] = &scene.CellMesh{Mesh: cm.Mesh, CellX: cm.CellX, CellZ: cm.CellZ}
 	}
 	fmt.Printf("Built %d merged cell meshes for far rendering\n", len(cellMeshes))
 
@@ -432,23 +675,22 @@ func main() {
 	}
 	headlampColor := mgl32.Vec4{1.0, 0.95, 0.8, 8.0} // rgb + intensity
 
-	nScene := len(s.Lights)
-	if nScene > 511 {
-		nScene = 511
-	}
-
 	rebuildLightUniforms := func() {
 		lightUniforms.LightColors[0] = headlampColor
 
+		nScene := len(world.scene.Lights)
+		if nScene > 511 {
+			nScene = 511
+		}
 		for i := 0; i < nScene; i++ {
-			l := s.Lights[i]
+			l := world.scene.Lights[i]
 			lightUniforms.LightPositions[i+1] = mgl32.Vec4{l.Position.X(), l.Position.Y(), l.Position.Z(), 0}
 			lightUniforms.LightColors[i+1] = mgl32.Vec4{l.Color.X(), l.Color.Y(), l.Color.Z(), l.Intensity}
 		}
 
 		totalLights := 1 + nScene
-		if trafficSys != nil {
-			trafficLights := trafficSys.Lights()
+		if world.trafficSys != nil {
+			trafficLights := world.trafficSys.Lights()
 			for i, tl := range trafficLights {
 				slot := 1 + nScene + i
 				if slot >= 512 {
@@ -458,6 +700,12 @@ func main() {
 				lightUniforms.LightColors[slot] = mgl32.Vec4{tl.Color.X(), tl.Color.Y(), tl.Color.Z(), tl.Intensity}
 				totalLights = slot + 1
 			}
+		}
+
+		// Zero out stale light slots from previous load
+		for i := totalLights; i < 512; i++ {
+			lightUniforms.LightPositions[i] = mgl32.Vec4{}
+			lightUniforms.LightColors[i] = mgl32.Vec4{}
 		}
 
 		lightUniforms.NumLights = mgl32.Vec4{float32(totalLights), 0, 0, 0}
@@ -490,9 +738,10 @@ func main() {
 		// Update street light color/intensity from config (positions stay fixed from scene builder)
 		streetColor := mgl32.Vec3{cfg.Lighting.StreetLightR, cfg.Lighting.StreetLightG, cfg.Lighting.StreetLightB}
 		streetIntensity := cfg.Lighting.StreetLightIntensity
+		nScene := len(world.scene.Lights)
 		for i := 0; i < nScene; i++ {
-			s.Lights[i].Color = streetColor
-			s.Lights[i].Intensity = streetIntensity
+			world.scene.Lights[i].Color = streetColor
+			world.scene.Lights[i].Intensity = streetIntensity
 		}
 		rebuildLightUniforms()
 
@@ -542,6 +791,12 @@ func main() {
 	configWatcher.modTime = time.Time{} // reset so it reloads
 	if cfg, ok := configWatcher.Load(); ok {
 		applyConfig(cfg)
+	}
+
+	// Map data watcher (only for local map data path, not -fetch)
+	var mapWatcher *mapdata.MapWatcher
+	if !*useFetch {
+		mapWatcher = mapdata.NewWatcher(mapDataDir)
 	}
 
 	fmt.Println("\nControls:")
@@ -621,6 +876,18 @@ func main() {
 			applyConfig(cfg)
 		}
 
+		// Hot-reload map data
+		if mapWatcher != nil && mapWatcher.Check() {
+			fmt.Println("Reloading map data...")
+			adminMode.ClearSelection()
+			adminMode.ResetEditing()
+			if err := world.Reload(mapDataDir); err != nil {
+				fmt.Println("Map reload error:", err)
+			} else {
+				rebuildLightUniforms()
+			}
+		}
+
 		if !pauseMenu.IsActive() {
 			// Throttle: scroll wheel adjusts move speed
 			if scroll := inp.ScrollY(); scroll != 0 {
@@ -637,10 +904,14 @@ func main() {
 			// Handle camera movement
 			var forward, right, up float32
 
+			// When admin mode is active and Cmd/Ctrl is held, skip S for backward
+			// movement so Cmd+S can be used for save.
+			cmdHeld := adminMode.IsActive() && (inp.IsKeyDown(sdl.K_LGUI) || inp.IsKeyDown(sdl.K_LCTRL))
+
 			if inp.IsKeyDown(sdl.K_W) {
 				forward = 1
 			}
-			if inp.IsKeyDown(sdl.K_S) {
+			if inp.IsKeyDown(sdl.K_S) && !cmdHeld {
 				forward = -1
 			}
 			if inp.IsKeyDown(sdl.K_D) {
@@ -658,13 +929,47 @@ func main() {
 
 			// Admin mode: raycast from screen center to select what you're looking at
 			if adminMode.IsActive() {
-				adminMode.Update(cam, grid, s.Objects, reg, trafficSys)
+				adminMode.Update(cam, world.grid, world.scene.Objects, world.reg, world.trafficSys)
+
+				if world.store != nil {
+					action := adminMode.HandleEdit(inp, world.reg, world.trafficSys,
+						world.scene, world.grid, world.store)
+					switch action {
+					case admin.EditSave:
+						// Remember selection for re-select
+						var selBBL, selIntID string
+						if sel := adminMode.Selection(); sel.Type == admin.EntityBuilding {
+							b := world.reg.Get(sel.BuildingID)
+							if b != nil {
+								selBBL = b.BBL
+							}
+						} else if sel.Type == admin.EntitySignal && world.trafficSys != nil && sel.SignalIdx >= 0 {
+							selIntID = world.trafficSys.Signals[sel.SignalIdx].ID
+						}
+						if err := adminMode.SaveDirty(world.store); err != nil {
+							fmt.Println("Save error:", err)
+						} else {
+							if err := world.Reload(mapDataDir); err != nil {
+								fmt.Println("Reload error:", err)
+							} else {
+								if mapWatcher != nil {
+									mapWatcher.Reset()
+								}
+								rebuildLightUniforms()
+								adminMode.ResetEditing()
+								adminMode.Reselect(selBBL, selIntID, world.reg, world.trafficSys)
+							}
+						}
+					case admin.EditDirty:
+						rebuildLightUniforms()
+					}
+				}
 			}
 
 			// Update traffic lights
-			if trafficSys != nil {
-				trafficSys.Update(deltaTime)
-				if trafficSys.Dirty() {
+			if world.trafficSys != nil {
+				world.trafficSys.Update(deltaTime)
+				if world.trafficSys.Dirty() {
 					rebuildLightUniforms()
 				}
 			}
@@ -738,16 +1043,16 @@ func main() {
 		farCellSet := make(map[uint64]bool)
 
 		// Iterate all cells with merged meshes and decide per-cell
-		allCells := grid.QueryCells(cam.Position.X(), cam.Position.Z(), cullDist)
+		allCells := world.grid.QueryCells(cam.Position.X(), cam.Position.Z(), cullDist)
 		for _, key := range allCells {
-			cellDistSq := grid.CellDistSq(key, cam.Position.X(), cam.Position.Z())
+			cellDistSq := world.grid.CellDistSq(key, cam.Position.X(), cam.Position.Z())
 			if cellDistSq > cullDistSq {
 				continue
 			}
 			if cellDistSq >= detailDistSq {
 				// Far tier: draw merged mesh
-				cm := grid.CellMeshes[key]
-				ccx, ccz := grid.CellCenter(key)
+				cm := world.grid.CellMeshes[key]
+				ccx, ccz := world.grid.CellCenter(key)
 				if !frustum.SphereVisible(mgl32.Vec3{ccx, 50, ccz}, gridCellSize) {
 					continue
 				}
@@ -776,9 +1081,12 @@ func main() {
 		}
 
 		// Near tier: individual objects (skip objects in far-tier cells)
-		nearby := grid.QueryRadius(cam.Position.X(), cam.Position.Z(), cullDist)
+		nearby := world.grid.QueryRadius(cam.Position.X(), cam.Position.Z(), cullDist)
 		for _, idx := range nearby {
-			obj := s.Objects[idx]
+			obj := world.scene.Objects[idx]
+			if obj.Hidden {
+				continue
+			}
 			dx := obj.Position.X() - cam.Position.X()
 			dz := obj.Position.Z() - cam.Position.Z()
 			distSq := dx*dx + dz*dz
@@ -789,7 +1097,7 @@ func main() {
 				continue
 			}
 			// Skip objects whose cell is handled by the far tier
-			cellKey := grid.CellKeyFor(obj.Position.X(), obj.Position.Z())
+			cellKey := world.grid.CellKeyFor(obj.Position.X(), obj.Position.Z())
 			if farCellSet[cellKey] && obj.SurfaceType == 0 {
 				continue
 			}
@@ -810,7 +1118,7 @@ func main() {
 			mvp := viewProj.Mul4(model)
 
 			var highlight float32
-			if adminMode.IsActive() && obj.BuildingID > 0 &&
+			if adminMode.IsActive() && obj.BuildingID > 0 && world.reg != nil &&
 				building.BuildingID(obj.BuildingID-1) == adminMode.SelectedBuildingID() {
 				highlight = 1.0
 			}
@@ -855,7 +1163,7 @@ func main() {
 		}
 
 		// Draw traffic signals (pole + 2 directional signal heads per intersection)
-		if trafficSys != nil {
+		if world.trafficSys != nil {
 			var sigHighlight float32
 			drawBox := func(m *mesh.Mesh, x, y, z float32) {
 				model := mgl32.Translate3D(x, y, z)
@@ -870,7 +1178,7 @@ func main() {
 				})
 			}
 
-			for sigIdx, sig := range trafficSys.Signals {
+			for sigIdx, sig := range world.trafficSys.Signals {
 				x, z := sig.Position.X, sig.Position.Z
 
 				// Frustum cull entire intersection (generous 10m radius)
@@ -938,7 +1246,7 @@ func main() {
 
 				// Street name signs (stacked on the pole, not on the heads)
 				drawSign := func(name string, y, angle float32) {
-					sm, ok := signMeshes[name]
+					sm, ok := world.signMeshes[name]
 					if !ok {
 						return
 					}
@@ -957,6 +1265,34 @@ func main() {
 				if sig.Street2 != "" {
 					drawSign(sig.Street2, traffic.SignY2, sig.DirAngle+math.Pi)
 				}
+			}
+		}
+
+		// Draw pedestrian ramps
+		if world.rampSys != nil {
+			rm := world.rampSys.Mesh
+			for _, r := range world.rampSys.Ramps {
+				rx, rz := r.Position.X, r.Position.Z
+				// Frustum cull with 2m radius
+				if !frustum.SphereVisible(mgl32.Vec3{rx, 0.1, rz}, 2) {
+					continue
+				}
+				// Distance cull
+				dx := rx - cam.Position.X()
+				dz := rz - cam.Position.Z()
+				if dx*dx+dz*dz > cullDistSq {
+					continue
+				}
+				model := mgl32.Translate3D(rx, 0.07, rz).
+					Mul4(mgl32.HomogRotate3DY(r.DirAngle)).
+					Mul4(mgl32.Scale3D(r.Width, 1.0, r.Length))
+				rend.DrawLit(cmdBuf, scenePass, renderer.LitDrawCall{
+					VertexBuffer: rm.VertexBuffer,
+					IndexBuffer:  rm.IndexBuffer,
+					IndexCount:   rm.IndexCount,
+					MVP:          viewProj.Mul4(model),
+					Model:        model,
+				})
 			}
 		}
 

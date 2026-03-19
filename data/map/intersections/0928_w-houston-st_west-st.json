@@ -1,0 +1,12 @@
+{
+  "id": "0928_w-houston-st_west-st",
+  "position": [
+    1419.2571,
+    192.85165
+  ],
+  "street1": "W HOUSTON ST",
+  "street2": "WEST ST",
+  "directionDeg": 262.63083,
+  "cycleOffsetSec": 15.52908,
+  "features": []
+}

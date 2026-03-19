@@ -1,0 +1,12 @@
+{
+  "id": "0021_water-st_whitehall-st",
+  "position": [
+    1606.6481,
+    -2781.1929
+  ],
+  "street1": "WHITEHALL ST",
+  "street2": "WATER ST",
+  "directionDeg": -171.27698,
+  "cycleOffsetSec": 21.620405,
+  "features": []
+}

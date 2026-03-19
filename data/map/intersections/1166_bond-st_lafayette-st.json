@@ -1,0 +1,12 @@
+{
+  "id": "1166_bond-st_lafayette-st",
+  "position": [
+    26.731453,
+    -100.75229
+  ],
+  "street1": "LAFAYETTE ST",
+  "street2": "BOND ST",
+  "directionDeg": 151.14345,
+  "cycleOffsetSec": 39.486103,
+  "features": []
+}

@@ -1,0 +1,12 @@
+{
+  "id": "0059_broadway_cortlandt-st",
+  "position": [
+    1362.7585,
+    -1955.0747
+  ],
+  "street1": "CORTLANDT ST",
+  "street2": "BROADWAY",
+  "directionDeg": 239.22754,
+  "cycleOffsetSec": 29.703234,
+  "features": []
+}

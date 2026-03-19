@@ -1,0 +1,12 @@
+{
+  "id": "0650_gold-st_york-st",
+  "position": [
+    -928.11334,
+    -2892.7256
+  ],
+  "street1": "YORK ST",
+  "street2": "GOLD ST",
+  "directionDeg": 86.78948,
+  "cycleOffsetSec": 19.41538,
+  "features": []
+}

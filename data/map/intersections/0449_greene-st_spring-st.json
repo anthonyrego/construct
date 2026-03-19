@@ -1,0 +1,12 @@
+{
+  "id": "0449_greene-st_spring-st",
+  "position": [
+    548.5354,
+    -400.1566
+  ],
+  "street1": "SPRING ST",
+  "street2": "GREENE ST",
+  "directionDeg": 57.03018,
+  "cycleOffsetSec": 44.335857,
+  "features": []
+}

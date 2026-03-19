@@ -1,0 +1,12 @@
+{
+  "id": "0096_murray-st_w-broadway",
+  "position": [
+    1375.127,
+    -1445.9127
+  ],
+  "street1": "MURRAY ST",
+  "street2": "W BROADWAY",
+  "directionDeg": 240.3792,
+  "cycleOffsetSec": 36.009468,
+  "features": []
+}

@@ -1,0 +1,12 @@
+{
+  "id": "0284_greenwich-st_n-moore-st",
+  "position": [
+    1372.8932,
+    -808.1627
+  ],
+  "street1": "N MOORE ST",
+  "street2": "GREENWICH ST",
+  "directionDeg": 262.33246,
+  "cycleOffsetSec": 25.610905,
+  "features": []
+}

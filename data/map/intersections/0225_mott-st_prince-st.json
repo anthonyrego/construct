@@ -1,0 +1,12 @@
+{
+  "id": "0225_mott-st_prince-st",
+  "position": [
+    92.1855,
+    -491.51694
+  ],
+  "street1": "PRINCE ST",
+  "street2": "MOTT ST",
+  "directionDeg": 241.31372,
+  "cycleOffsetSec": 56.218052,
+  "features": []
+}

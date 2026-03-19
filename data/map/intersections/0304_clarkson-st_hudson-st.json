@@ -1,0 +1,12 @@
+{
+  "id": "0304_clarkson-st_hudson-st",
+  "position": [
+    1106.755,
+    226.78131
+  ],
+  "street1": "CLARKSON ST",
+  "street2": "HUDSON ST",
+  "directionDeg": 83.07107,
+  "cycleOffsetSec": 8.886043,
+  "features": []
+}

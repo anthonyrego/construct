@@ -1,0 +1,12 @@
+{
+  "id": "0664_washington-st_york-st",
+  "position": [
+    -342.76404,
+    -2870.1272
+  ],
+  "street1": "WASHINGTON ST",
+  "street2": "YORK ST",
+  "directionDeg": 357.31824,
+  "cycleOffsetSec": 49.511917,
+  "features": []
+}

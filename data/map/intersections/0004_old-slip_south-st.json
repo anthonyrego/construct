@@ -1,0 +1,12 @@
+{
+  "id": "0004_old-slip_south-st",
+  "position": [
+    1197.2257,
+    -2698.2651
+  ],
+  "street1": "OLD SLIP",
+  "street2": "SOUTH ST",
+  "directionDeg": 41.457706,
+  "cycleOffsetSec": 0.73219836,
+  "features": []
+}

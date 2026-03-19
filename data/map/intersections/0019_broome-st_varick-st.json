@@ -1,0 +1,12 @@
+{
+  "id": "0019_broome-st_varick-st",
+  "position": [
+    1024.82,
+    -331.1361
+  ],
+  "street1": "BROOME ST",
+  "street2": "VARICK ST",
+  "directionDeg": 262.14172,
+  "cycleOffsetSec": 59.95411,
+  "features": []
+}

@@ -1,0 +1,12 @@
+{
+  "id": "0877_lafayette-st_leonard-st",
+  "position": [
+    722.5167,
+    -1250.7421
+  ],
+  "street1": "LAFAYETTE ST",
+  "street2": "LEONARD ST",
+  "directionDeg": -33.49254,
+  "cycleOffsetSec": 42.43371,
+  "features": []
+}

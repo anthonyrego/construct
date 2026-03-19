@@ -1,0 +1,12 @@
+{
+  "id": "0125_kenmare-st_mott-st",
+  "position": [
+    157.40594,
+    -727.3996
+  ],
+  "street1": "MOTT ST",
+  "street2": "KENMARE ST",
+  "directionDeg": -16.668213,
+  "cycleOffsetSec": 31.317583,
+  "features": []
+}

@@ -64,6 +64,7 @@ type SignalHead struct {
 
 // Signal represents a coordinated intersection with two directional signal heads.
 type Signal struct {
+	ID       string          // unique identifier for store linkage
 	Position geojson.Point2D
 	Phase1   Phase   // current phase for street1 direction
 	Phase2   Phase   // current phase for street2 direction
@@ -267,6 +268,38 @@ func NewFromPoints(points []geojson.Point2D, lightIntensity float32, streets []g
 	}
 }
 
+// NewFromMapData creates a traffic system directly from pre-processed intersection data.
+// Position and direction are already computed (no clustering/snapping needed).
+func NewFromMapData(intersections []MapIntersection, lightIntensity float32) *System {
+	signals := make([]Signal, len(intersections))
+	for i, d := range intersections {
+		sig := Signal{
+			ID:       d.ID,
+			Position: geojson.Point2D{X: d.Position[0], Z: d.Position[1]},
+			Street1:  d.Street1,
+			Street2:  d.Street2,
+			DirAngle: d.DirectionDeg * math.Pi / 180,
+		}
+		sig.advance(d.CycleOffsetSec)
+		signals[i] = sig
+	}
+	return &System{
+		Signals:        signals,
+		dirty:          true,
+		lightIntensity: lightIntensity,
+	}
+}
+
+// MapIntersection holds the data needed to create a Signal from map data.
+type MapIntersection struct {
+	ID             string
+	Position       [2]float32
+	Street1        string
+	Street2        string
+	DirectionDeg   float32
+	CycleOffsetSec float32
+}
+
 // nearestStreetNames finds the two closest segments with distinct names.
 func nearestStreetNames(pt geojson.Point2D, streets []geojson.StreetSegment) (string, string) {
 	type segDist struct {
@@ -404,6 +437,11 @@ func (s *System) Update(dt float32) {
 			s.dirty = true
 		}
 	}
+}
+
+// SetDirty marks the system as needing a light uniform rebuild.
+func (s *System) SetDirty() {
+	s.dirty = true
 }
 
 // Dirty returns true if any signal changed phase since last call.

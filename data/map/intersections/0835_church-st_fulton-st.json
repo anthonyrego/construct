@@ -1,0 +1,12 @@
+{
+  "id": "0835_church-st_fulton-st",
+  "position": [
+    1401.553,
+    -1763.0194
+  ],
+  "street1": "FULTON ST",
+  "street2": "CHURCH ST",
+  "directionDeg": 243.04008,
+  "cycleOffsetSec": 21.334846,
+  "features": []
+}

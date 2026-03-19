@@ -1,0 +1,12 @@
+{
+  "id": "0402_charlton-st_varick-st",
+  "position": [
+    987.0335,
+    -25.288496
+  ],
+  "street1": "CHARLTON ST",
+  "street2": "VARICK ST",
+  "directionDeg": 262.87396,
+  "cycleOffsetSec": 38.0538,
+  "features": []
+}

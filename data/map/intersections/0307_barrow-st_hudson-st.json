@@ -1,0 +1,12 @@
+{
+  "id": "0307_barrow-st_hudson-st",
+  "position": [
+    1076.3776,
+    477.10043
+  ],
+  "street1": "BARROW ST",
+  "street2": "HUDSON ST",
+  "directionDeg": 263.1322,
+  "cycleOffsetSec": 6.765563,
+  "features": []
+}

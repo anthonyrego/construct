@@ -1,0 +1,12 @@
+{
+  "id": "0016_hudson-st_laight-st",
+  "position": [
+    1218.2715,
+    -600.66766
+  ],
+  "street1": "LAIGHT ST",
+  "street2": "HUDSON ST",
+  "directionDeg": 261.76596,
+  "cycleOffsetSec": 46.75101,
+  "features": []
+}

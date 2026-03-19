@@ -1,0 +1,12 @@
+{
+  "id": "0826_chatham-sq_mott-st",
+  "position": [
+    390.99936,
+    -1533.7798
+  ],
+  "street1": "CHATHAM SQ",
+  "street2": "MOTT ST",
+  "directionDeg": -59.661606,
+  "cycleOffsetSec": 33.126442,
+  "features": []
+}

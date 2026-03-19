@@ -1,0 +1,12 @@
+{
+  "id": "0670_vesey-st_west-st",
+  "position": [
+    1691.8014,
+    -1510.2324
+  ],
+  "street1": "VESEY ST",
+  "street2": "WEST ST",
+  "directionDeg": 239.84695,
+  "cycleOffsetSec": 24.518301,
+  "features": []
+}

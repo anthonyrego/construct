@@ -1,0 +1,12 @@
+{
+  "id": "0234_e-broadway_pike-st",
+  "position": [
+    -110.16739,
+    -1509.0105
+  ],
+  "street1": "PIKE ST",
+  "street2": "E BROADWAY",
+  "directionDeg": -172.35121,
+  "cycleOffsetSec": 47.57406,
+  "features": []
+}

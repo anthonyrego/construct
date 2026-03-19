@@ -1,0 +1,12 @@
+{
+  "id": "1191_delancey-st_suffolk-st",
+  "position": [
+    -600.57007,
+    -1045.249
+  ],
+  "street1": "DELANCEY ST",
+  "street2": "SUFFOLK ST",
+  "directionDeg": 64.89557,
+  "cycleOffsetSec": 4.7995796,
+  "features": []
+}

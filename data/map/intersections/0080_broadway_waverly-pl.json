@@ -1,0 +1,12 @@
+{
+  "id": "0080_broadway_waverly-pl",
+  "position": [
+    -50.86647,
+    243.92885
+  ],
+  "street1": "WAVERLY PL",
+  "street2": "BROADWAY",
+  "directionDeg": 56.79953,
+  "cycleOffsetSec": 5.591595,
+  "features": []
+}

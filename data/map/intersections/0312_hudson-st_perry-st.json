@@ -1,0 +1,12 @@
+{
+  "id": "0312_hudson-st_perry-st",
+  "position": [
+    1029.1427,
+    854.70624
+  ],
+  "street1": "PERRY ST",
+  "street2": "HUDSON ST",
+  "directionDeg": 101.18675,
+  "cycleOffsetSec": 31.785872,
+  "features": []
+}

@@ -28,7 +28,7 @@ var surfaceColors = [3][3]uint8{
 
 var surfaceYOffsets = [3]float32{
 	Roadbed:  0.06,
-	Sidewalk: 0.10,
+	Sidewalk: 0.20,
 	Park:     0.01,
 }
 
@@ -88,6 +88,40 @@ func Flatten(r *renderer.Renderer, poly geojson.SurfacePolygon, surfType Surface
 		indices[i] = triIndices[i]
 		indices[i+1] = triIndices[i+2]
 		indices[i+2] = triIndices[i+1]
+	}
+
+	// Add curb walls for sidewalk polygons (vertical face from surface down to roadbed)
+	if surfType == Sidewalk {
+		curbHeight := surfaceYOffsets[Sidewalk] - surfaceYOffsets[Roadbed]
+		// Darken color slightly for the wall face
+		wallR := uint8(float32(red) * 0.7)
+		wallG := uint8(float32(green) * 0.7)
+		wallB := uint8(float32(blue) * 0.7)
+
+		for i := 0; i < n; i++ {
+			j := (i + 1) % n
+			a := centered[i]
+			b := centered[j]
+
+			// Outward normal for CCW winding (right-hand perpendicular)
+			dx := b.X - a.X
+			dz := b.Z - a.Z
+			l := float32(math.Sqrt(float64(dx*dx + dz*dz)))
+			if l < 1e-6 {
+				continue
+			}
+			nx := dz / l
+			nz := -dx / l
+
+			base := uint16(len(vertices))
+			vertices = append(vertices,
+				renderer.LitVertex{X: a.X, Y: 0, Z: a.Z, NX: nx, NY: 0, NZ: nz, R: wallR, G: wallG, B: wallB, A: 255},
+				renderer.LitVertex{X: b.X, Y: 0, Z: b.Z, NX: nx, NY: 0, NZ: nz, R: wallR, G: wallG, B: wallB, A: 255},
+				renderer.LitVertex{X: b.X, Y: -curbHeight, Z: b.Z, NX: nx, NY: 0, NZ: nz, R: wallR, G: wallG, B: wallB, A: 255},
+				renderer.LitVertex{X: a.X, Y: -curbHeight, Z: a.Z, NX: nx, NY: 0, NZ: nz, R: wallR, G: wallG, B: wallB, A: 255},
+			)
+			indices = append(indices, base, base+1, base+2, base, base+2, base+3)
+		}
 	}
 
 	if len(vertices) > 65535 {

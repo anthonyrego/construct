@@ -1,0 +1,12 @@
+{
+  "id": "0653_gansevoort-st_west-st",
+  "position": [
+    1366.4067,
+    1342.7377
+  ],
+  "street1": "WEST ST",
+  "street2": "GANSEVOORT ST",
+  "directionDeg": -22.565447,
+  "cycleOffsetSec": 34.232662,
+  "features": []
+}

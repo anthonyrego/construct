@@ -1,0 +1,12 @@
+{
+  "id": "0209_broome-st_essex-st",
+  "position": [
+    -437.46536,
+    -1083.8645
+  ],
+  "street1": "BROOME ST",
+  "street2": "ESSEX ST",
+  "directionDeg": 68.187164,
+  "cycleOffsetSec": 5.7216153,
+  "features": []
+}

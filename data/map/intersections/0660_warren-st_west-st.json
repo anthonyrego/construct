@@ -1,0 +1,12 @@
+{
+  "id": "0660_warren-st_west-st",
+  "position": [
+    1629.946,
+    -1214.4036
+  ],
+  "street1": "WEST ST",
+  "street2": "WARREN ST",
+  "directionDeg": -10.912525,
+  "cycleOffsetSec": 68.90554,
+  "features": []
+}

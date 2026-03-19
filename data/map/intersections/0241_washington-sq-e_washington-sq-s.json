@@ -1,0 +1,12 @@
+{
+  "id": "0241_washington-sq-e_washington-sq-s",
+  "position": [
+    233.95274,
+    240.88924
+  ],
+  "street1": "WASHINGTON SQ E",
+  "street2": "WASHINGTON SQ S",
+  "directionDeg": 147.3948,
+  "cycleOffsetSec": 56.671345,
+  "features": []
+}

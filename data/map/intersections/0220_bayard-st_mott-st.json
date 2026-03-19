@@ -1,0 +1,12 @@
+{
+  "id": "0220_bayard-st_mott-st",
+  "position": [
+    388.92648,
+    -1314.0361
+  ],
+  "street1": "MOTT ST",
+  "street2": "BAYARD ST",
+  "directionDeg": -24.004997,
+  "cycleOffsetSec": 30.947962,
+  "features": []
+}

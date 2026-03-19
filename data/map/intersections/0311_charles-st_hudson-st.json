@@ -1,0 +1,12 @@
+{
+  "id": "0311_charles-st_hudson-st",
+  "position": [
+    1038.6903,
+    777.454
+  ],
+  "street1": "CHARLES ST",
+  "street2": "HUDSON ST",
+  "directionDeg": 281.45654,
+  "cycleOffsetSec": 54.681637,
+  "features": []
+}

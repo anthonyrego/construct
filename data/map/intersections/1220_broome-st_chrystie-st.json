@@ -1,0 +1,12 @@
+{
+  "id": "1220_broome-st_chrystie-st",
+  "position": [
+    -36.153114,
+    -913.68195
+  ],
+  "street1": "CHRYSTIE ST",
+  "street2": "BROOME ST",
+  "directionDeg": 158.85844,
+  "cycleOffsetSec": 16.40544,
+  "features": []
+}

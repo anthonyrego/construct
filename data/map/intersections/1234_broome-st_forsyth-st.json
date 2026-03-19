@@ -1,0 +1,12 @@
+{
+  "id": "1234_broome-st_forsyth-st",
+  "position": [
+    -103.605515,
+    -967.1025
+  ],
+  "street1": "FORSYTH ST",
+  "street2": "BROOME ST",
+  "directionDeg": 158.85596,
+  "cycleOffsetSec": 8.571084,
+  "features": []
+}

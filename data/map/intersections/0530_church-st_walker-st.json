@@ -1,0 +1,12 @@
+{
+  "id": "0530_church-st_walker-st",
+  "position": [
+    886.79816,
+    -880.86725
+  ],
+  "street1": "WALKER ST",
+  "street2": "CHURCH ST",
+  "directionDeg": 58.99417,
+  "cycleOffsetSec": 18.439737,
+  "features": []
+}

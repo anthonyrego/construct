@@ -1,0 +1,12 @@
+{
+  "id": "0658_n-moore-st_west-st",
+  "position": [
+    1556.4711,
+    -768.6265
+  ],
+  "street1": "WEST ST",
+  "street2": "N MOORE ST",
+  "directionDeg": -9.401574,
+  "cycleOffsetSec": 24.839664,
+  "features": []
+}

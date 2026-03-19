@@ -1,0 +1,12 @@
+{
+  "id": "0069_broadway_walker-st",
+  "position": [
+    736.4183,
+    -975.33105
+  ],
+  "street1": "BROADWAY",
+  "street2": "WALKER ST",
+  "directionDeg": -32.719753,
+  "cycleOffsetSec": 21.07957,
+  "features": []
+}

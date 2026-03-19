@@ -1,0 +1,12 @@
+{
+  "id": "0048_broadway_w-25-st",
+  "position": [
+    -396.42065,
+    1742.6373
+  ],
+  "street1": "W 25 ST",
+  "street2": "BROADWAY",
+  "directionDeg": 240.69072,
+  "cycleOffsetSec": 28.209251,
+  "features": []
+}

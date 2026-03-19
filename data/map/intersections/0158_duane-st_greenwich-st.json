@@ -1,0 +1,12 @@
+{
+  "id": "0158_duane-st_greenwich-st",
+  "position": [
+    1415.8824,
+    -1104.1305
+  ],
+  "street1": "DUANE ST",
+  "street2": "GREENWICH ST",
+  "directionDeg": 80.11567,
+  "cycleOffsetSec": 66.44704,
+  "features": []
+}

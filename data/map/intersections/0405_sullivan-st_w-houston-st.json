@@ -1,0 +1,12 @@
+{
+  "id": "0405_sullivan-st_w-houston-st",
+  "position": [
+    641.0339,
+    30.579668
+  ],
+  "street1": "SULLIVAN ST",
+  "street2": "W HOUSTON ST",
+  "directionDeg": 147.45886,
+  "cycleOffsetSec": 41.019,
+  "features": []
+}

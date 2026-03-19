@@ -1,0 +1,12 @@
+{
+  "id": "0689_fulton-st_greenwich-st",
+  "position": [
+    1526.2979,
+    -1709.326
+  ],
+  "street1": "GREENWICH ST",
+  "street2": "FULTON ST",
+  "directionDeg": 166.41718,
+  "cycleOffsetSec": 19.504423,
+  "features": []
+}

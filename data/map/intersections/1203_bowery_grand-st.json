@@ -1,0 +1,12 @@
+{
+  "id": "1203_bowery_grand-st",
+  "position": [
+    85.033226,
+    -980.9223
+  ],
+  "street1": "BOWERY",
+  "street2": "GRAND ST",
+  "directionDeg": 162.76904,
+  "cycleOffsetSec": 14.344716,
+  "features": []
+}

@@ -1,0 +1,12 @@
+{
+  "id": "0582_harrison-st_west-st",
+  "position": [
+    1563.4028,
+    -931.3381
+  ],
+  "street1": "WEST ST",
+  "street2": "HARRISON ST",
+  "directionDeg": 170.36563,
+  "cycleOffsetSec": 17.633654,
+  "features": []
+}

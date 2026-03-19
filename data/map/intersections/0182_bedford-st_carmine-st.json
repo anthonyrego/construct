@@ -1,0 +1,12 @@
+{
+  "id": "0182_bedford-st_carmine-st",
+  "position": [
+    849.93445,
+    273.64825
+  ],
+  "street1": "BEDFORD ST",
+  "street2": "CARMINE ST",
+  "directionDeg": 204.04669,
+  "cycleOffsetSec": 35.113117,
+  "features": []
+}

@@ -1,0 +1,12 @@
+{
+  "id": "1167_bond-st_bowery",
+  "position": [
+    -136.83313,
+    -184.52054
+  ],
+  "street1": "BOWERY",
+  "street2": "BOND ST",
+  "directionDeg": -15.6759405,
+  "cycleOffsetSec": 22.574167,
+  "features": []
+}

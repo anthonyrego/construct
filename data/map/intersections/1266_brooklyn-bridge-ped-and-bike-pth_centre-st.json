@@ -1,0 +1,12 @@
+{
+  "id": "1266_brooklyn-bridge-ped-and-bike-pth_centre-st",
+  "position": [
+    933.06335,
+    -1662.0826
+  ],
+  "street1": "CENTRE ST",
+  "street2": "BROOKLYN BRIDGE PED AND BIKE PTH",
+  "directionDeg": -43.319714,
+  "cycleOffsetSec": 59.648746,
+  "features": []
+}

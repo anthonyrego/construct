@@ -1,0 +1,12 @@
+{
+  "id": "0395_baxter-st_grand-st",
+  "position": [
+    365.95065,
+    -871.51904
+  ],
+  "street1": "GRAND ST",
+  "street2": "BAXTER ST",
+  "directionDeg": 60.18228,
+  "cycleOffsetSec": 17.296726,
+  "features": []
+}

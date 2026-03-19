@@ -1,0 +1,12 @@
+{
+  "id": "0562_grand-st_greene-st",
+  "position": [
+    703.8978,
+    -642.11395
+  ],
+  "street1": "GRAND ST",
+  "street2": "GREENE ST",
+  "directionDeg": 57.123547,
+  "cycleOffsetSec": 18.965183,
+  "features": []
+}

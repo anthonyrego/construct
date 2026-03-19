@@ -1,0 +1,12 @@
+{
+  "id": "1179_broome-st_wooster-st",
+  "position": [
+    692.3261,
+    -499.1555
+  ],
+  "street1": "WOOSTER ST",
+  "street2": "BROOME ST",
+  "directionDeg": -32.661636,
+  "cycleOffsetSec": 40.55218,
+  "features": []
+}

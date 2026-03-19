@@ -1,0 +1,12 @@
+{
+  "id": "0822_bowery_kenmare-st",
+  "position": [
+    39.120113,
+    -789.42523
+  ],
+  "street1": "KENMARE ST",
+  "street2": "BOWERY",
+  "directionDeg": 246.44121,
+  "cycleOffsetSec": 68.614136,
+  "features": []
+}

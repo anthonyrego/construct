@@ -1,0 +1,12 @@
+{
+  "id": "0269_delancey-st_lewis-st",
+  "position": [
+    -1229.9586,
+    -1334.6656
+  ],
+  "street1": "LEWIS ST",
+  "street2": "DELANCEY ST",
+  "directionDeg": 157.97348,
+  "cycleOffsetSec": 53.831642,
+  "features": []
+}

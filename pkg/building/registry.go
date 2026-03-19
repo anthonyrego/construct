@@ -26,6 +26,7 @@ type Building struct {
 	Position  mgl32.Vec3
 	Radius    float32
 	CellKey   uint64
+	Hidden    bool
 }
 
 // MergedCell holds a merged GPU mesh for a grid cell with per-building span tracking.
@@ -102,9 +103,12 @@ func (reg *Registry) Ingest(footprints []geojson.Footprint) int {
 // BuildCellMeshes merges per-cell raw meshes with span tracking.
 // Returns the cell map for grid integration.
 func (reg *Registry) BuildCellMeshes() map[uint64]*MergedCell {
-	// Group buildings by cell
+	// Group visible buildings by cell
 	cellBuildings := make(map[uint64][]int) // cellKey → building indices
 	for i := range reg.buildings {
+		if reg.buildings[i].Hidden {
+			continue
+		}
 		key := reg.buildings[i].CellKey
 		cellBuildings[key] = append(cellBuildings[key], i)
 	}
@@ -183,41 +187,45 @@ func (reg *Registry) ReplaceMesh(id BuildingID, raw *RawMesh) error {
 }
 
 // RebuildCellMesh re-merges a single cell after a building change.
-func (reg *Registry) RebuildCellMesh(cellKey uint64) error {
-	// Collect buildings in this cell
+// Returns the new MergedCell (or nil if no visible buildings remain).
+func (reg *Registry) RebuildCellMesh(cellKey uint64) (*MergedCell, error) {
+	// Collect visible buildings in this cell
 	var entries []MergeEntry
 	for i := range reg.buildings {
-		if reg.buildings[i].CellKey == cellKey {
+		if reg.buildings[i].CellKey == cellKey && !reg.buildings[i].Hidden {
 			entries = append(entries, MergeEntry{
 				ID:  reg.buildings[i].ID,
 				Raw: reg.buildings[i].Raw,
 			})
 		}
 	}
-	if len(entries) == 0 {
-		return fmt.Errorf("no buildings in cell %d", cellKey)
-	}
-
-	merged, spans, err := MergeMeshesWithSpans(reg.rend, entries)
-	if err != nil {
-		return fmt.Errorf("failed to rebuild cell mesh: %w", err)
-	}
 
 	// Release old merged mesh if it exists
 	if old, ok := reg.cells[cellKey]; ok {
 		old.Mesh.Destroy(reg.rend)
+		delete(reg.cells, cellKey)
+	}
+
+	if len(entries) == 0 {
+		return nil, nil
+	}
+
+	merged, spans, err := MergeMeshesWithSpans(reg.rend, entries)
+	if err != nil {
+		return nil, fmt.Errorf("failed to rebuild cell mesh: %w", err)
 	}
 
 	cx := int32(uint32(cellKey >> 32))
 	cz := int32(uint32(cellKey))
-	reg.cells[cellKey] = &MergedCell{
+	cell := &MergedCell{
 		Mesh:  merged,
 		CellX: cx,
 		CellZ: cz,
 		Spans: spans,
 	}
+	reg.cells[cellKey] = cell
 
-	return nil
+	return cell, nil
 }
 
 // Destroy releases all GPU resources (individual + merged meshes).

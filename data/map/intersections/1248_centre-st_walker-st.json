@@ -1,0 +1,12 @@
+{
+  "id": "1248_centre-st_walker-st",
+  "position": [
+    553.8848,
+    -1094.5751
+  ],
+  "street1": "WALKER ST",
+  "street2": "CENTRE ST",
+  "directionDeg": 59.98283,
+  "cycleOffsetSec": 31.395977,
+  "features": []
+}

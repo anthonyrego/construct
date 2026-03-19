@@ -1,0 +1,12 @@
+{
+  "id": "0932_washington-st_west-st",
+  "position": [
+    1424.2343,
+    57.157578
+  ],
+  "street1": "WEST ST",
+  "street2": "WASHINGTON ST",
+  "directionDeg": 175.40204,
+  "cycleOffsetSec": 24.01798,
+  "features": []
+}

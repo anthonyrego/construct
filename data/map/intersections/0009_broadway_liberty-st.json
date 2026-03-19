@@ -1,0 +1,12 @@
+{
+  "id": "0009_broadway_liberty-st",
+  "position": [
+    1407.265,
+    -2024.4326
+  ],
+  "street1": "LIBERTY ST",
+  "street2": "BROADWAY",
+  "directionDeg": 238.11836,
+  "cycleOffsetSec": 60.933388,
+  "features": []
+}

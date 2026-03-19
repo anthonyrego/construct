@@ -1,0 +1,12 @@
+{
+  "id": "0199_madison-st_oliver-st",
+  "position": [
+    333.18198,
+    -1711.5337
+  ],
+  "street1": "MADISON ST",
+  "street2": "OLIVER ST",
+  "directionDeg": 97.63238,
+  "cycleOffsetSec": 34.656796,
+  "features": []
+}

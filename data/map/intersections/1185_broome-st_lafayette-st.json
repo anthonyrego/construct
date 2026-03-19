@@ -1,0 +1,12 @@
+{
+  "id": "1185_broome-st_lafayette-st",
+  "position": [
+    366.02402,
+    -690.9198
+  ],
+  "street1": "LAFAYETTE ST",
+  "street2": "BROOME ST",
+  "directionDeg": -32.709793,
+  "cycleOffsetSec": 13.241472,
+  "features": []
+}

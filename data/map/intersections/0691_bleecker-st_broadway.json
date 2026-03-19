@@ -1,0 +1,12 @@
+{
+  "id": "0691_bleecker-st_broadway",
+  "position": [
+    171.61235,
+    -102.59156
+  ],
+  "street1": "BLEECKER ST",
+  "street2": "BROADWAY",
+  "directionDeg": 56.78502,
+  "cycleOffsetSec": 6.9497905,
+  "features": []
+}

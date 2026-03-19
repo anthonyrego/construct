@@ -1,0 +1,12 @@
+{
+  "id": "0688_park-row_spruce-st",
+  "position": [
+    1036.3087,
+    -1720.4714
+  ],
+  "street1": "SPRUCE ST",
+  "street2": "PARK ROW",
+  "directionDeg": 14.028156,
+  "cycleOffsetSec": 49.924393,
+  "features": []
+}

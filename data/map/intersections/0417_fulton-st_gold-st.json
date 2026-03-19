@@ -1,0 +1,12 @@
+{
+  "id": "0417_fulton-st_gold-st",
+  "position": [
+    977.11816,
+    -2044.9711
+  ],
+  "street1": "GOLD ST",
+  "street2": "FULTON ST",
+  "directionDeg": 140.22612,
+  "cycleOffsetSec": 12.617382,
+  "features": []
+}

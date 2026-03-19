@@ -1,0 +1,12 @@
+{
+  "id": "0038_jackson-st_madison-st",
+  "position": [
+    -1098.4379,
+    -1551.5248
+  ],
+  "street1": "MADISON ST",
+  "street2": "JACKSON ST",
+  "directionDeg": 99.907745,
+  "cycleOffsetSec": 13.97845,
+  "features": []
+}

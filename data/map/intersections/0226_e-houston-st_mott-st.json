@@ -1,0 +1,12 @@
+{
+  "id": "0226_e-houston-st_mott-st",
+  "position": [
+    32.43693,
+    -302.0391
+  ],
+  "street1": "MOTT ST",
+  "street2": "E HOUSTON ST",
+  "directionDeg": -18.54338,
+  "cycleOffsetSec": 27.82449,
+  "features": []
+}

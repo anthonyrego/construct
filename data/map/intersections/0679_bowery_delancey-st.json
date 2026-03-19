@@ -1,0 +1,12 @@
+{
+  "id": "0679_bowery_delancey-st",
+  "position": [
+    -2.2465181,
+    -794.58215
+  ],
+  "street1": "DELANCEY ST",
+  "street2": "BOWERY",
+  "directionDeg": -111.23103,
+  "cycleOffsetSec": 55.999115,
+  "features": []
+}

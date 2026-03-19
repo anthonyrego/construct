@@ -1,0 +1,12 @@
+{
+  "id": "0005_liberty-st_south-end-av",
+  "position": [
+    1858.8888,
+    -1760.2115
+  ],
+  "street1": "SOUTH END AV",
+  "street2": "LIBERTY ST",
+  "directionDeg": 160.8639,
+  "cycleOffsetSec": 13.289148,
+  "features": []
+}

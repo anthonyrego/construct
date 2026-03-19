@@ -1,0 +1,12 @@
+{
+  "id": "0603_pearl-st_water-st",
+  "position": [
+    1198.9388,
+    -2537.3215
+  ],
+  "street1": "WATER ST",
+  "street2": "PEARL ST",
+  "directionDeg": 132.55635,
+  "cycleOffsetSec": 32.96146,
+  "features": []
+}

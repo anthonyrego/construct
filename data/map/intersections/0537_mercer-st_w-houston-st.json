@@ -1,0 +1,12 @@
+{
+  "id": "0537_mercer-st_w-houston-st",
+  "position": [
+    322.47467,
+    -176.7767
+  ],
+  "street1": "MERCER ST",
+  "street2": "W HOUSTON ST",
+  "directionDeg": -32.435905,
+  "cycleOffsetSec": 53.476997,
+  "features": []
+}

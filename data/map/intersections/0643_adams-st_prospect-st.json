@@ -1,0 +1,12 @@
+{
+  "id": "0643_adams-st_prospect-st",
+  "position": [
+    -434.6065,
+    -2969.579
+  ],
+  "street1": "PROSPECT ST",
+  "street2": "ADAMS ST",
+  "directionDeg": 86.547,
+  "cycleOffsetSec": 27.036163,
+  "features": []
+}

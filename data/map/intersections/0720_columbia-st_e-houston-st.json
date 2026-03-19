@@ -1,0 +1,12 @@
+{
+  "id": "0720_columbia-st_e-houston-st",
+  "position": [
+    -1256.153,
+    -850.8445
+  ],
+  "street1": "COLUMBIA ST",
+  "street2": "E HOUSTON ST",
+  "directionDeg": 158.36531,
+  "cycleOffsetSec": 27.362926,
+  "features": []
+}

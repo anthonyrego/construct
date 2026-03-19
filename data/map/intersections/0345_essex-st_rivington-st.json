@@ -1,0 +1,12 @@
+{
+  "id": "0345_essex-st_rivington-st",
+  "position": [
+    -523.59375,
+    -841.8484
+  ],
+  "street1": "ESSEX ST",
+  "street2": "RIVINGTON ST",
+  "directionDeg": 158.61292,
+  "cycleOffsetSec": 23.959318,
+  "features": []
+}

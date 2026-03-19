@@ -1,0 +1,12 @@
+{
+  "id": "0775_bayard-st_mulberry-st",
+  "position": [
+    466.1804,
+    -1278.2853
+  ],
+  "street1": "MULBERRY ST",
+  "street2": "BAYARD ST",
+  "directionDeg": 154.88026,
+  "cycleOffsetSec": 12.703287,
+  "features": []
+}

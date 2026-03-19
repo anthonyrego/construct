@@ -1,0 +1,12 @@
+{
+  "id": "0701_e-houston-st_ludlow-st",
+  "position": [
+    -570.0832,
+    -551.87427
+  ],
+  "street1": "LUDLOW ST",
+  "street2": "E HOUSTON ST",
+  "directionDeg": -19.376772,
+  "cycleOffsetSec": 58.46087,
+  "features": []
+}

@@ -1,0 +1,12 @@
+{
+  "id": "0221_canal-st_mott-st",
+  "position": [
+    334.87106,
+    -1177.0916
+  ],
+  "street1": "MOTT ST",
+  "street2": "CANAL ST",
+  "directionDeg": -25.169724,
+  "cycleOffsetSec": 12.566474,
+  "features": []
+}

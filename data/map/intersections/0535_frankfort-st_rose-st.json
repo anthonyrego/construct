@@ -1,0 +1,12 @@
+{
+  "id": "0535_frankfort-st_rose-st",
+  "position": [
+    827.38165,
+    -1836.5311
+  ],
+  "street1": "FRANKFORT ST",
+  "street2": "ROSE ST",
+  "directionDeg": 50.027573,
+  "cycleOffsetSec": 68.9955,
+  "features": []
+}

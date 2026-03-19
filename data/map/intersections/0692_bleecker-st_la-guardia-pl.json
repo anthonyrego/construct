@@ -1,0 +1,12 @@
+{
+  "id": "0692_bleecker-st_la-guardia-pl",
+  "position": [
+    438.2241,
+    76.689964
+  ],
+  "street1": "LA GUARDIA PL",
+  "street2": "BLEECKER ST",
+  "directionDeg": 146.89635,
+  "cycleOffsetSec": 18.710962,
+  "features": []
+}

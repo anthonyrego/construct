@@ -1,0 +1,12 @@
+{
+  "id": "0713_beekman-st_south-st",
+  "position": [
+    720.52405,
+    -2298.782
+  ],
+  "street1": "SOUTH ST",
+  "street2": "BEEKMAN ST",
+  "directionDeg": 126.79249,
+  "cycleOffsetSec": 14.287841,
+  "features": []
+}

@@ -1,0 +1,12 @@
+{
+  "id": "0922_greenwich-st_w-10-st",
+  "position": [
+    1151.3606,
+    678.9153
+  ],
+  "street1": "GREENWICH ST",
+  "street2": "W 10 ST",
+  "directionDeg": 169.41762,
+  "cycleOffsetSec": 22.348005,
+  "features": []
+}

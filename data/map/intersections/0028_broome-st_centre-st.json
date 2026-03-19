@@ -1,0 +1,12 @@
+{
+  "id": "0028_broome-st_centre-st",
+  "position": [
+    320.5864,
+    -743.10815
+  ],
+  "street1": "BROOME ST",
+  "street2": "CENTRE ST",
+  "directionDeg": 240.35669,
+  "cycleOffsetSec": 12.165506,
+  "features": []
+}

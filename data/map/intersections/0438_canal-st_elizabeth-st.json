@@ -1,0 +1,12 @@
+{
+  "id": "0438_canal-st_elizabeth-st",
+  "position": [
+    269.2279,
+    -1208.357
+  ],
+  "street1": "ELIZABETH ST",
+  "street2": "CANAL ST",
+  "directionDeg": 154.76393,
+  "cycleOffsetSec": 3.8233886,
+  "features": []
+}

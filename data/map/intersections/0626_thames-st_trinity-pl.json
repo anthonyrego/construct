@@ -1,0 +1,12 @@
+{
+  "id": "0626_thames-st_trinity-pl",
+  "position": [
+    1537.7704,
+    -2048.418
+  ],
+  "street1": "TRINITY PL",
+  "street2": "THAMES ST",
+  "directionDeg": 153.13203,
+  "cycleOffsetSec": 30.210821,
+  "features": []
+}

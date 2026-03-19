@@ -52,6 +52,9 @@ func NewProjection(refLat, refLon float64) *Projection {
 	}
 }
 
+func (p *Projection) RefLat() float64 { return p.refLat }
+func (p *Projection) RefLon() float64 { return p.refLon }
+
 func (p *Projection) ToLocal(lat, lon float64) Point2D {
 	x := -(lon - p.refLon) * metersPerDegLat * p.cosLat
 	z := (lat - p.refLat) * metersPerDegLat

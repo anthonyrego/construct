@@ -1,0 +1,12 @@
+{
+  "id": "0341_ridge-st_rivington-st",
+  "position": [
+    -877.19244,
+    -982.98956
+  ],
+  "street1": "RIDGE ST",
+  "street2": "RIVINGTON ST",
+  "directionDeg": -21.24817,
+  "cycleOffsetSec": 39.615974,
+  "features": []
+}

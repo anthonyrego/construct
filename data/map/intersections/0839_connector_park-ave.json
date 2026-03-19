@@ -1,0 +1,12 @@
+{
+  "id": "0839_connector_park-ave",
+  "position": [
+    -1005.2485,
+    2105.621
+  ],
+  "street1": "PARK AVE",
+  "street2": "CONNECTOR",
+  "directionDeg": 150.618,
+  "cycleOffsetSec": 34.334446,
+  "features": []
+}

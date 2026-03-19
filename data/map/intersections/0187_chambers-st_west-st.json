@@ -1,0 +1,12 @@
+{
+  "id": "0187_chambers-st_west-st",
+  "position": [
+    1591.7719,
+    -1138.0553
+  ],
+  "street1": "CHAMBERS ST",
+  "street2": "WEST ST",
+  "directionDeg": 238.77092,
+  "cycleOffsetSec": 30.984589,
+  "features": []
+}

@@ -1,0 +1,12 @@
+{
+  "id": "0895_10-av_west-st",
+  "position": [
+    1359.8231,
+    1230.9907
+  ],
+  "street1": "WEST ST",
+  "street2": "10 AV",
+  "directionDeg": 186.14551,
+  "cycleOffsetSec": 30.864025,
+  "features": []
+}

@@ -1,0 +1,12 @@
+{
+  "id": "0693_bleecker-st_thompson-st",
+  "position": [
+    488.73807,
+    109.74196
+  ],
+  "street1": "THOMPSON ST",
+  "street2": "BLEECKER ST",
+  "directionDeg": -32.767765,
+  "cycleOffsetSec": 42.35824,
+  "features": []
+}

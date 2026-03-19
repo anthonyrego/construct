@@ -1,0 +1,12 @@
+{
+  "id": "0238_canal-st_wooster-st",
+  "position": [
+    854.3714,
+    -726.46606
+  ],
+  "street1": "WOOSTER ST",
+  "street2": "CANAL ST",
+  "directionDeg": -32.489277,
+  "cycleOffsetSec": 15.885158,
+  "features": []
+}

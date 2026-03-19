@@ -1,0 +1,12 @@
+{
+  "id": "0440_canal-st_mercer-st",
+  "position": [
+    742.09064,
+    -832.3067
+  ],
+  "street1": "MERCER ST",
+  "street2": "CANAL ST",
+  "directionDeg": -33.290787,
+  "cycleOffsetSec": 65.34855,
+  "features": []
+}

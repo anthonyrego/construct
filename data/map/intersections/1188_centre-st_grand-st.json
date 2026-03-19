@@ -1,0 +1,12 @@
+{
+  "id": "1188_centre-st_grand-st",
+  "position": [
+    405.3002,
+    -837.57166
+  ],
+  "street1": "GRAND ST",
+  "street2": "CENTRE ST",
+  "directionDeg": 57.56699,
+  "cycleOffsetSec": 2.2304516,
+  "features": []
+}

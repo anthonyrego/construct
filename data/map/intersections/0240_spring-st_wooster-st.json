@@ -1,0 +1,12 @@
+{
+  "id": "0240_spring-st_wooster-st",
+  "position": [
+    611.45215,
+    -364.37253
+  ],
+  "street1": "WOOSTER ST",
+  "street2": "SPRING ST",
+  "directionDeg": -32.661636,
+  "cycleOffsetSec": 26.559217,
+  "features": []
+}

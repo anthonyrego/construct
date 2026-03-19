@@ -1,0 +1,12 @@
+{
+  "id": "0799_e-houston-st_forsyth-st",
+  "position": [
+    -315.72766,
+    -448.09073
+  ],
+  "street1": "E HOUSTON ST",
+  "street2": "FORSYTH ST",
+  "directionDeg": -111.54518,
+  "cycleOffsetSec": 64.84738,
+  "features": []
+}

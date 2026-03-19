@@ -1,0 +1,12 @@
+{
+  "id": "0266_mulberry-st_prince-st",
+  "position": [
+    155.70966,
+    -447.55054
+  ],
+  "street1": "PRINCE ST",
+  "street2": "MULBERRY ST",
+  "directionDeg": 241.33492,
+  "cycleOffsetSec": 45.688114,
+  "features": []
+}

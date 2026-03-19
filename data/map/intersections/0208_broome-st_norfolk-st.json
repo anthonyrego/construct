@@ -1,0 +1,12 @@
+{
+  "id": "0208_broome-st_norfolk-st",
+  "position": [
+    -504.00208,
+    -1110.5819
+  ],
+  "street1": "BROOME ST",
+  "street2": "NORFOLK ST",
+  "directionDeg": 68.13215,
+  "cycleOffsetSec": 44.977673,
+  "features": []
+}

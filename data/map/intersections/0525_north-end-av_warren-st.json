@@ -1,0 +1,12 @@
+{
+  "id": "0525_north-end-av_warren-st",
+  "position": [
+    1750.1819,
+    -1145.3037
+  ],
+  "street1": "NORTH END AV",
+  "street2": "WARREN ST",
+  "directionDeg": -30.865988,
+  "cycleOffsetSec": 37.09418,
+  "features": []
+}

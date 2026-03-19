@@ -1,0 +1,12 @@
+{
+  "id": "0007_greenwich-st_liberty-st",
+  "position": [
+    1592.4817,
+    -1921.6693
+  ],
+  "street1": "GREENWICH ST",
+  "street2": "LIBERTY ST",
+  "directionDeg": -16.584204,
+  "cycleOffsetSec": 38.914997,
+  "features": []
+}

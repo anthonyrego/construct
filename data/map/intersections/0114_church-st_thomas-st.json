@@ -1,0 +1,12 @@
+{
+  "id": "0114_church-st_thomas-st",
+  "position": [
+    1078.7385,
+    -1213.8938
+  ],
+  "street1": "CHURCH ST",
+  "street2": "THOMAS ST",
+  "directionDeg": 149.34532,
+  "cycleOffsetSec": 11.541449,
+  "features": []
+}

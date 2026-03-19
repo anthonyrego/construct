@@ -1,0 +1,12 @@
+{
+  "id": "0023_gold-st_spruce-st",
+  "position": [
+    883.5573,
+    -1913.9026
+  ],
+  "street1": "GOLD ST",
+  "street2": "SPRUCE ST",
+  "directionDeg": 137.08823,
+  "cycleOffsetSec": 18.454336,
+  "features": []
+}

@@ -1,0 +1,12 @@
+{
+  "id": "0801_e-houston-st_norfolk-st",
+  "position": [
+    -718.4206,
+    -608.8088
+  ],
+  "street1": "E HOUSTON ST",
+  "street2": "NORFOLK ST",
+  "directionDeg": -111.33501,
+  "cycleOffsetSec": 30.175486,
+  "features": []
+}

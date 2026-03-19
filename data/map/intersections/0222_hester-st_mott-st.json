@@ -1,0 +1,12 @@
+{
+  "id": "0222_hester-st_mott-st",
+  "position": [
+    278.94955,
+    -1060.4053
+  ],
+  "street1": "MOTT ST",
+  "street2": "HESTER ST",
+  "directionDeg": -26.24903,
+  "cycleOffsetSec": 56.20443,
+  "features": []
+}

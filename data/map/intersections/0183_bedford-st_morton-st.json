@@ -1,0 +1,12 @@
+{
+  "id": "0183_bedford-st_morton-st",
+  "position": [
+    908.37286,
+    395.21866
+  ],
+  "street1": "MORTON ST",
+  "street2": "BEDFORD ST",
+  "directionDeg": 112.15621,
+  "cycleOffsetSec": 6.1947527,
+  "features": []
+}

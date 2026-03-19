@@ -1,0 +1,12 @@
+{
+  "id": "0099_murray-st_north-end-av",
+  "position": [
+    1842.4618,
+    -1315.2448
+  ],
+  "street1": "NORTH END AV",
+  "street2": "MURRAY ST",
+  "directionDeg": 149.81348,
+  "cycleOffsetSec": 36.429344,
+  "features": []
+}

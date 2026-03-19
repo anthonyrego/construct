@@ -1,0 +1,12 @@
+{
+  "id": "0699_bowery_division-st",
+  "position": [
+    286.84317,
+    -1481.4742
+  ],
+  "street1": "DIVISION ST",
+  "street2": "BOWERY",
+  "directionDeg": -86.84249,
+  "cycleOffsetSec": 35.71849,
+  "features": []
+}

@@ -1,0 +1,12 @@
+{
+  "id": "0630_e-houston-st_elizabeth-st",
+  "position": [
+    -28.408709,
+    -330.6328
+  ],
+  "street1": "ELIZABETH ST",
+  "street2": "E HOUSTON ST",
+  "directionDeg": 162.8198,
+  "cycleOffsetSec": 34.117836,
+  "features": []
+}

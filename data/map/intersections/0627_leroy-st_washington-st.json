@@ -1,0 +1,12 @@
+{
+  "id": "0627_leroy-st_washington-st",
+  "position": [
+    1278.2194,
+    340.0786
+  ],
+  "street1": "WASHINGTON ST",
+  "street2": "LEROY ST",
+  "directionDeg": -8.657449,
+  "cycleOffsetSec": 17.985102,
+  "features": []
+}

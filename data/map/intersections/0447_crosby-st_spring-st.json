@@ -1,0 +1,12 @@
+{
+  "id": "0447_crosby-st_spring-st",
+  "position": [
+    345.51443,
+    -531.0091
+  ],
+  "street1": "CROSBY ST",
+  "street2": "SPRING ST",
+  "directionDeg": 147.36017,
+  "cycleOffsetSec": 33.02654,
+  "features": []
+}

@@ -1,0 +1,12 @@
+{
+  "id": "0712_madison-st_pike-st",
+  "position": [
+    -107.37047,
+    -1656.9714
+  ],
+  "street1": "MADISON ST",
+  "street2": "PIKE ST",
+  "directionDeg": 96.021385,
+  "cycleOffsetSec": 48.800903,
+  "features": []
+}

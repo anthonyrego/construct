@@ -1,0 +1,12 @@
+{
+  "id": "0767_greenwich-st_harrison-st",
+  "position": [
+    1392.4839,
+    -954.939
+  ],
+  "street1": "HARRISON ST",
+  "street2": "GREENWICH ST",
+  "directionDeg": 82.24429,
+  "cycleOffsetSec": 15.1594,
+  "features": []
+}

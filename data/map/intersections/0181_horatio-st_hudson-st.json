@@ -1,0 +1,12 @@
+{
+  "id": "0181_horatio-st_hudson-st",
+  "position": [
+    984.5876,
+    1266.8445
+  ],
+  "street1": "HORATIO ST",
+  "street2": "HUDSON ST",
+  "directionDeg": 89.94821,
+  "cycleOffsetSec": 28.428312,
+  "features": []
+}

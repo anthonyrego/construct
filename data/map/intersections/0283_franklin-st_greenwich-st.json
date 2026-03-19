@@ -1,0 +1,12 @@
+{
+  "id": "0283_franklin-st_greenwich-st",
+  "position": [
+    1384.0918,
+    -891.781
+  ],
+  "street1": "FRANKLIN ST",
+  "street2": "GREENWICH ST",
+  "directionDeg": 82.69305,
+  "cycleOffsetSec": 31.00765,
+  "features": []
+}

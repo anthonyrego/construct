@@ -1,0 +1,12 @@
+{
+  "id": "0160_duane-st_lafayette-st",
+  "position": [
+    809.7136,
+    -1467.8381
+  ],
+  "street1": "LAFAYETTE ST",
+  "street2": "DUANE ST",
+  "directionDeg": -16.864746,
+  "cycleOffsetSec": 56.425358,
+  "features": []
+}

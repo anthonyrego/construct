@@ -1,0 +1,12 @@
+{
+  "id": "0013_e-houston-st_f-d-r-dr",
+  "position": [
+    -1603.435,
+    -957.5226
+  ],
+  "street1": "E HOUSTON ST",
+  "street2": "F D R DR",
+  "directionDeg": -126.97743,
+  "cycleOffsetSec": 17.618198,
+  "features": []
+}

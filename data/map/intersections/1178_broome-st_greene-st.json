@@ -1,0 +1,12 @@
+{
+  "id": "1178_broome-st_greene-st",
+  "position": [
+    634.99066,
+    -550.5619
+  ],
+  "street1": "GREENE ST",
+  "street2": "BROOME ST",
+  "directionDeg": 146.88196,
+  "cycleOffsetSec": 23.438889,
+  "features": []
+}

@@ -1,0 +1,12 @@
+{
+  "id": "0591_wall-st_water-st",
+  "position": [
+    1150.0002,
+    -2469.8667
+  ],
+  "street1": "WATER ST",
+  "street2": "WALL ST",
+  "directionDeg": 132.55635,
+  "cycleOffsetSec": 58.606243,
+  "features": []
+}

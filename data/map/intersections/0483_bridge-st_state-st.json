@@ -1,0 +1,12 @@
+{
+  "id": "0483_bridge-st_state-st",
+  "position": [
+    1742.7157,
+    -2648.614
+  ],
+  "street1": "STATE ST",
+  "street2": "BRIDGE ST",
+  "directionDeg": 172.86621,
+  "cycleOffsetSec": 10.790253,
+  "features": []
+}

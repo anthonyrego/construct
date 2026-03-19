@@ -1,0 +1,12 @@
+{
+  "id": "0111_delancey-st_ridge-st",
+  "position": [
+    -826.523,
+    -1110.4913
+  ],
+  "street1": "RIDGE ST",
+  "street2": "DELANCEY ST",
+  "directionDeg": -21.48517,
+  "cycleOffsetSec": 29.232843,
+  "features": []
+}

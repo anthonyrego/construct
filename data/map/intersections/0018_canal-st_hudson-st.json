@@ -1,0 +1,12 @@
+{
+  "id": "0018_canal-st_hudson-st",
+  "position": [
+    1151.401,
+    -430.41574
+  ],
+  "street1": "CANAL ST",
+  "street2": "HUDSON ST",
+  "directionDeg": 226.76166,
+  "cycleOffsetSec": 38.729294,
+  "features": []
+}

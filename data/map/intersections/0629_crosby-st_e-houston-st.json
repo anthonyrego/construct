@@ -1,0 +1,12 @@
+{
+  "id": "0629_crosby-st_e-houston-st",
+  "position": [
+    164.82678,
+    -247.14388
+  ],
+  "street1": "CROSBY ST",
+  "street2": "E HOUSTON ST",
+  "directionDeg": 147.33432,
+  "cycleOffsetSec": 66.22587,
+  "features": []
+}

@@ -1,0 +1,12 @@
+{
+  "id": "0380_allen-st_canal-st",
+  "position": [
+    -104.48451,
+    -1361.1819
+  ],
+  "street1": "CANAL ST",
+  "street2": "ALLEN ST",
+  "directionDeg": 248.30717,
+  "cycleOffsetSec": 35.91161,
+  "features": []
+}

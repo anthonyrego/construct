@@ -8,6 +8,8 @@ import (
 
 	"github.com/anthonyrego/construct/pkg/building"
 	"github.com/anthonyrego/construct/pkg/camera"
+	"github.com/anthonyrego/construct/pkg/input"
+	"github.com/anthonyrego/construct/pkg/mapdata"
 	"github.com/anthonyrego/construct/pkg/renderer"
 	"github.com/anthonyrego/construct/pkg/scene"
 	"github.com/anthonyrego/construct/pkg/traffic"
@@ -34,14 +36,21 @@ type Mode struct {
 	selection Selection
 	panel     *InfoPanel
 	rend      *renderer.Renderer
+
+	// Editing state
+	dirtyBlocks map[string]bool
+	dirtyInts   map[string]bool
+	undoStack   []undoEntry
 }
 
 func New(r *renderer.Renderer, pixelScale int) *Mode {
-	return &Mode{
+	m := &Mode{
 		selection: Selection{SignalIdx: -1},
 		panel:     newInfoPanel(r, pixelScale),
 		rend:      r,
 	}
+	m.initEditing()
+	return m
 }
 
 func (m *Mode) Toggle() {
@@ -180,7 +189,7 @@ func (m *Mode) Update(cam *camera.Camera, grid *scene.SpatialGrid, objects []sce
 	if bestSel.Type == EntityBuilding {
 		b := reg.Get(bestSel.BuildingID)
 		if b != nil {
-			m.panel.setBuildingValues(m.rend, b.BBL, b.PLUTO.Address, b.PLUTO.BldgClass, b.PLUTO.LandUse, b.PLUTO.YearBuilt, b.PLUTO.NumFloors)
+			m.panel.setBuildingValues(m.rend, b.BBL, b.PLUTO.Address, b.PLUTO.BldgClass, b.PLUTO.LandUse, b.PLUTO.YearBuilt, b.PLUTO.NumFloors, b.Footprint.Height, b.Hidden)
 		}
 	} else if bestSel.Type == EntitySignal {
 		sig := trafficSys.Signals[bestSel.SignalIdx]
@@ -191,7 +200,90 @@ func (m *Mode) Update(cam *camera.Camera, grid *scene.SpatialGrid, objects []sce
 }
 
 func (m *Mode) Render(r *renderer.Renderer, cmdBuf *sdl.GPUCommandBuffer, swapchainTex *sdl.GPUTexture, screenW, screenH int) {
-	m.panel.render(r, cmdBuf, swapchainTex, screenW, screenH, m.selection)
+	m.panel.render(r, cmdBuf, swapchainTex, screenW, screenH, m.selection, m.HasDirty())
+}
+
+// HandleEdit processes editing key presses and returns what action the caller should take.
+func (m *Mode) HandleEdit(inp *input.Input, reg *building.Registry,
+	trafficSys *traffic.System, scn *scene.Scene,
+	grid *scene.SpatialGrid, store *mapdata.Store) EditAction {
+
+	if m.selection.Type == EntityNone {
+		// Only check Cmd+S / Cmd+Z even without selection
+		cmdHeld := inp.IsKeyDown(sdl.K_LGUI) || inp.IsKeyDown(sdl.K_LCTRL)
+		if cmdHeld && inp.IsKeyPressed(sdl.K_S) {
+			return EditSave
+		}
+		if cmdHeld && inp.IsKeyPressed(sdl.K_Z) {
+			if m.undo(reg, scn.Objects, grid, trafficSys, store) {
+				return EditDirty
+			}
+			return EditNone
+		}
+		return EditNone
+	}
+
+	shift := inp.IsKeyDown(sdl.K_LSHIFT) || inp.IsKeyDown(sdl.K_RSHIFT)
+	cmdHeld := inp.IsKeyDown(sdl.K_LGUI) || inp.IsKeyDown(sdl.K_LCTRL)
+
+	// Cmd+S: save
+	if cmdHeld && inp.IsKeyPressed(sdl.K_S) {
+		return EditSave
+	}
+
+	// Cmd+Z: undo
+	if cmdHeld && inp.IsKeyPressed(sdl.K_Z) {
+		if m.undo(reg, scn.Objects, grid, trafficSys, store) {
+			return EditDirty
+		}
+		return EditNone
+	}
+
+	// Building edits
+	if m.selection.Type == EntityBuilding {
+		if inp.IsKeyPressed(sdl.K_UP) {
+			delta := float32(1.0)
+			if shift {
+				delta = 0.1
+			}
+			m.adjustHeight(delta, reg, scn.Objects, grid, store)
+			return EditNone
+		}
+		if inp.IsKeyPressed(sdl.K_DOWN) {
+			delta := float32(-1.0)
+			if shift {
+				delta = -0.1
+			}
+			m.adjustHeight(delta, reg, scn.Objects, grid, store)
+			return EditNone
+		}
+		if inp.IsKeyPressed(sdl.K_V) {
+			m.toggleVisibility(reg, scn.Objects, grid, store)
+			return EditNone
+		}
+	}
+
+	// Signal edits
+	if m.selection.Type == EntitySignal && trafficSys != nil {
+		if inp.IsKeyPressed(sdl.K_RIGHT) {
+			delta := float32(5.0)
+			if shift {
+				delta = 1.0
+			}
+			m.rotateSignal(delta, trafficSys, store)
+			return EditDirty
+		}
+		if inp.IsKeyPressed(sdl.K_LEFT) {
+			delta := float32(-5.0)
+			if shift {
+				delta = -1.0
+			}
+			m.rotateSignal(delta, trafficSys, store)
+			return EditDirty
+		}
+	}
+
+	return EditNone
 }
 
 func (m *Mode) Destroy(r *renderer.Renderer) {

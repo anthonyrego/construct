@@ -1,0 +1,12 @@
+{
+  "id": "0192_bleecker-st_charles-st",
+  "position": [
+    924.0154,
+    804.2062
+  ],
+  "street1": "BLEECKER ST",
+  "street2": "CHARLES ST",
+  "directionDeg": 12.219994,
+  "cycleOffsetSec": 49.10047,
+  "features": []
+}

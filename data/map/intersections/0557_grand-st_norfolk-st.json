@@ -1,0 +1,12 @@
+{
+  "id": "0557_grand-st_norfolk-st",
+  "position": [
+    -463.99237,
+    -1213.2933
+  ],
+  "street1": "GRAND ST",
+  "street2": "NORFOLK ST",
+  "directionDeg": 66.24508,
+  "cycleOffsetSec": 53.172493,
+  "features": []
+}

@@ -1,0 +1,12 @@
+{
+  "id": "0121_church-st_park-pl",
+  "position": [
+    1302.0421,
+    -1580.803
+  ],
+  "street1": "PARK PL",
+  "street2": "CHURCH ST",
+  "directionDeg": 59.0129,
+  "cycleOffsetSec": 69.06408,
+  "features": []
+}

@@ -1,0 +1,12 @@
+{
+  "id": "1176_broadway_broome-st",
+  "position": [
+    503.3132,
+    -611.77203
+  ],
+  "street1": "BROADWAY",
+  "street2": "BROOME ST",
+  "directionDeg": -32.69717,
+  "cycleOffsetSec": 65.99559,
+  "features": []
+}

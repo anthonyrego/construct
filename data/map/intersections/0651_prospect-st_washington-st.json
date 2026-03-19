@@ -1,0 +1,12 @@
+{
+  "id": "0651_prospect-st_washington-st",
+  "position": [
+    -338.4947,
+    -2969.5398
+  ],
+  "street1": "WASHINGTON ST",
+  "street2": "PROSPECT ST",
+  "directionDeg": 357.43735,
+  "cycleOffsetSec": 22.035109,
+  "features": []
+}

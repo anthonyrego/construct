@@ -1,0 +1,12 @@
+{
+  "id": "0184_chambers-st_church-st",
+  "position": [
+    1184.6992,
+    -1383.8129
+  ],
+  "street1": "CHAMBERS ST",
+  "street2": "CHURCH ST",
+  "directionDeg": 238.35504,
+  "cycleOffsetSec": 40.13073,
+  "features": []
+}

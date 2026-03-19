@@ -1,0 +1,12 @@
+{
+  "id": "0865_10-ave_w-14-st",
+  "position": [
+    1215.5283,
+    1646.632
+  ],
+  "street1": "W 14 ST",
+  "street2": "10 AVE",
+  "directionDeg": 60.2726,
+  "cycleOffsetSec": 57.045055,
+  "features": []
+}

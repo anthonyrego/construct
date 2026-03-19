@@ -1,0 +1,12 @@
+{
+  "id": "0333_thompson-st_washington-sq-s",
+  "position": [
+    355.26636,
+    323.2687
+  ],
+  "street1": "WASHINGTON SQ S",
+  "street2": "THOMPSON ST",
+  "directionDeg": 56.85594,
+  "cycleOffsetSec": 27.961143,
+  "features": []
+}

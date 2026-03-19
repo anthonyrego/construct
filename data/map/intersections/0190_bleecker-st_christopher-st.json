@@ -1,0 +1,12 @@
+{
+  "id": "0190_bleecker-st_christopher-st",
+  "position": [
+    883.91583,
+    668.5749
+  ],
+  "street1": "CHRISTOPHER ST",
+  "street2": "BLEECKER ST",
+  "directionDeg": 281.50266,
+  "cycleOffsetSec": 39.888714,
+  "features": []
+}

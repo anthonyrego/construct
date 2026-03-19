@@ -1,0 +1,12 @@
+{
+  "id": "0708_broadway_murray-st",
+  "position": [
+    1125.9171,
+    -1602.3943
+  ],
+  "street1": "BROADWAY",
+  "street2": "MURRAY ST",
+  "directionDeg": -32.60896,
+  "cycleOffsetSec": 28.50355,
+  "features": []
+}

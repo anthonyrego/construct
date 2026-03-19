@@ -1,0 +1,12 @@
+{
+  "id": "0320_dominick-st_varick-st",
+  "position": [
+    1012.67053,
+    -266.52896
+  ],
+  "street1": "VARICK ST",
+  "street2": "DOMINICK ST",
+  "directionDeg": -7.5681643,
+  "cycleOffsetSec": 62.648685,
+  "features": []
+}

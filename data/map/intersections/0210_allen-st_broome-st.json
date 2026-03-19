@@ -1,0 +1,12 @@
+{
+  "id": "0210_allen-st_broome-st",
+  "position": [
+    -262.4963,
+    -1022.58
+  ],
+  "street1": "BROOME ST",
+  "street2": "ALLEN ST",
+  "directionDeg": 68.35715,
+  "cycleOffsetSec": 21.0056,
+  "features": []
+}

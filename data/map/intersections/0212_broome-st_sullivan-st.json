@@ -1,0 +1,12 @@
+{
+  "id": "0212_broome-st_sullivan-st",
+  "position": [
+    892.62244,
+    -372.42673
+  ],
+  "street1": "SULLIVAN ST",
+  "street2": "BROOME ST",
+  "directionDeg": 147.57956,
+  "cycleOffsetSec": 36.563633,
+  "features": []
+}

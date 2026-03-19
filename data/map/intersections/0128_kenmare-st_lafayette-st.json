@@ -1,0 +1,12 @@
+{
+  "id": "0128_kenmare-st_lafayette-st",
+  "position": [
+    323.59644,
+    -648.9191
+  ],
+  "street1": "LAFAYETTE ST",
+  "street2": "KENMARE ST",
+  "directionDeg": -33.727856,
+  "cycleOffsetSec": 8.22524,
+  "features": []
+}

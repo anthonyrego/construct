@@ -1,0 +1,12 @@
+{
+  "id": "0200_gouverneur-st_madison-st",
+  "position": [
+    -838.4491,
+    -1575.1573
+  ],
+  "street1": "MADISON ST",
+  "street2": "GOUVERNEUR ST",
+  "directionDeg": 97.741165,
+  "cycleOffsetSec": 1.055174,
+  "features": []
+}

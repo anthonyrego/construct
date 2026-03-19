@@ -1,0 +1,12 @@
+{
+  "id": "0540_beekman-st_william-st",
+  "position": [
+    996.77106,
+    -1895.548
+  ],
+  "street1": "BEEKMAN ST",
+  "street2": "WILLIAM ST",
+  "directionDeg": -141.30464,
+  "cycleOffsetSec": 16.817844,
+  "features": []
+}

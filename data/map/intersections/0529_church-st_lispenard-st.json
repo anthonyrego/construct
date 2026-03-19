@@ -1,0 +1,12 @@
+{
+  "id": "0529_church-st_lispenard-st",
+  "position": [
+    847.8268,
+    -818.2215
+  ],
+  "street1": "LISPENARD ST",
+  "street2": "CHURCH ST",
+  "directionDeg": 57.342293,
+  "cycleOffsetSec": 38.200634,
+  "features": []
+}

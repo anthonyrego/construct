@@ -1,0 +1,12 @@
+{
+  "id": "0533_church-st_leonard-st",
+  "position": [
+    1008.76917,
+    -1088.325
+  ],
+  "street1": "LEONARD ST",
+  "street2": "CHURCH ST",
+  "directionDeg": -121.25927,
+  "cycleOffsetSec": 5.08621,
+  "features": []
+}

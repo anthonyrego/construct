@@ -1,0 +1,12 @@
+{
+  "id": "1247_canal-st_centre-st",
+  "position": [
+    522.4026,
+    -1029.293
+  ],
+  "street1": "CANAL ST",
+  "street2": "CENTRE ST",
+  "directionDeg": 226.56242,
+  "cycleOffsetSec": 53.04738,
+  "features": []
+}

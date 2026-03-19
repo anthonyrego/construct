@@ -1,0 +1,12 @@
+{
+  "id": "0901_christopher-st_west-st",
+  "position": [
+    1388.587,
+    538.45465
+  ],
+  "street1": "WEST ST",
+  "street2": "CHRISTOPHER ST",
+  "directionDeg": 176.13199,
+  "cycleOffsetSec": 5.144559,
+  "features": []
+}

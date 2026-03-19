@@ -1,0 +1,12 @@
+{
+  "id": "0383_dover-st_south-st",
+  "position": [
+    526.18225,
+    -2179.1606
+  ],
+  "street1": "SOUTH ST",
+  "street2": "DOVER ST",
+  "directionDeg": 124.8683,
+  "cycleOffsetSec": 47.718525,
+  "features": []
+}

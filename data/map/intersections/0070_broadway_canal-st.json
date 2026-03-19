@@ -1,0 +1,12 @@
+{
+  "id": "0070_broadway_canal-st",
+  "position": [
+    681.82416,
+    -890.4318
+  ],
+  "street1": "BROADWAY",
+  "street2": "CANAL ST",
+  "directionDeg": -32.81882,
+  "cycleOffsetSec": 6.597526,
+  "features": []
+}

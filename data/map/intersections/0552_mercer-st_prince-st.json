@@ -1,0 +1,12 @@
+{
+  "id": "0552_mercer-st_prince-st",
+  "position": [
+    402.57147,
+    -313.68463
+  ],
+  "street1": "PRINCE ST",
+  "street2": "MERCER ST",
+  "directionDeg": 236.75978,
+  "cycleOffsetSec": 24.676949,
+  "features": []
+}

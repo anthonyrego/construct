@@ -1,0 +1,12 @@
+{
+  "id": "0343_rivington-st_suffolk-st",
+  "position": [
+    -664.8265,
+    -898.387
+  ],
+  "street1": "SUFFOLK ST",
+  "street2": "RIVINGTON ST",
+  "directionDeg": -20.719408,
+  "cycleOffsetSec": 64.46706,
+  "features": []
+}

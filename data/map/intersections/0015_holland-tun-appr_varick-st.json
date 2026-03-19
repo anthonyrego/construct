@@ -1,0 +1,12 @@
+{
+  "id": "0015_holland-tun-appr_varick-st",
+  "position": [
+    1039.4286,
+    -403.56708
+  ],
+  "street1": "VARICK ST",
+  "street2": "HOLLAND TUN APPR",
+  "directionDeg": -5.0108705,
+  "cycleOffsetSec": 0.89682466,
+  "features": []
+}

@@ -28,17 +28,30 @@ type InfoPanel struct {
 	landUseLabel  *mesh.Mesh
 	yearLabel     *mesh.Mesh
 	floorsLabel   *mesh.Mesh
+	heightLabel   *mesh.Mesh
+	visibleLabel  *mesh.Mesh
 
 	signalLabel  *mesh.Mesh
 	street1Label *mesh.Mesh
 	street2Label *mesh.Mesh
 	dirLabel     *mesh.Mesh
 
+	// Key hint labels
+	bldgHint   *mesh.Mesh
+	signalHint *mesh.Mesh
+	commonHint *mesh.Mesh
+
+	bldgHintW   float32
+	signalHintW float32
+	commonHintW float32
+
 	// Dynamic value meshes (recreated on selection change)
 	valueMeshes []*mesh.Mesh
 	valueWidths []float32
 
 	modeLabelWidth  float32
+	dirtyLabelWidth float32
+	dirtyLabel      *mesh.Mesh
 	maxBldgLabelW   float32 // widest building label (including header)
 	maxSignalLabelW float32 // widest signal label (including header)
 }
@@ -107,6 +120,7 @@ func newInfoPanel(r *renderer.Renderer, pixelScale int) *InfoPanel {
 	}
 
 	p.modeLabel, p.modeLabelWidth, _ = ui.NewTextMesh(r, "ADMIN MODE", ps, 255, 200, 100, 255)
+	p.dirtyLabel, p.dirtyLabelWidth, _ = ui.NewTextMesh(r, "*", ps, 255, 100, 100, 255)
 
 	var w float32
 	p.buildingLabel, w = mkLabel("BUILDING")
@@ -123,6 +137,10 @@ func newInfoPanel(r *renderer.Renderer, pixelScale int) *InfoPanel {
 	if w > p.maxBldgLabelW { p.maxBldgLabelW = w }
 	p.floorsLabel, w = mkLabel("FLOORS")
 	if w > p.maxBldgLabelW { p.maxBldgLabelW = w }
+	p.heightLabel, w = mkLabel("HEIGHT")
+	if w > p.maxBldgLabelW { p.maxBldgLabelW = w }
+	p.visibleLabel, w = mkLabel("VISIBLE")
+	if w > p.maxBldgLabelW { p.maxBldgLabelW = w }
 
 	p.signalLabel, w = mkLabel("SIGNAL")
 	p.maxSignalLabelW = w
@@ -132,6 +150,18 @@ func newInfoPanel(r *renderer.Renderer, pixelScale int) *InfoPanel {
 	if w > p.maxSignalLabelW { p.maxSignalLabelW = w }
 	p.dirLabel, w = mkLabel("DIRECTION")
 	if w > p.maxSignalLabelW { p.maxSignalLabelW = w }
+
+	// Key hints (dimmer color)
+	mkHint := func(text string) (*mesh.Mesh, float32) {
+		m, w, err := ui.NewTextMesh(r, text, ps, 140, 140, 140, 200)
+		if err != nil {
+			return nil, 0
+		}
+		return m, w
+	}
+	p.bldgHint, p.bldgHintW = mkHint("UP/DN HEIGHT  V TOGGLE")
+	p.signalHint, p.signalHintW = mkHint("L/R DIRECTION")
+	p.commonHint, p.commonHintW = mkHint("^S SAVE  ^Z UNDO")
 
 	return p
 }
@@ -187,7 +217,7 @@ func (p *InfoPanel) addValue(r *renderer.Renderer, text string) {
 	p.valueWidths = append(p.valueWidths, w)
 }
 
-func (p *InfoPanel) setBuildingValues(r *renderer.Renderer, bbl, address, class, landUse string, year int, floors float32) {
+func (p *InfoPanel) setBuildingValues(r *renderer.Renderer, bbl, address, class, landUse string, year int, floors float32, height float32, hidden bool) {
 	p.clearValues(r)
 	p.addValue(r, bbl)
 	if address != "" {
@@ -207,6 +237,12 @@ func (p *InfoPanel) setBuildingValues(r *renderer.Renderer, bbl, address, class,
 	} else {
 		p.addValue(r, "-")
 	}
+	p.addValue(r, fmt.Sprintf("%.1f M", height))
+	if hidden {
+		p.addValue(r, "NO")
+	} else {
+		p.addValue(r, "YES")
+	}
 }
 
 func (p *InfoPanel) setSignalValues(r *renderer.Renderer, street1, street2 string, angle float32) {
@@ -224,7 +260,7 @@ func (p *InfoPanel) setSignalValues(r *renderer.Renderer, street1, street2 strin
 	p.addValue(r, fmt.Sprintf("%.0f DEG", angle*180/3.14159))
 }
 
-func (p *InfoPanel) render(r *renderer.Renderer, cmdBuf *sdl.GPUCommandBuffer, swapchainTex *sdl.GPUTexture, screenW, screenH int, sel Selection) {
+func (p *InfoPanel) render(r *renderer.Renderer, cmdBuf *sdl.GPUCommandBuffer, swapchainTex *sdl.GPUTexture, screenW, screenH int, sel Selection, dirty bool) {
 	ortho := mgl32.Ortho2D(0, float32(screenW), float32(screenH), 0)
 	pass := r.BeginUIPass(cmdBuf, swapchainTex)
 
@@ -254,8 +290,13 @@ func (p *InfoPanel) render(r *renderer.Renderer, cmdBuf *sdl.GPUCommandBuffer, s
 	// Crosshair at screen center
 	draw(p.crosshair, at(sw/2, sh/2))
 
-	// "ADMIN MODE" indicator in top-right
-	draw(p.modeLabel, at(sw-p.modeLabelWidth-margin, margin))
+	// "ADMIN MODE" indicator in top-right (with dirty "*" if needed)
+	modeLabelX := sw - p.modeLabelWidth - margin
+	if dirty {
+		modeLabelX = sw - p.modeLabelWidth - p.dirtyLabelWidth - margin - p.ps
+		draw(p.dirtyLabel, at(sw-p.dirtyLabelWidth-margin, margin))
+	}
+	draw(p.modeLabel, at(modeLabelX, margin))
 
 	// Info panel on right side (only if something is selected)
 	if sel.Type == EntityNone {
@@ -279,6 +320,16 @@ func (p *InfoPanel) render(r *renderer.Renderer, cmdBuf *sdl.GPUCommandBuffer, s
 			maxContentW = valIndent + vw
 		}
 	}
+	// Account for hint widths
+	if sel.Type == EntityBuilding && p.bldgHintW > maxContentW {
+		maxContentW = p.bldgHintW
+	}
+	if sel.Type == EntitySignal && p.signalHintW > maxContentW {
+		maxContentW = p.signalHintW
+	}
+	if p.commonHintW > maxContentW {
+		maxContentW = p.commonHintW
+	}
 	panelW := maxContentW + pad*2
 	panelX := sw - panelW - margin
 	panelY := margin + lineH*2
@@ -286,9 +337,9 @@ func (p *InfoPanel) render(r *renderer.Renderer, cmdBuf *sdl.GPUCommandBuffer, s
 	// Count lines for panel height
 	var numLines float32
 	if sel.Type == EntityBuilding {
-		numLines = 1.5 + 6*2 // header + 6 label/value pairs
+		numLines = 1.5 + 8*2 + 2 // header + 8 label/value pairs + hint lines
 	} else {
-		numLines = 1.5 + 3*2 // header + 3 label/value pairs
+		numLines = 1.5 + 3*2 + 2 // header + 3 label/value pairs + hint lines
 	}
 
 	// Draw panel background
@@ -305,7 +356,7 @@ func (p *InfoPanel) render(r *renderer.Renderer, cmdBuf *sdl.GPUCommandBuffer, s
 		draw(p.buildingLabel, at(contentX, y))
 		y += lineH * 1.5
 
-		labels := []*mesh.Mesh{p.bblLabel, p.addressLabel, p.classLabel, p.landUseLabel, p.yearLabel, p.floorsLabel}
+		labels := []*mesh.Mesh{p.bblLabel, p.addressLabel, p.classLabel, p.landUseLabel, p.yearLabel, p.floorsLabel, p.heightLabel, p.visibleLabel}
 		for i, label := range labels {
 			draw(label, at(contentX, y))
 			y += lineH
@@ -314,6 +365,12 @@ func (p *InfoPanel) render(r *renderer.Renderer, cmdBuf *sdl.GPUCommandBuffer, s
 			}
 			y += lineH
 		}
+
+		// Key hints
+		y += lineH * 0.5
+		draw(p.bldgHint, at(contentX, y))
+		y += lineH
+		draw(p.commonHint, at(contentX, y))
 	} else if sel.Type == EntitySignal {
 		draw(p.signalLabel, at(contentX, y))
 		y += lineH * 1.5
@@ -327,6 +384,12 @@ func (p *InfoPanel) render(r *renderer.Renderer, cmdBuf *sdl.GPUCommandBuffer, s
 			}
 			y += lineH
 		}
+
+		// Key hints
+		y += lineH * 0.5
+		draw(p.signalHint, at(contentX, y))
+		y += lineH
+		draw(p.commonHint, at(contentX, y))
 	}
 
 	r.EndUIPass(pass)
@@ -344,6 +407,7 @@ func (p *InfoPanel) destroy(r *renderer.Renderer) {
 	destroyMesh(p.overlay)
 	destroyMesh(p.crosshair)
 	destroyMesh(p.modeLabel)
+	destroyMesh(p.dirtyLabel)
 	destroyMesh(p.buildingLabel)
 	destroyMesh(p.bblLabel)
 	destroyMesh(p.addressLabel)
@@ -351,8 +415,13 @@ func (p *InfoPanel) destroy(r *renderer.Renderer) {
 	destroyMesh(p.landUseLabel)
 	destroyMesh(p.yearLabel)
 	destroyMesh(p.floorsLabel)
+	destroyMesh(p.heightLabel)
+	destroyMesh(p.visibleLabel)
 	destroyMesh(p.signalLabel)
 	destroyMesh(p.street1Label)
 	destroyMesh(p.street2Label)
 	destroyMesh(p.dirLabel)
+	destroyMesh(p.bldgHint)
+	destroyMesh(p.signalHint)
+	destroyMesh(p.commonHint)
 }

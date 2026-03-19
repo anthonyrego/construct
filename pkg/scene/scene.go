@@ -12,6 +12,7 @@ type Object struct {
 	Radius      float32 // Bounding sphere radius for frustum culling
 	SurfaceType int     // 0=none, 1=roadbed, 2=sidewalk, 3=park (for ground texturing)
 	BuildingID  uint32  // 0 = not a building; references building registry
+	Hidden      bool    // If true, skip rendering (admin mode visibility toggle)
 }
 
 type PointLight struct {

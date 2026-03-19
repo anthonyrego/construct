@@ -1,0 +1,12 @@
+{
+  "id": "0663_vestry-st_west-st",
+  "position": [
+    1498.6237,
+    -488.9141
+  ],
+  "street1": "VESTRY ST",
+  "street2": "WEST ST",
+  "directionDeg": 80.67127,
+  "cycleOffsetSec": 35.13097,
+  "features": []
+}

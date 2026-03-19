@@ -1,0 +1,12 @@
+{
+  "id": "1193_delancey-st_williamsburg-br-bike-and-ped-pth",
+  "position": [
+    -626.4965,
+    -1044.7295
+  ],
+  "street1": "WILLIAMSBURG BR BIKE AND PED PTH",
+  "street2": "DELANCEY ST",
+  "directionDeg": 65.92021,
+  "cycleOffsetSec": 32.161514,
+  "features": []
+}

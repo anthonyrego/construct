@@ -1,0 +1,12 @@
+{
+  "id": "1250_canal-st_lafayette-st",
+  "position": [
+    570.86237,
+    -982.94775
+  ],
+  "street1": "CANAL ST",
+  "street2": "LAFAYETTE ST",
+  "directionDeg": 226.5829,
+  "cycleOffsetSec": 21.293365,
+  "features": []
+}

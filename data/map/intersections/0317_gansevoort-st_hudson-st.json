@@ -1,0 +1,12 @@
+{
+  "id": "0317_gansevoort-st_hudson-st",
+  "position": [
+    975.8442,
+    1339.0463
+  ],
+  "street1": "GANSEVOORT ST",
+  "street2": "HUDSON ST",
+  "directionDeg": 269.3175,
+  "cycleOffsetSec": 64.6871,
+  "features": []
+}

@@ -1,0 +1,12 @@
+{
+  "id": "0811_allen-st_division-st",
+  "position": [
+    -75.851265,
+    -1439.486
+  ],
+  "street1": "ALLEN ST",
+  "street2": "DIVISION ST",
+  "directionDeg": 16.883707,
+  "cycleOffsetSec": 17.273605,
+  "features": []
+}

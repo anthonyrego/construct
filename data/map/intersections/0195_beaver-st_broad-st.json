@@ -1,0 +1,12 @@
+{
+  "id": "0195_beaver-st_broad-st",
+  "position": [
+    1489.4202,
+    -2496.8901
+  ],
+  "street1": "BROAD ST",
+  "street2": "BEAVER ST",
+  "directionDeg": 173.76154,
+  "cycleOffsetSec": 55.357788,
+  "features": []
+}

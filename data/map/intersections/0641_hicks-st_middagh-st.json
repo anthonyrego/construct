@@ -1,0 +1,12 @@
+{
+  "id": "0641_hicks-st_middagh-st",
+  "position": [
+    -41.848316,
+    -2994.5515
+  ],
+  "street1": "MIDDAGH ST",
+  "street2": "HICKS ST",
+  "directionDeg": -109.6746,
+  "cycleOffsetSec": 56.639202,
+  "features": []
+}

@@ -1,0 +1,12 @@
+{
+  "id": "0258_beach-st_greenwich-st",
+  "position": [
+    1363.5482,
+    -736.84436
+  ],
+  "street1": "BEACH ST",
+  "street2": "GREENWICH ST",
+  "directionDeg": 263.09305,
+  "cycleOffsetSec": 54.505993,
+  "features": []
+}

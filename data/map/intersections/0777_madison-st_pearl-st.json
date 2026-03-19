@@ -1,0 +1,12 @@
+{
+  "id": "0777_madison-st_pearl-st",
+  "position": [
+    583.65607,
+    -1747.9658
+  ],
+  "street1": "PEARL ST",
+  "street2": "MADISON ST",
+  "directionDeg": 180.60439,
+  "cycleOffsetSec": 10.05922,
+  "features": []
+}

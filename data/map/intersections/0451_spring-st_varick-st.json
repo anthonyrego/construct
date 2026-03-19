@@ -1,0 +1,12 @@
+{
+  "id": "0451_spring-st_varick-st",
+  "position": [
+    1011.41895,
+    -192.85605
+  ],
+  "street1": "VARICK ST",
+  "street2": "SPRING ST",
+  "directionDeg": -7.003074,
+  "cycleOffsetSec": 52.4982,
+  "features": []
+}

@@ -1,0 +1,12 @@
+{
+  "id": "0053_broadway_morris-st",
+  "position": [
+    1638.4746,
+    -2393.2717
+  ],
+  "street1": "MORRIS ST",
+  "street2": "BROADWAY",
+  "directionDeg": 245.89674,
+  "cycleOffsetSec": 54.664753,
+  "features": []
+}

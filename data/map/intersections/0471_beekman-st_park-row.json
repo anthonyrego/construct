@@ -1,0 +1,12 @@
+{
+  "id": "0471_beekman-st_park-row",
+  "position": [
+    1115.2523,
+    -1746.4851
+  ],
+  "street1": "BEEKMAN ST",
+  "street2": "PARK ROW",
+  "directionDeg": -152.31815,
+  "cycleOffsetSec": 48.078457,
+  "features": []
+}

@@ -1,0 +1,12 @@
+{
+  "id": "0422_john-st_south-st",
+  "position": [
+    851.80444,
+    -2401.7341
+  ],
+  "street1": "SOUTH ST",
+  "street2": "JOHN ST",
+  "directionDeg": 130.10849,
+  "cycleOffsetSec": 61.773624,
+  "features": []
+}

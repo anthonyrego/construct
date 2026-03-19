@@ -1,0 +1,12 @@
+{
+  "id": "0020_baxter-st_worth-st",
+  "position": [
+    557.7539,
+    -1443.1818
+  ],
+  "street1": "WORTH ST",
+  "street2": "BAXTER ST",
+  "directionDeg": 56.69972,
+  "cycleOffsetSec": 69.93902,
+  "features": []
+}

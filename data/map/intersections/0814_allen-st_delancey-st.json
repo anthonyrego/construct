@@ -1,0 +1,12 @@
+{
+  "id": "0814_allen-st_delancey-st",
+  "position": [
+    -268.7224,
+    -908.8377
+  ],
+  "street1": "DELANCEY ST",
+  "street2": "ALLEN ST",
+  "directionDeg": 68.08832,
+  "cycleOffsetSec": 43.430706,
+  "features": []
+}

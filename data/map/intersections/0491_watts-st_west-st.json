@@ -1,0 +1,12 @@
+{
+  "id": "0491_watts-st_west-st",
+  "position": [
+    1471.5273,
+    -349.48746
+  ],
+  "street1": "WEST ST",
+  "street2": "WATTS ST",
+  "directionDeg": 171.28745,
+  "cycleOffsetSec": 58.426983,
+  "features": []
+}

@@ -1,0 +1,12 @@
+{
+  "id": "0365_madison-st_st-james-pl",
+  "position": [
+    495.82855,
+    -1732.493
+  ],
+  "street1": "MADISON ST",
+  "street2": "ST JAMES PL",
+  "directionDeg": 95.3736,
+  "cycleOffsetSec": 58.185913,
+  "features": []
+}

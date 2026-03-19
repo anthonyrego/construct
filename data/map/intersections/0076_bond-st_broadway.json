@@ -1,0 +1,12 @@
+{
+  "id": "0076_bond-st_broadway",
+  "position": [
+    124.07832,
+    -20.962204
+  ],
+  "street1": "BROADWAY",
+  "street2": "BOND ST",
+  "directionDeg": -32.908947,
+  "cycleOffsetSec": 8.012834,
+  "features": []
+}

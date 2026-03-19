@@ -1,0 +1,12 @@
+{
+  "id": "0750_charles-st_west-st",
+  "position": [
+    1393.6917,
+    734.98035
+  ],
+  "street1": "WEST ST",
+  "street2": "CHARLES ST",
+  "directionDeg": -3.7273695,
+  "cycleOffsetSec": 32.87968,
+  "features": []
+}

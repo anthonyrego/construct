@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "projection": {
+    "refLat": 40.72741982735245,
+    "refLon": -73.99383900149576
+  },
+  "bounds": {
+    "minLat": 40.7,
+    "minLon": -74.02,
+    "maxLat": 40.747,
+    "maxLon": -73.97
+  },
+  "coordinateSystem": "Coordinates are in local meters relative to projection origin. +X is west, +Z is north."
+}

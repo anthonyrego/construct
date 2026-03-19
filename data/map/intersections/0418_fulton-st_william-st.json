@@ -1,0 +1,12 @@
+{
+  "id": "0418_fulton-st_william-st",
+  "position": [
+    1060.9001,
+    -1983.2886
+  ],
+  "street1": "FULTON ST",
+  "street2": "WILLIAM ST",
+  "directionDeg": 236.10089,
+  "cycleOffsetSec": 53.09419,
+  "features": []
+}

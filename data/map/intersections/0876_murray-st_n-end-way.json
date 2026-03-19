@@ -1,0 +1,12 @@
+{
+  "id": "0876_murray-st_n-end-way",
+  "position": [
+    1753.9441,
+    -1329.8076
+  ],
+  "street1": "MURRAY ST",
+  "street2": "N END WAY",
+  "directionDeg": 80.76947,
+  "cycleOffsetSec": 10.432639,
+  "features": []
+}

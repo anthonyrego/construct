@@ -1,0 +1,12 @@
+{
+  "id": "0925_clarkson-st_washington-st",
+  "position": [
+    1306.9336,
+    260.49673
+  ],
+  "street1": "CLARKSON ST",
+  "street2": "WASHINGTON ST",
+  "directionDeg": 83.45893,
+  "cycleOffsetSec": 26.511354,
+  "features": []
+}

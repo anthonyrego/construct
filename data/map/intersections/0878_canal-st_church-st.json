@@ -1,0 +1,12 @@
+{
+  "id": "0878_canal-st_church-st",
+  "position": [
+    821.25757,
+    -783.5503
+  ],
+  "street1": "CHURCH ST",
+  "street2": "CANAL ST",
+  "directionDeg": 149.21263,
+  "cycleOffsetSec": 56.880295,
+  "features": []
+}

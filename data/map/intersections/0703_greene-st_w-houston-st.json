@@ -1,0 +1,12 @@
+{
+  "id": "0703_greene-st_w-houston-st",
+  "position": [
+    384.60184,
+    -136.32706
+  ],
+  "street1": "GREENE ST",
+  "street2": "W HOUSTON ST",
+  "directionDeg": 147.44293,
+  "cycleOffsetSec": 16.077679,
+  "features": []
+}

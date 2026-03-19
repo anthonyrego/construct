@@ -1,0 +1,12 @@
+{
+  "id": "1219_chrystie-st_delancey-st",
+  "position": [
+    -100.54297,
+    -823.14496
+  ],
+  "street1": "DELANCEY ST",
+  "street2": "CHRYSTIE ST",
+  "directionDeg": -110.64988,
+  "cycleOffsetSec": 61.121162,
+  "features": []
+}

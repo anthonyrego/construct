@@ -1,0 +1,12 @@
+{
+  "id": "0043_broadway_e-18-st",
+  "position": [
+    -314.0579,
+    1159.5376
+  ],
+  "street1": "E 18 ST",
+  "street2": "BROADWAY",
+  "directionDeg": 60.856327,
+  "cycleOffsetSec": 42.6506,
+  "features": []
+}

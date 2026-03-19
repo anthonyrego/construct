@@ -1,0 +1,12 @@
+{
+  "id": "0904_clarkson-st_west-st",
+  "position": [
+    1426.073,
+    283.0849
+  ],
+  "street1": "WEST ST",
+  "street2": "CLARKSON ST",
+  "directionDeg": -4.6458697,
+  "cycleOffsetSec": 8.904613,
+  "features": []
+}

@@ -1,0 +1,12 @@
+{
+  "id": "0714_holland-tunnel-exit_varick-st",
+  "position": [
+    1070.7715,
+    -702.12695
+  ],
+  "street1": "VARICK ST",
+  "street2": "HOLLAND TUNNEL EXIT",
+  "directionDeg": -7.3281703,
+  "cycleOffsetSec": 69.28781,
+  "features": []
+}

@@ -1,0 +1,39 @@
+{
+  "block": "1-00108",
+  "buildings": [
+    {
+      "bbl": "1001080004",
+      "address": "SOUTH STREET",
+      "height": 3.6576,
+      "color": [
+        110,
+        108,
+        105
+      ],
+      "buildingClass": "T9",
+      "landUse": "7",
+      "yearBuilt": 0,
+      "floors": 0,
+      "visible": true,
+      "footprint": [
+        [
+          510.06345,
+          -2142.449
+        ],
+        [
+          512.1382,
+          -2139.432
+        ],
+        [
+          508.63278,
+          -2137.0012
+        ],
+        [
+          506.558,
+          -2140.0183
+        ]
+      ],
+      "holes": null
+    }
+  ]
+}

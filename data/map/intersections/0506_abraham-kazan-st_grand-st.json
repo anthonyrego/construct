@@ -1,0 +1,12 @@
+{
+  "id": "0506_abraham-kazan-st_grand-st",
+  "position": [
+    -1032.0731,
+    -1434.6211
+  ],
+  "street1": "GRAND ST",
+  "street2": "ABRAHAM KAZAN ST",
+  "directionDeg": 70.31772,
+  "cycleOffsetSec": 13.671931,
+  "features": []
+}

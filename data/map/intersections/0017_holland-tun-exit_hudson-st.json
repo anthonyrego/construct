@@ -1,0 +1,12 @@
+{
+  "id": "0017_holland-tun-exit_hudson-st",
+  "position": [
+    1238.4662,
+    -756.9937
+  ],
+  "street1": "HUDSON ST",
+  "street2": "HOLLAND TUN EXIT",
+  "directionDeg": 172.3791,
+  "cycleOffsetSec": 10.040558,
+  "features": []
+}

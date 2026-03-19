@@ -1,0 +1,12 @@
+{
+  "id": "0442_canal-st_w-broadway",
+  "position": [
+    906.0622,
+    -675.99695
+  ],
+  "street1": "W BROADWAY",
+  "street2": "CANAL ST",
+  "directionDeg": 147.45517,
+  "cycleOffsetSec": 8.339278,
+  "features": []
+}

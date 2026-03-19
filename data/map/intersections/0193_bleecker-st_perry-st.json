@@ -1,0 +1,12 @@
+{
+  "id": "0193_bleecker-st_perry-st",
+  "position": [
+    939.57104,
+    876.04987
+  ],
+  "street1": "BLEECKER ST",
+  "street2": "PERRY ST",
+  "directionDeg": 12.223406,
+  "cycleOffsetSec": 15.967754,
+  "features": []
+}

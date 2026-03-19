@@ -1,0 +1,12 @@
+{
+  "id": "1173_broome-st_mulberry-st",
+  "position": [
+    246.08276,
+    -778.9942
+  ],
+  "street1": "MULBERRY ST",
+  "street2": "BROOME ST",
+  "directionDeg": 163.31778,
+  "cycleOffsetSec": 57.553516,
+  "features": []
+}

@@ -1,0 +1,12 @@
+{
+  "id": "0424_clinton-st_grand-st",
+  "position": [
+    -604.14545,
+    -1269.1862
+  ],
+  "street1": "GRAND ST",
+  "street2": "CLINTON ST",
+  "directionDeg": 68.435814,
+  "cycleOffsetSec": 64.53857,
+  "features": []
+}

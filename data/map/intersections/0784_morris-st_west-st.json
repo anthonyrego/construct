@@ -1,0 +1,12 @@
+{
+  "id": "0784_morris-st_west-st",
+  "position": [
+    1847.574,
+    -2306.4602
+  ],
+  "street1": "MORRIS ST",
+  "street2": "WEST ST",
+  "directionDeg": 251.22162,
+  "cycleOffsetSec": 28.10817,
+  "features": []
+}

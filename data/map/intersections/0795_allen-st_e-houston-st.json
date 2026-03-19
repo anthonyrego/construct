@@ -1,0 +1,12 @@
+{
+  "id": "0795_allen-st_e-houston-st",
+  "position": [
+    -460.97336,
+    -506.25278
+  ],
+  "street1": "E HOUSTON ST",
+  "street2": "ALLEN ST",
+  "directionDeg": -111.64754,
+  "cycleOffsetSec": 27.951962,
+  "features": []
+}

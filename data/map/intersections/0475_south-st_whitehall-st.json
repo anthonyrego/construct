@@ -1,0 +1,12 @@
+{
+  "id": "0475_south-st_whitehall-st",
+  "position": [
+    1567.2013,
+    -2886.452
+  ],
+  "street1": "SOUTH ST",
+  "street2": "WHITEHALL ST",
+  "directionDeg": -76.18007,
+  "cycleOffsetSec": 14.95479,
+  "features": []
+}

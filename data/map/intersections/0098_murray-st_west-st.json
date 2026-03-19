@@ -1,0 +1,12 @@
+{
+  "id": "0098_murray-st_west-st",
+  "position": [
+    1632.4093,
+    -1350.0354
+  ],
+  "street1": "MURRAY ST",
+  "street2": "WEST ST",
+  "directionDeg": 255.92596,
+  "cycleOffsetSec": 31.989653,
+  "features": []
+}

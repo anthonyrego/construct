@@ -1,0 +1,12 @@
+{
+  "id": "0112_columbia-st_delancey-st",
+  "position": [
+    -1117.6014,
+    -1224.4329
+  ],
+  "street1": "DELANCEY ST",
+  "street2": "COLUMBIA ST",
+  "directionDeg": -111.75286,
+  "cycleOffsetSec": 41.236282,
+  "features": []
+}

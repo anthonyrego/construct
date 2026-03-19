@@ -1,0 +1,12 @@
+{
+  "id": "0810_division-st_pike-st",
+  "position": [
+    -115.92619,
+    -1459.6155
+  ],
+  "street1": "DIVISION ST",
+  "street2": "PIKE ST",
+  "directionDeg": -84.40784,
+  "cycleOffsetSec": 63.895184,
+  "features": []
+}

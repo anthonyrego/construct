@@ -1,0 +1,12 @@
+{
+  "id": "0477_south-st_wall-st",
+  "position": [
+    1047.6085,
+    -2576.4949
+  ],
+  "street1": "WALL ST",
+  "street2": "SOUTH ST",
+  "directionDeg": 37.92759,
+  "cycleOffsetSec": 42.785763,
+  "features": []
+}

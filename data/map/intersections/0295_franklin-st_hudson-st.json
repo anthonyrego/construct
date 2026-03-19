@@ -1,0 +1,12 @@
+{
+  "id": "0295_franklin-st_hudson-st",
+  "position": [
+    1254.1587,
+    -908.30536
+  ],
+  "street1": "FRANKLIN ST",
+  "street2": "HUDSON ST",
+  "directionDeg": 82.773186,
+  "cycleOffsetSec": 49.36273,
+  "features": []
+}

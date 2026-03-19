@@ -1,0 +1,12 @@
+{
+  "id": "0649_bridge-st_york-st",
+  "position": [
+    -773.91907,
+    -2891.5923
+  ],
+  "street1": "BRIDGE ST",
+  "street2": "YORK ST",
+  "directionDeg": 357.34402,
+  "cycleOffsetSec": 30.653473,
+  "features": []
+}

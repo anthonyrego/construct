@@ -1,0 +1,12 @@
+{
+  "id": "1243_howard-st_lafayette-st",
+  "position": [
+    504.86243,
+    -902.90027
+  ],
+  "street1": "LAFAYETTE ST",
+  "street2": "HOWARD ST",
+  "directionDeg": -34.734478,
+  "cycleOffsetSec": 28.00358,
+  "features": []
+}

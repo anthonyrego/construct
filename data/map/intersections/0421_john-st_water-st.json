@@ -1,0 +1,12 @@
+{
+  "id": "0421_john-st_water-st",
+  "position": [
+    948.2335,
+    -2283.6978
+  ],
+  "street1": "WATER ST",
+  "street2": "JOHN ST",
+  "directionDeg": 132.4648,
+  "cycleOffsetSec": 66.99136,
+  "features": []
+}

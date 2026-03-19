@@ -1,0 +1,12 @@
+{
+  "id": "0921_bethune-st_greenwich-st",
+  "position": [
+    1063.2173,
+    1052.872
+  ],
+  "street1": "BETHUNE ST",
+  "street2": "GREENWICH ST",
+  "directionDeg": 266.28635,
+  "cycleOffsetSec": 51.878593,
+  "features": []
+}

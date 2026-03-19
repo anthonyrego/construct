@@ -1,0 +1,12 @@
+{
+  "id": "0097_greenwich-st_murray-st",
+  "position": [
+    1472.2151,
+    -1393.27
+  ],
+  "street1": "GREENWICH ST",
+  "street2": "MURRAY ST",
+  "directionDeg": -14.626781,
+  "cycleOffsetSec": 14.437494,
+  "features": []
+}

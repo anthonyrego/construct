@@ -1,0 +1,12 @@
+{
+  "id": "0384_monroe-st_montgomery-st",
+  "position": [
+    -757.82855,
+    -1674.8475
+  ],
+  "street1": "MONTGOMERY ST",
+  "street2": "MONROE ST",
+  "directionDeg": 6.423028,
+  "cycleOffsetSec": 30.058306,
+  "features": []
+}

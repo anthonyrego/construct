@@ -1,0 +1,12 @@
+{
+  "id": "1170_bleecker-st_bowery",
+  "position": [
+    -117.72868,
+    -231.5573
+  ],
+  "street1": "BLEECKER ST",
+  "street2": "BOWERY",
+  "directionDeg": 70.74423,
+  "cycleOffsetSec": 14.149845,
+  "features": []
+}

@@ -1,0 +1,12 @@
+{
+  "id": "0129_church-st_franklin-st",
+  "position": [
+    965.8925,
+    -1014.76434
+  ],
+  "street1": "FRANKLIN ST",
+  "street2": "CHURCH ST",
+  "directionDeg": 58.955296,
+  "cycleOffsetSec": 30.472675,
+  "features": []
+}

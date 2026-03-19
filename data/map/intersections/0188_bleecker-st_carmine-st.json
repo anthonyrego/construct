@@ -1,0 +1,12 @@
+{
+  "id": "0188_bleecker-st_carmine-st",
+  "position": [
+    724.9953,
+    326.43076
+  ],
+  "street1": "BLEECKER ST",
+  "street2": "CARMINE ST",
+  "directionDeg": 24.26084,
+  "cycleOffsetSec": 14.95999,
+  "features": []
+}

@@ -1,0 +1,12 @@
+{
+  "id": "0823_bowery_spring-st",
+  "position": [
+    5.43964,
+    -705.34644
+  ],
+  "street1": "SPRING ST",
+  "street2": "BOWERY",
+  "directionDeg": 61.646908,
+  "cycleOffsetSec": 69.9795,
+  "features": []
+}

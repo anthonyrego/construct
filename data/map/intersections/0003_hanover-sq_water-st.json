@@ -1,0 +1,12 @@
+{
+  "id": "0003_hanover-sq_water-st",
+  "position": [
+    1281.5697,
+    -2588.8984
+  ],
+  "street1": "WATER ST",
+  "street2": "HANOVER SQ",
+  "directionDeg": 129.98668,
+  "cycleOffsetSec": 31.953737,
+  "features": []
+}

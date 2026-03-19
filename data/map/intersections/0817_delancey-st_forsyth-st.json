@@ -1,0 +1,12 @@
+{
+  "id": "0817_delancey-st_forsyth-st",
+  "position": [
+    -137.70651,
+    -879.5537
+  ],
+  "street1": "FORSYTH ST",
+  "street2": "DELANCEY ST",
+  "directionDeg": 158.61624,
+  "cycleOffsetSec": 56.901913,
+  "features": []
+}

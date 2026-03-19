@@ -1,0 +1,12 @@
+{
+  "id": "0330_prince-st_thompson-st",
+  "position": [
+    657.75665,
+    -142.54684
+  ],
+  "street1": "THOMPSON ST",
+  "street2": "PRINCE ST",
+  "directionDeg": -32.11342,
+  "cycleOffsetSec": 55.975857,
+  "features": []
+}

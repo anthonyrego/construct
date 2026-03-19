@@ -1,0 +1,12 @@
+{
+  "id": "0425_clinton-st_south-st",
+  "position": [
+    -610.5703,
+    -1876.2322
+  ],
+  "street1": "SOUTH ST",
+  "street2": "CLINTON ST",
+  "directionDeg": 99.27896,
+  "cycleOffsetSec": 5.867762,
+  "features": []
+}

@@ -1,0 +1,12 @@
+{
+  "id": "0937_holland-tun-exit_washington-st",
+  "position": [
+    1375.511,
+    -275.9851
+  ],
+  "street1": "WASHINGTON ST",
+  "street2": "HOLLAND TUN EXIT",
+  "directionDeg": 172.44855,
+  "cycleOffsetSec": 1.2550557,
+  "features": []
+}

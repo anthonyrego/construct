@@ -1,0 +1,12 @@
+{
+  "id": "0026_centre-st_worth-st",
+  "position": [
+    693.0485,
+    -1358.3746
+  ],
+  "street1": "WORTH ST",
+  "street2": "CENTRE ST",
+  "directionDeg": 58.531143,
+  "cycleOffsetSec": 22.522564,
+  "features": []
+}

@@ -1,0 +1,12 @@
+{
+  "id": "0539_varick-st_w-houston-st",
+  "position": [
+    972.66144,
+    133.90695
+  ],
+  "street1": "VARICK ST",
+  "street2": "W HOUSTON ST",
+  "directionDeg": -7.7226596,
+  "cycleOffsetSec": 24.867706,
+  "features": []
+}

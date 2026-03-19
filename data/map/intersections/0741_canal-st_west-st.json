@@ -1,0 +1,12 @@
+{
+  "id": "0741_canal-st_west-st",
+  "position": [
+    1459.1263,
+    -266.59857
+  ],
+  "street1": "WEST ST",
+  "street2": "CANAL ST",
+  "directionDeg": 171.28745,
+  "cycleOffsetSec": 14.479163,
+  "features": []
+}

@@ -1,0 +1,12 @@
+{
+  "id": "0213_broome-st_thompson-st",
+  "position": [
+    835.015,
+    -419.7541
+  ],
+  "street1": "THOMPSON ST",
+  "street2": "BROOME ST",
+  "directionDeg": -32.26083,
+  "cycleOffsetSec": 65.71599,
+  "features": []
+}

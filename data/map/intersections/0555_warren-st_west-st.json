@@ -1,0 +1,12 @@
+{
+  "id": "0555_warren-st_west-st",
+  "position": [
+    1614.7136,
+    -1223.3304
+  ],
+  "street1": "WEST ST",
+  "street2": "WARREN ST",
+  "directionDeg": 168.58504,
+  "cycleOffsetSec": 52.56655,
+  "features": []
+}

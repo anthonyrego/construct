@@ -1,0 +1,12 @@
+{
+  "id": "0061_broadway_fulton-st",
+  "position": [
+    1285.2214,
+    -1834.1244
+  ],
+  "street1": "FULTON ST",
+  "street2": "BROADWAY",
+  "directionDeg": 238.63937,
+  "cycleOffsetSec": 9.882356,
+  "features": []
+}

@@ -1,0 +1,12 @@
+{
+  "id": "1232_forsyth-st_grand-st",
+  "position": [
+    -52.225536,
+    -1043.1116
+  ],
+  "street1": "GRAND ST",
+  "street2": "FORSYTH ST",
+  "directionDeg": 68.230316,
+  "cycleOffsetSec": 28.517294,
+  "features": []
+}

@@ -1,0 +1,12 @@
+{
+  "id": "0370_clinton-st_madison-st",
+  "position": [
+    -578.8699,
+    -1607.3627
+  ],
+  "street1": "MADISON ST",
+  "street2": "CLINTON ST",
+  "directionDeg": 96.45849,
+  "cycleOffsetSec": 60.482887,
+  "features": []
+}

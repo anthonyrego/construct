@@ -1,0 +1,12 @@
+{
+  "id": "0416_fulton-st_water-st",
+  "position": [
+    870.467,
+    -2227.6052
+  ],
+  "street1": "FULTON ST",
+  "street2": "WATER ST",
+  "directionDeg": 208.05608,
+  "cycleOffsetSec": 28.3024,
+  "features": []
+}

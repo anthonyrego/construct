@@ -1,0 +1,12 @@
+{
+  "id": "0263_canal-st_mulberry-st",
+  "position": [
+    404.4246,
+    -1145.1274
+  ],
+  "street1": "MULBERRY ST",
+  "street2": "CANAL ST",
+  "directionDeg": 154.76419,
+  "cycleOffsetSec": 34.29653,
+  "features": []
+}

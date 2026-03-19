@@ -1,0 +1,12 @@
+{
+  "id": "0382_church-st_cortlandt-st",
+  "position": [
+    1475.3148,
+    -1900.3121
+  ],
+  "street1": "CHURCH ST",
+  "street2": "CORTLANDT ST",
+  "directionDeg": 153.71898,
+  "cycleOffsetSec": 15.10398,
+  "features": []
+}

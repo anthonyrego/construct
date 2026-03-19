@@ -1,0 +1,12 @@
+{
+  "id": "0551_grand-st_mercer-st",
+  "position": [
+    639.5492,
+    -683.30725
+  ],
+  "street1": "GRAND ST",
+  "street2": "MERCER ST",
+  "directionDeg": 55.336514,
+  "cycleOffsetSec": 25.412176,
+  "features": []
+}

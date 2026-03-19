@@ -1,0 +1,12 @@
+{
+  "id": "0186_chambers-st_greenwich-st",
+  "position": [
+    1437.1315,
+    -1230.536
+  ],
+  "street1": "CHAMBERS ST",
+  "street2": "GREENWICH ST",
+  "directionDeg": 239.12982,
+  "cycleOffsetSec": 27.745611,
+  "features": []
+}
