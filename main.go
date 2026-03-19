@@ -27,6 +27,8 @@ import (
 	"github.com/anthonyrego/construct/pkg/sign"
 	"github.com/anthonyrego/construct/pkg/snow"
 	"github.com/anthonyrego/construct/pkg/traffic"
+	"github.com/anthonyrego/construct/pkg/tree"
+	"github.com/anthonyrego/construct/pkg/hydrant"
 	"github.com/anthonyrego/construct/pkg/ui"
 	"github.com/anthonyrego/construct/pkg/window"
 )
@@ -136,6 +138,8 @@ type MapWorld struct {
 	signMeshes   map[string]*mesh.Mesh
 	signWidths   map[string]float32
 	rampSys      *ramp.System
+	treeSys      *tree.System
+	hydrantSys   *hydrant.System
 	store        *mapdata.Store
 }
 
@@ -167,6 +171,14 @@ func (w *MapWorld) destroyResources() {
 		w.rampSys.Destroy(w.rend)
 		w.rampSys = nil
 	}
+	if w.treeSys != nil {
+		w.treeSys.Destroy(w.rend)
+		w.treeSys = nil
+	}
+	if w.hydrantSys != nil {
+		w.hydrantSys.Destroy(w.rend)
+		w.hydrantSys = nil
+	}
 	w.trafficSys = nil
 	w.scene = nil
 	w.grid = nil
@@ -190,7 +202,7 @@ func (w *MapWorld) Reload(dir string) error {
 	w.reg = building.NewRegistry(w.rend, w.gridCellSize)
 	w.scene = &scene.Scene{}
 
-	loadFromMapData(w.rend, store, w.reg, w.scene, &w.groundMeshes, &w.trafficSys, w.signMeshes, w.signWidths, &w.rampSys)
+	loadFromMapData(w.rend, store, w.reg, w.scene, &w.groundMeshes, &w.trafficSys, w.signMeshes, w.signWidths, &w.rampSys, &w.treeSys, &w.hydrantSys)
 
 	w.grid = scene.NewSpatialGrid(w.scene.Objects, w.gridCellSize)
 	cellMeshes := w.reg.BuildCellMeshes()
@@ -334,7 +346,7 @@ func loadFromMapData(
 	rend *renderer.Renderer, store *mapdata.Store, reg *building.Registry, s *scene.Scene,
 	groundMeshes *[]*mesh.Mesh, trafficSys **traffic.System,
 	signMeshes map[string]*mesh.Mesh, signWidths map[string]float32,
-	rampSys **ramp.System,
+	rampSys **ramp.System, treeSys **tree.System, hydrantSys **hydrant.System,
 ) {
 	// --- Buildings ---
 	var allFootprints []geojson.Footprint
@@ -450,6 +462,28 @@ func loadFromMapData(
 		} else {
 			*rampSys = rs
 			fmt.Printf("Loaded %d ramps from map data\n", len(items))
+		}
+	}
+
+	// --- Trees ---
+	if treeData, ok := store.Doodads["tree"]; ok && len(treeData.Items) > 0 {
+		ts, err := tree.NewFromMapData(rend, treeData.Items)
+		if err != nil {
+			fmt.Println("Warning: could not create tree system:", err)
+		} else {
+			*treeSys = ts
+			fmt.Printf("Loaded %d trees from map data\n", len(ts.Trees))
+		}
+	}
+
+	// --- Hydrants ---
+	if hydrantData, ok := store.Doodads["hydrant"]; ok && len(hydrantData.Items) > 0 {
+		hs, err := hydrant.NewFromMapData(rend, hydrantData.Items)
+		if err != nil {
+			fmt.Println("Warning: could not create hydrant system:", err)
+		} else {
+			*hydrantSys = hs
+			fmt.Printf("Loaded %d hydrants from map data\n", len(hs.Hydrants))
 		}
 	}
 }
@@ -630,7 +664,7 @@ func main() {
 			world.store = store
 			world.reg = building.NewRegistry(rend, gridCellSize)
 			world.scene = &scene.Scene{}
-			loadFromMapData(rend, store, world.reg, world.scene, &world.groundMeshes, &world.trafficSys, world.signMeshes, world.signWidths, &world.rampSys)
+			loadFromMapData(rend, store, world.reg, world.scene, &world.groundMeshes, &world.trafficSys, world.signMeshes, world.signWidths, &world.rampSys, &world.treeSys, &world.hydrantSys)
 		}
 	}
 
@@ -1290,6 +1324,55 @@ func main() {
 					VertexBuffer: rm.VertexBuffer,
 					IndexBuffer:  rm.IndexBuffer,
 					IndexCount:   rm.IndexCount,
+					MVP:          viewProj.Mul4(model),
+					Model:        model,
+				})
+			}
+		}
+
+		// Draw trees
+		if world.treeSys != nil {
+			tm := world.treeSys.Mesh
+			for _, t := range world.treeSys.Trees {
+				tx, tz := t.Position.X, t.Position.Z
+				if !frustum.SphereVisible(mgl32.Vec3{tx, t.Height / 2, tz}, t.Height/2+1) {
+					continue
+				}
+				dx := tx - cam.Position.X()
+				dz := tz - cam.Position.Z()
+				if dx*dx+dz*dz > cullDistSq {
+					continue
+				}
+				model := mgl32.Translate3D(tx, 0, tz).
+					Mul4(mgl32.Scale3D(t.Spread, t.Height, t.Spread))
+				rend.DrawLit(cmdBuf, scenePass, renderer.LitDrawCall{
+					VertexBuffer: tm.VertexBuffer,
+					IndexBuffer:  tm.IndexBuffer,
+					IndexCount:   tm.IndexCount,
+					MVP:          viewProj.Mul4(model),
+					Model:        model,
+				})
+			}
+		}
+
+		// Draw hydrants
+		if world.hydrantSys != nil {
+			hm := world.hydrantSys.Mesh
+			for _, h := range world.hydrantSys.Hydrants {
+				hx, hz := h.Position.X, h.Position.Z
+				if !frustum.SphereVisible(mgl32.Vec3{hx, 0.4, hz}, 1.5) {
+					continue
+				}
+				dx := hx - cam.Position.X()
+				dz := hz - cam.Position.Z()
+				if dx*dx+dz*dz > cullDistSq {
+					continue
+				}
+				model := mgl32.Translate3D(hx, 0, hz)
+				rend.DrawLit(cmdBuf, scenePass, renderer.LitDrawCall{
+					VertexBuffer: hm.VertexBuffer,
+					IndexBuffer:  hm.IndexBuffer,
+					IndexCount:   hm.IndexCount,
 					MVP:          viewProj.Mul4(model),
 					Model:        model,
 				})
