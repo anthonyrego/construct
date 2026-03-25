@@ -5,6 +5,9 @@ import (
 	"math/rand"
 
 	"github.com/go-gl/mathgl/mgl32"
+
+	"github.com/anthonyrego/construct/pkg/mesh"
+	"github.com/anthonyrego/construct/pkg/renderer"
 )
 
 type Particle struct {
@@ -141,5 +144,30 @@ func (s *System) Update(dt float32) {
 			p.Pos[2] < minZ-3 || p.Pos[2] > maxZ+3 {
 			s.spawn(p, true) // drifted out horizontally — respawn at random height
 		}
+	}
+}
+
+// Render draws all snow particles as billboarded quads facing the camera.
+func (s *System) Render(rend *renderer.Renderer, frame renderer.RenderFrame, snowMesh *mesh.Mesh) {
+	for i := range s.Particles {
+		p := &s.Particles[i]
+		sx := p.Size
+		sy := p.Size * p.Aspect
+		r := frame.CamRight.Mul(sx)
+		u := frame.CamUp.Mul(sy)
+		f := frame.CamRight.Cross(frame.CamUp).Mul(p.Size * 0.05)
+		model := mgl32.Mat4{
+			r[0], r[1], r[2], 0,
+			u[0], u[1], u[2], 0,
+			f[0], f[1], f[2], 0,
+			p.Pos[0], p.Pos[1], p.Pos[2], 1,
+		}
+		rend.DrawLit(frame.CmdBuf, frame.ScenePass, renderer.LitDrawCall{
+			VertexBuffer: snowMesh.VertexBuffer,
+			IndexBuffer:  snowMesh.IndexBuffer,
+			IndexCount:   snowMesh.IndexCount,
+			MVP:          frame.ViewProj.Mul4(model),
+			Model:        model,
+		})
 	}
 }

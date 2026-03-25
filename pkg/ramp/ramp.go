@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/go-gl/mathgl/mgl32"
+
 	"github.com/anthonyrego/construct/pkg/geojson"
 	"github.com/anthonyrego/construct/pkg/mesh"
 	"github.com/anthonyrego/construct/pkg/renderer"
@@ -309,6 +311,35 @@ func newMesh(r *renderer.Renderer, curbHeight float32) (*mesh.Mesh, error) {
 		IndexBuffer:  indexBuffer,
 		IndexCount:   uint32(len(indices)),
 	}, nil
+}
+
+// Render draws all ramps using the shared mesh with frustum and distance culling.
+func (s *System) Render(rend *renderer.Renderer, frame renderer.RenderFrame) {
+	if s == nil {
+		return
+	}
+	rm := s.Mesh
+	for _, r := range s.Ramps {
+		rx, rz := r.Position.X, r.Position.Z
+		if !frame.Frustum.SphereVisible(mgl32.Vec3{rx, 0.1, rz}, 2) {
+			continue
+		}
+		dx := rx - frame.CamPos.X()
+		dz := rz - frame.CamPos.Z()
+		if dx*dx+dz*dz > frame.CullDistSq {
+			continue
+		}
+		model := mgl32.Translate3D(rx, 0.07, rz).
+			Mul4(mgl32.HomogRotate3DY(r.DirAngle)).
+			Mul4(mgl32.Scale3D(r.Width, 1.0, r.Length))
+		rend.DrawLit(frame.CmdBuf, frame.ScenePass, renderer.LitDrawCall{
+			VertexBuffer: rm.VertexBuffer,
+			IndexBuffer:  rm.IndexBuffer,
+			IndexCount:   rm.IndexCount,
+			MVP:          frame.ViewProj.Mul4(model),
+			Model:        model,
+		})
+	}
 }
 
 // Destroy releases the shared mesh GPU buffers.

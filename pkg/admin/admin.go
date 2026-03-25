@@ -8,6 +8,7 @@ import (
 
 	"github.com/anthonyrego/construct/pkg/building"
 	"github.com/anthonyrego/construct/pkg/camera"
+	"github.com/anthonyrego/construct/pkg/doodad"
 	"github.com/anthonyrego/construct/pkg/input"
 	"github.com/anthonyrego/construct/pkg/mapdata"
 	"github.com/anthonyrego/construct/pkg/renderer"
@@ -21,12 +22,39 @@ const (
 	EntityNone EntityType = iota
 	EntityBuilding
 	EntitySignal
+	EntityTree
+	EntityHydrant
+	EntityDoodad
 )
+
+func (s Selection) DoodadType() string {
+	switch s.Type {
+	case EntityTree:
+		return "tree"
+	case EntityHydrant:
+		return "hydrant"
+	default:
+		return ""
+	}
+}
+
+func doodadEntityType(typeName string) EntityType {
+	switch typeName {
+	case "tree":
+		return EntityTree
+	case "hydrant":
+		return EntityHydrant
+	default:
+		return EntityDoodad
+	}
+}
 
 type Selection struct {
 	Type       EntityType
 	BuildingID building.BuildingID
 	SignalIdx  int
+	DoodadIdx  int
+	DoodadID   string
 	Position   mgl32.Vec3
 	Distance   float32
 }
@@ -37,15 +65,21 @@ type Mode struct {
 	panel     *InfoPanel
 	rend      *renderer.Renderer
 
+	// Placement mode: entity follows crosshair on Y=0 plane
+	placing      bool
+	placeOriginX float32
+	placeOriginZ float32
+
 	// Editing state
-	dirtyBlocks map[string]bool
-	dirtyInts   map[string]bool
-	undoStack   []undoEntry
+	dirtyBlocks  map[string]bool
+	dirtyInts    map[string]bool
+	dirtyDoodads map[string]bool
+	undoStack    []undoEntry
 }
 
 func New(r *renderer.Renderer, pixelScale int) *Mode {
 	m := &Mode{
-		selection: Selection{SignalIdx: -1},
+		selection: Selection{SignalIdx: -1, DoodadIdx: -1},
 		panel:     newInfoPanel(r, pixelScale),
 		rend:      r,
 	}
@@ -83,18 +117,55 @@ func (m *Mode) SelectedSignalIdx() int {
 }
 
 func (m *Mode) ClearSelection() {
-	m.selection = Selection{SignalIdx: -1}
+	m.selection = Selection{SignalIdx: -1, DoodadIdx: -1}
+	m.placing = false
 	m.panel.clearValues(m.rend)
 }
 
-// Update raycasts from screen center each frame and updates the selection.
-func (m *Mode) Update(cam *camera.Camera, grid *scene.SpatialGrid, objects []scene.Object, reg *building.Registry, trafficSys *traffic.System) {
-	// Ray from camera position along camera forward (center of screen)
+// Update handles look-to-select and placement mode in admin mode.
+// Uses screen-center raycast (cam.Position + cam.Forward()) for both selection and placement.
+func (m *Mode) Update(cam *camera.Camera, grid *scene.SpatialGrid, objects []scene.Object,
+	reg *building.Registry, trafficSys *traffic.System,
+	doodads map[string]*doodad.System,
+	inp *input.Input) {
+
 	origin := cam.Position
 	dir := cam.Forward()
 
+	// Placement mode: entity follows crosshair on Y=0 plane
+	if m.placing {
+		hitX, hitZ, ok := rayToGroundPlane(origin, dir, 0)
+		if ok {
+			m.setPosition(hitX, hitZ, doodads, trafficSys)
+		}
+		return // confirm/cancel handled in HandleEdit (which has store access)
+	}
+
+	// Left-click: select entity at crosshair
+	if inp.IsMouseLeftPressed() {
+		bestSel := m.hitTest(origin, dir, cam.Position, grid, objects, reg, trafficSys, doodads)
+
+		changed := bestSel.Type != m.selection.Type ||
+			bestSel.BuildingID != m.selection.BuildingID ||
+			bestSel.SignalIdx != m.selection.SignalIdx ||
+			bestSel.DoodadIdx != m.selection.DoodadIdx ||
+			bestSel.DoodadID != m.selection.DoodadID
+
+		m.selection = bestSel
+
+		if changed {
+			m.updatePanel(reg, trafficSys, doodads)
+		}
+	}
+}
+
+// hitTest raycasts against all entity types and returns the closest hit.
+func (m *Mode) hitTest(origin, dir, camPos mgl32.Vec3, grid *scene.SpatialGrid, objects []scene.Object,
+	reg *building.Registry, trafficSys *traffic.System,
+	doodads map[string]*doodad.System) Selection {
+
 	bestDist := float32(math.MaxFloat32)
-	bestSel := Selection{SignalIdx: -1}
+	bestSel := Selection{SignalIdx: -1, DoodadIdx: -1}
 
 	// Phase 1: collect sphere-hit building candidates
 	type candidate struct {
@@ -103,7 +174,7 @@ func (m *Mode) Update(cam *camera.Camera, grid *scene.SpatialGrid, objects []sce
 	}
 	var candidates []candidate
 
-	nearby := grid.QueryRadius(cam.Position.X(), cam.Position.Z(), 200)
+	nearby := grid.QueryRadius(camPos.X(), camPos.Z(), 200)
 	for _, idx := range nearby {
 		obj := objects[idx]
 		if obj.BuildingID == 0 {
@@ -136,7 +207,6 @@ func (m *Mode) Update(cam *camera.Camera, grid *scene.SpatialGrid, objects []sce
 		if b == nil || b.Raw == nil {
 			continue
 		}
-		// Transform ray to building-local space (vertices are centroid-relative)
 		localOrigin := origin.Sub(c.position)
 		verts := b.Raw.Vertices
 		indices := b.Raw.Indices
@@ -151,6 +221,7 @@ func (m *Mode) Update(cam *camera.Camera, grid *scene.SpatialGrid, objects []sce
 					Type:       EntityBuilding,
 					BuildingID: c.bid,
 					SignalIdx:  -1,
+					DoodadIdx:  -1,
 					Position:   c.position,
 					Distance:   t,
 				}
@@ -168,6 +239,7 @@ func (m *Mode) Update(cam *camera.Camera, grid *scene.SpatialGrid, objects []sce
 				bestSel = Selection{
 					Type:      EntitySignal,
 					SignalIdx: i,
+					DoodadIdx: -1,
 					Position:  center,
 					Distance:  t,
 				}
@@ -175,38 +247,97 @@ func (m *Mode) Update(cam *camera.Camera, grid *scene.SpatialGrid, objects []sce
 		}
 	}
 
-	// Only rebuild panel meshes when selection actually changes
-	changed := bestSel.Type != m.selection.Type ||
-		bestSel.BuildingID != m.selection.BuildingID ||
-		bestSel.SignalIdx != m.selection.SignalIdx
-
-	m.selection = bestSel
-
-	if !changed {
-		return
+	// Test doodads
+	for typeName, sys := range doodads {
+		if sys == nil {
+			continue
+		}
+		for i := range sys.Instances {
+			inst := &sys.Instances[i]
+			dx := inst.X - camPos.X()
+			dz := inst.Z - camPos.Z()
+			if dx*dx+dz*dz > 100*100 {
+				continue
+			}
+			centerY, pickR := sys.CullSphere(i)
+			center := mgl32.Vec3{inst.X, centerY, inst.Z}
+			tt, hit := camera.RaySphereIntersect(origin, dir, center, pickR)
+			if hit && tt < bestDist {
+				bestDist = tt
+				bestSel = Selection{
+					Type:      doodadEntityType(typeName),
+					SignalIdx: -1,
+					DoodadIdx: i,
+					DoodadID:  inst.ID,
+					Position:  center,
+					Distance:  tt,
+				}
+			}
+		}
 	}
 
-	if bestSel.Type == EntityBuilding {
-		b := reg.Get(bestSel.BuildingID)
+	return bestSel
+}
+
+// updatePanel refreshes the info panel for the current selection.
+func (m *Mode) updatePanel(reg *building.Registry, trafficSys *traffic.System,
+	doodads map[string]*doodad.System) {
+	switch m.selection.Type {
+	case EntityBuilding:
+		b := reg.Get(m.selection.BuildingID)
 		if b != nil {
 			m.panel.setBuildingValues(m.rend, b.BBL, b.PLUTO.Address, b.PLUTO.BldgClass, b.PLUTO.LandUse, b.PLUTO.YearBuilt, b.PLUTO.NumFloors, b.Footprint.Height, b.Hidden)
 		}
-	} else if bestSel.Type == EntitySignal {
-		sig := trafficSys.Signals[bestSel.SignalIdx]
-		m.panel.setSignalValues(m.rend, sig.Street1, sig.Street2, sig.DirAngle)
-	} else {
+	case EntitySignal:
+		if trafficSys != nil && m.selection.SignalIdx >= 0 && m.selection.SignalIdx < len(trafficSys.Signals) {
+			sig := trafficSys.Signals[m.selection.SignalIdx]
+			m.panel.setSignalValues(m.rend, sig.Street1, sig.Street2, sig.DirAngle)
+		}
+	case EntityTree, EntityHydrant, EntityDoodad:
+		typeName := m.selection.DoodadType()
+		if sys := doodads[typeName]; sys != nil && m.selection.DoodadIdx >= 0 && m.selection.DoodadIdx < len(sys.Instances) {
+			inst := &sys.Instances[m.selection.DoodadIdx]
+			m.panel.setDoodadValues(m.rend, sys.TypeName, inst.ID, inst.X, inst.Z)
+		}
+	default:
 		m.panel.clearValues(m.rend)
 	}
 }
 
+// rayToGroundPlane intersects a ray with a horizontal plane at the given Y.
+func rayToGroundPlane(origin, dir mgl32.Vec3, planeY float32) (x, z float32, ok bool) {
+	if dir.Y() > -1e-6 && dir.Y() < 1e-6 {
+		return 0, 0, false // parallel
+	}
+	t := (planeY - origin.Y()) / dir.Y()
+	if t <= 0 {
+		return 0, 0, false // behind camera
+	}
+	return origin.X() + t*dir.X(), origin.Z() + t*dir.Z(), true
+}
+
 func (m *Mode) Render(r *renderer.Renderer, cmdBuf *sdl.GPUCommandBuffer, swapchainTex *sdl.GPUTexture, screenW, screenH int) {
-	m.panel.render(r, cmdBuf, swapchainTex, screenW, screenH, m.selection, m.HasDirty())
+	m.panel.render(r, cmdBuf, swapchainTex, screenW, screenH, m.selection, m.HasDirty(), m.placing)
 }
 
 // HandleEdit processes editing key presses and returns what action the caller should take.
 func (m *Mode) HandleEdit(inp *input.Input, reg *building.Registry,
 	trafficSys *traffic.System, scn *scene.Scene,
-	grid *scene.SpatialGrid, store *mapdata.Store) EditAction {
+	grid *scene.SpatialGrid, store *mapdata.Store,
+	doodads map[string]*doodad.System) EditAction {
+
+	// Placement mode: confirm or cancel
+	if m.placing {
+		if inp.IsMouseLeftPressed() {
+			m.finalizePlace(doodads, trafficSys, store)
+			return EditDirty
+		}
+		if inp.IsKeyPressed(sdl.K_ESCAPE) {
+			m.cancelPlace(doodads, trafficSys)
+			return EditNone
+		}
+		return EditNone
+	}
 
 	if m.selection.Type == EntityNone {
 		// Only check Cmd+S / Cmd+Z even without selection
@@ -215,7 +346,7 @@ func (m *Mode) HandleEdit(inp *input.Input, reg *building.Registry,
 			return EditSave
 		}
 		if cmdHeld && inp.IsKeyPressed(sdl.K_Z) {
-			if m.undo(reg, scn.Objects, grid, trafficSys, store) {
+			if m.undo(reg, scn.Objects, grid, trafficSys, store, doodads) {
 				return EditDirty
 			}
 			return EditNone
@@ -233,10 +364,34 @@ func (m *Mode) HandleEdit(inp *input.Input, reg *building.Registry,
 
 	// Cmd+Z: undo
 	if cmdHeld && inp.IsKeyPressed(sdl.K_Z) {
-		if m.undo(reg, scn.Objects, grid, trafficSys, store) {
+		if m.undo(reg, scn.Objects, grid, trafficSys, store, doodads) {
 			return EditDirty
 		}
 		return EditNone
+	}
+
+	// Doodad edits: arrow keys nudge position
+	if m.selection.Type == EntityTree || m.selection.Type == EntityHydrant || m.selection.Type == EntityDoodad {
+		step := float32(0.5)
+		if shift {
+			step = 0.05
+		}
+		if inp.IsKeyPressed(sdl.K_UP) {
+			m.nudgePosition(0, -step, doodads, trafficSys, store)
+			return EditNone
+		}
+		if inp.IsKeyPressed(sdl.K_DOWN) {
+			m.nudgePosition(0, step, doodads, trafficSys, store)
+			return EditNone
+		}
+		if inp.IsKeyPressed(sdl.K_LEFT) {
+			m.nudgePosition(-step, 0, doodads, trafficSys, store)
+			return EditNone
+		}
+		if inp.IsKeyPressed(sdl.K_RIGHT) {
+			m.nudgePosition(step, 0, doodads, trafficSys, store)
+			return EditNone
+		}
 	}
 
 	// Building edits
@@ -263,7 +418,15 @@ func (m *Mode) HandleEdit(inp *input.Input, reg *building.Registry,
 		}
 	}
 
-	// Signal edits
+	// G key: enter placement mode for any movable entity
+	if inp.IsKeyPressed(sdl.K_G) {
+		if m.selection.Type == EntityTree || m.selection.Type == EntityHydrant || m.selection.Type == EntityDoodad || m.selection.Type == EntitySignal {
+			m.enterPlace(doodads, trafficSys)
+			return EditNone
+		}
+	}
+
+	// Signal edits: arrows rotate direction
 	if m.selection.Type == EntitySignal && trafficSys != nil {
 		if inp.IsKeyPressed(sdl.K_RIGHT) {
 			delta := float32(5.0)

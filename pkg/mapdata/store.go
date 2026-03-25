@@ -116,6 +116,21 @@ func (s *Store) SaveDoodad(typ string) error {
 	return writeJSON(filepath.Join(s.Dir, "doodads", typ+"s.json"), d)
 }
 
+// FindDoodadByID searches doodad items of the given type by ID.
+// Returns the item pointer and index, or nil/-1 if not found.
+func (s *Store) FindDoodadByID(typ, id string) (*DoodadItem, int) {
+	d, ok := s.Doodads[typ]
+	if !ok {
+		return nil, -1
+	}
+	for i := range d.Items {
+		if d.Items[i].ID == id {
+			return &d.Items[i], i
+		}
+	}
+	return nil, -1
+}
+
 // FindBuildingByBBL looks up a building by its BBL identifier.
 // Returns the building and its block ID, or nil if not found.
 func (s *Store) FindBuildingByBBL(bbl string) (*BuildingData, string) {

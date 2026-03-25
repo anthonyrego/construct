@@ -2,6 +2,7 @@ package admin
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/Zyko0/go-sdl3/sdl"
 	"github.com/go-gl/mathgl/mgl32"
@@ -36,14 +37,28 @@ type InfoPanel struct {
 	street2Label *mesh.Mesh
 	dirLabel     *mesh.Mesh
 
-	// Key hint labels
-	bldgHint   *mesh.Mesh
-	signalHint *mesh.Mesh
-	commonHint *mesh.Mesh
+	treeLabel     *mesh.Mesh
+	hydrantLabel  *mesh.Mesh
+	idLabel       *mesh.Mesh
+	positionLabel *mesh.Mesh
+	doodadHeightLabel *mesh.Mesh
+	spreadLabel   *mesh.Mesh
 
-	bldgHintW   float32
-	signalHintW float32
-	commonHintW float32
+	// Key hint labels
+	bldgHint    *mesh.Mesh
+	signalHint  *mesh.Mesh
+	doodadHint  *mesh.Mesh
+	placingHint *mesh.Mesh
+	commonHint  *mesh.Mesh
+
+	bldgHintW    float32
+	signalHintW  float32
+	doodadHintW  float32
+	placingHintW float32
+	commonHintW  float32
+
+	maxTreeLabelW    float32
+	maxHydrantLabelW float32
 
 	// Dynamic value meshes (recreated on selection change)
 	valueMeshes []*mesh.Mesh
@@ -151,6 +166,21 @@ func newInfoPanel(r *renderer.Renderer, pixelScale int) *InfoPanel {
 	p.dirLabel, w = mkLabel("DIRECTION")
 	if w > p.maxSignalLabelW { p.maxSignalLabelW = w }
 
+	p.treeLabel, w = mkLabel("TREE")
+	p.maxTreeLabelW = w
+	p.hydrantLabel, w = mkLabel("HYDRANT")
+	p.maxHydrantLabelW = w
+	p.idLabel, w = mkLabel("ID")
+	if w > p.maxTreeLabelW { p.maxTreeLabelW = w }
+	if w > p.maxHydrantLabelW { p.maxHydrantLabelW = w }
+	p.positionLabel, w = mkLabel("POSITION")
+	if w > p.maxTreeLabelW { p.maxTreeLabelW = w }
+	if w > p.maxHydrantLabelW { p.maxHydrantLabelW = w }
+	p.doodadHeightLabel, w = mkLabel("HEIGHT")
+	if w > p.maxTreeLabelW { p.maxTreeLabelW = w }
+	p.spreadLabel, w = mkLabel("SPREAD")
+	if w > p.maxTreeLabelW { p.maxTreeLabelW = w }
+
 	// Key hints (dimmer color)
 	mkHint := func(text string) (*mesh.Mesh, float32) {
 		m, w, err := ui.NewTextMesh(r, text, ps, 140, 140, 140, 200)
@@ -160,7 +190,9 @@ func newInfoPanel(r *renderer.Renderer, pixelScale int) *InfoPanel {
 		return m, w
 	}
 	p.bldgHint, p.bldgHintW = mkHint("UP/DN HEIGHT  V TOGGLE")
-	p.signalHint, p.signalHintW = mkHint("L/R DIRECTION")
+	p.signalHint, p.signalHintW = mkHint("L/R DIR  G PLACE")
+	p.doodadHint, p.doodadHintW = mkHint("ARROWS MOVE  G PLACE")
+	p.placingHint, p.placingHintW = mkHint("CLICK PLACE  ESC CANCEL")
 	p.commonHint, p.commonHintW = mkHint("^S SAVE  ^Z UNDO")
 
 	return p
@@ -245,6 +277,17 @@ func (p *InfoPanel) setBuildingValues(r *renderer.Renderer, bbl, address, class,
 	}
 }
 
+func (p *InfoPanel) setDoodadValues(r *renderer.Renderer, typeName, id string, x, z float32) {
+	p.clearValues(r)
+	p.addValue(r, strings.ToUpper(typeName))
+	if len(id) > 12 {
+		p.addValue(r, id[:12])
+	} else {
+		p.addValue(r, id)
+	}
+	p.addValue(r, fmt.Sprintf("%.1f, %.1f", x, z))
+}
+
 func (p *InfoPanel) setSignalValues(r *renderer.Renderer, street1, street2 string, angle float32) {
 	p.clearValues(r)
 	if street1 != "" {
@@ -260,7 +303,7 @@ func (p *InfoPanel) setSignalValues(r *renderer.Renderer, street1, street2 strin
 	p.addValue(r, fmt.Sprintf("%.0f DEG", angle*180/3.14159))
 }
 
-func (p *InfoPanel) render(r *renderer.Renderer, cmdBuf *sdl.GPUCommandBuffer, swapchainTex *sdl.GPUTexture, screenW, screenH int, sel Selection, dirty bool) {
+func (p *InfoPanel) render(r *renderer.Renderer, cmdBuf *sdl.GPUCommandBuffer, swapchainTex *sdl.GPUTexture, screenW, screenH int, sel Selection, dirty bool, placing bool) {
 	ortho := mgl32.Ortho2D(0, float32(screenW), float32(screenH), 0)
 	pass := r.BeginUIPass(cmdBuf, swapchainTex)
 
@@ -309,10 +352,17 @@ func (p *InfoPanel) render(r *renderer.Renderer, cmdBuf *sdl.GPUCommandBuffer, s
 
 	// Compute panel width from actual content
 	var maxLabelW float32
-	if sel.Type == EntityBuilding {
+	switch sel.Type {
+	case EntityBuilding:
 		maxLabelW = p.maxBldgLabelW
-	} else {
+	case EntitySignal:
 		maxLabelW = p.maxSignalLabelW
+	case EntityTree:
+		maxLabelW = p.maxTreeLabelW
+	case EntityHydrant:
+		maxLabelW = p.maxHydrantLabelW
+	case EntityDoodad:
+		maxLabelW = p.maxHydrantLabelW // generic doodads use same labels as hydrant
 	}
 	maxContentW := maxLabelW
 	for _, vw := range p.valueWidths {
@@ -327,6 +377,12 @@ func (p *InfoPanel) render(r *renderer.Renderer, cmdBuf *sdl.GPUCommandBuffer, s
 	if sel.Type == EntitySignal && p.signalHintW > maxContentW {
 		maxContentW = p.signalHintW
 	}
+	if (sel.Type == EntityTree || sel.Type == EntityHydrant || sel.Type == EntityDoodad) && p.doodadHintW > maxContentW {
+		maxContentW = p.doodadHintW
+	}
+	if placing && p.placingHintW > maxContentW {
+		maxContentW = p.placingHintW
+	}
 	if p.commonHintW > maxContentW {
 		maxContentW = p.commonHintW
 	}
@@ -336,10 +392,13 @@ func (p *InfoPanel) render(r *renderer.Renderer, cmdBuf *sdl.GPUCommandBuffer, s
 
 	// Count lines for panel height
 	var numLines float32
-	if sel.Type == EntityBuilding {
+	switch sel.Type {
+	case EntityBuilding:
 		numLines = 1.5 + 8*2 + 2 // header + 8 label/value pairs + hint lines
-	} else {
+	case EntitySignal:
 		numLines = 1.5 + 3*2 + 2 // header + 3 label/value pairs + hint lines
+	case EntityTree, EntityHydrant, EntityDoodad:
+		numLines = 1.5 + float32(len(p.valueMeshes))*2 + 2 // header + label/value pairs + hint lines
 	}
 
 	// Draw panel background
@@ -387,7 +446,40 @@ func (p *InfoPanel) render(r *renderer.Renderer, cmdBuf *sdl.GPUCommandBuffer, s
 
 		// Key hints
 		y += lineH * 0.5
-		draw(p.signalHint, at(contentX, y))
+		if placing {
+			draw(p.placingHint, at(contentX, y))
+		} else {
+			draw(p.signalHint, at(contentX, y))
+		}
+		y += lineH
+		draw(p.commonHint, at(contentX, y))
+	} else if sel.Type == EntityTree || sel.Type == EntityHydrant || sel.Type == EntityDoodad {
+		// First value mesh is the type header (e.g. "TREE", "HYDRANT")
+		// Remaining are ID, position, etc.
+		labels := []*mesh.Mesh{p.idLabel, p.positionLabel}
+
+		// Draw type name as header (first value)
+		if len(p.valueMeshes) > 0 {
+			draw(p.valueMeshes[0], at(contentX, y))
+		}
+		y += lineH * 1.5
+
+		for i, label := range labels {
+			draw(label, at(contentX, y))
+			y += lineH
+			vi := i + 1 // offset by 1 since valueMeshes[0] is the type header
+			if vi < len(p.valueMeshes) {
+				draw(p.valueMeshes[vi], at(valX, y))
+			}
+			y += lineH
+		}
+
+		y += lineH * 0.5
+		if placing {
+			draw(p.placingHint, at(contentX, y))
+		} else {
+			draw(p.doodadHint, at(contentX, y))
+		}
 		y += lineH
 		draw(p.commonHint, at(contentX, y))
 	}
@@ -421,7 +513,15 @@ func (p *InfoPanel) destroy(r *renderer.Renderer) {
 	destroyMesh(p.street1Label)
 	destroyMesh(p.street2Label)
 	destroyMesh(p.dirLabel)
+	destroyMesh(p.treeLabel)
+	destroyMesh(p.hydrantLabel)
+	destroyMesh(p.idLabel)
+	destroyMesh(p.positionLabel)
+	destroyMesh(p.doodadHeightLabel)
+	destroyMesh(p.spreadLabel)
 	destroyMesh(p.bldgHint)
 	destroyMesh(p.signalHint)
+	destroyMesh(p.doodadHint)
+	destroyMesh(p.placingHint)
 	destroyMesh(p.commonHint)
 }

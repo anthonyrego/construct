@@ -7,9 +7,25 @@ import (
 	"github.com/Zyko0/go-sdl3/sdl"
 	"github.com/go-gl/mathgl/mgl32"
 
+	"github.com/anthonyrego/construct/pkg/camera"
 	"github.com/anthonyrego/construct/pkg/window"
 	"github.com/anthonyrego/construct/shaders"
 )
+
+// RenderFrame bundles per-frame state needed by entity rendering methods.
+type RenderFrame struct {
+	CmdBuf     *sdl.GPUCommandBuffer
+	ScenePass  *sdl.GPURenderPass
+	ViewProj   mgl32.Mat4
+	Frustum    camera.Frustum
+	CamPos     mgl32.Vec3
+	CamRight   mgl32.Vec3 // for billboarding
+	CamUp      mgl32.Vec3 // for billboarding
+	CullDist   float32
+	CullDistSq float32
+	FadeStart  float32
+	FadeRange  float32
+}
 
 const (
 	defaultOffscreenWidth  = 320

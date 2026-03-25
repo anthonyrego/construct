@@ -226,7 +226,7 @@ func importIntersections(proj *geojson.Projection, outDir string, minLat, minLon
 	}
 
 	// Use the traffic package to cluster and snap signals
-	sys := traffic.NewFromPoints(signalPts, 2.0, streets)
+	sys := traffic.NewFromPoints(nil, signalPts, 2.0, streets)
 
 	intDir := filepath.Join(outDir, "intersections")
 	os.MkdirAll(intDir, 0o755)

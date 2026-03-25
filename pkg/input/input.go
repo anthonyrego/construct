@@ -15,6 +15,7 @@ type Input struct {
 	quit         bool
 
 	mouseLeftPressed bool
+	mouseLeftDown    bool
 	mouseRightDown   bool
 	mouseClickX      float32
 	mouseClickY      float32
@@ -65,6 +66,7 @@ func (i *Input) Update() {
 			btn := event.MouseButtonEvent()
 			if btn.Button == 1 { // left
 				i.mouseLeftPressed = true
+				i.mouseLeftDown = true
 				i.mouseClickX = btn.X
 				i.mouseClickY = btn.Y
 			}
@@ -74,6 +76,9 @@ func (i *Input) Update() {
 
 		case sdl.EVENT_MOUSE_BUTTON_UP:
 			btn := event.MouseButtonEvent()
+			if btn.Button == 1 { // left
+				i.mouseLeftDown = false
+			}
 			if btn.Button == 3 { // right
 				i.mouseRightDown = false
 			}
@@ -111,6 +116,10 @@ func (i *Input) ScrollY() float32 {
 
 func (i *Input) IsMouseLeftPressed() bool {
 	return i.mouseLeftPressed
+}
+
+func (i *Input) IsMouseLeftDown() bool {
+	return i.mouseLeftDown
 }
 
 func (i *Input) IsMouseRightDown() bool {

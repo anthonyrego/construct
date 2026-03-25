@@ -6,6 +6,8 @@ import (
 	"math/rand"
 
 	"github.com/anthonyrego/construct/pkg/geojson"
+	"github.com/anthonyrego/construct/pkg/mesh"
+	"github.com/anthonyrego/construct/pkg/renderer"
 	"github.com/anthonyrego/construct/pkg/scene"
 	"github.com/go-gl/mathgl/mgl32"
 )
@@ -186,11 +188,22 @@ func IntersectionsFromSegments(segments []geojson.StreetSegment, snapDist float3
 	return locs
 }
 
-// System manages independent traffic signals.
+// System manages independent traffic signals and their rendering resources.
 type System struct {
 	Signals        []Signal
 	dirty          bool
 	lightIntensity float32
+
+	// Shared rendering meshes (owned by System, created via createMeshes)
+	poleMesh    *mesh.Mesh
+	housingMesh *mesh.Mesh
+	greenOn     *mesh.Mesh
+	yellowOn    *mesh.Mesh
+	redOn       *mesh.Mesh
+	greenOff    *mesh.Mesh
+	yellowOff   *mesh.Mesh
+	redOff      *mesh.Mesh
+	signMeshes  map[string]*mesh.Mesh
 }
 
 // clusterPoints merges nearby points (within snapDist meters) into centroids.
@@ -235,7 +248,7 @@ func clusterPoints(points []geojson.Point2D, snapDist float32) []geojson.Point2D
 // Nearby points are clustered into single intersections (OSM often has 2-4 nodes
 // per intersection, one per traffic direction). Street names are derived from
 // the two nearest distinct-named centerline segments.
-func NewFromPoints(points []geojson.Point2D, lightIntensity float32, streets []geojson.StreetSegment) *System {
+func NewFromPoints(rend *renderer.Renderer, points []geojson.Point2D, lightIntensity float32, streets []geojson.StreetSegment) *System {
 	// Cluster nearby OSM nodes into single intersection points
 	merged := clusterPoints(points, 20)
 	fmt.Printf("Clustered %d OSM nodes into %d intersections\n", len(points), len(merged))
@@ -261,16 +274,22 @@ func NewFromPoints(points []geojson.Point2D, lightIntensity float32, streets []g
 		sig.advance(offset)
 		signals[i] = sig
 	}
-	return &System{
+	sys := &System{
 		Signals:        signals,
 		dirty:          true,
 		lightIntensity: lightIntensity,
 	}
+	if rend != nil {
+		if err := sys.createMeshes(rend); err != nil {
+			fmt.Println("Warning: could not create traffic meshes:", err)
+		}
+	}
+	return sys
 }
 
 // NewFromMapData creates a traffic system directly from pre-processed intersection data.
 // Position and direction are already computed (no clustering/snapping needed).
-func NewFromMapData(intersections []MapIntersection, lightIntensity float32) *System {
+func NewFromMapData(rend *renderer.Renderer, intersections []MapIntersection, lightIntensity float32) *System {
 	signals := make([]Signal, len(intersections))
 	for i, d := range intersections {
 		sig := Signal{
@@ -283,11 +302,17 @@ func NewFromMapData(intersections []MapIntersection, lightIntensity float32) *Sy
 		sig.advance(d.CycleOffsetSec)
 		signals[i] = sig
 	}
-	return &System{
+	sys := &System{
 		Signals:        signals,
 		dirty:          true,
 		lightIntensity: lightIntensity,
 	}
+	if rend != nil {
+		if err := sys.createMeshes(rend); err != nil {
+			fmt.Println("Warning: could not create traffic meshes:", err)
+		}
+	}
+	return sys
 }
 
 // MapIntersection holds the data needed to create a Signal from map data.
