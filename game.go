@@ -40,6 +40,11 @@ type NYCGame struct {
 	configWatcher *engine.ConfigWatcher
 	mapWatcher    *mapdata.MapWatcher
 
+	skyTime      float32
+	skySpeed     float32
+	skyScale     float32
+	skyIntensity float32
+
 	physWorld  *physics.World
 	playerBody physics.Body
 }
@@ -161,6 +166,11 @@ func (g *NYCGame) Init(e *engine.Engine) error {
 		Tint:   mgl32.Vec4{1.08, 1.0, 0.85, 0},
 	}
 
+	// Sky animation defaults (before config load so config overrides them)
+	g.skySpeed = 1.0
+	g.skyScale = 3.0
+	g.skyIntensity = 0.3
+
 	// Config watcher — force initial load
 	g.configWatcher = engine.NewConfigWatcher("scene.json")
 	g.configWatcher.ForceReload()
@@ -184,6 +194,10 @@ func (g *NYCGame) Init(e *engine.Engine) error {
 }
 
 func (g *NYCGame) Update(e *engine.Engine, dt float32) bool {
+	// Animate sky (always, even when paused)
+	g.skyTime += dt * g.skySpeed
+	e.LightUniforms.SkyParams = mgl32.Vec4{g.skyTime, g.skySpeed, g.skyScale, g.skyIntensity}
+
 	// Pause menu input
 	wasActive := g.pauseMenu.IsActive()
 	action := g.pauseMenu.HandleInput(e.Input)
@@ -499,6 +513,13 @@ func (g *NYCGame) applyConfig(e *engine.Engine, cfg *engine.SceneConfig) {
 
 	if cfg.Textures.GroundScale > 0 {
 		e.LightUniforms.TextureParams = mgl32.Vec4{cfg.Textures.GroundScale, cfg.Textures.GroundStrength, 0, 0}
+	}
+
+	// Sky animation
+	if cfg.Sky.Scale > 0 {
+		g.skySpeed = cfg.Sky.Speed
+		g.skyScale = cfg.Sky.Scale
+		g.skyIntensity = cfg.Sky.Intensity
 	}
 
 	if cfg.Fog.End > cfg.Fog.Start {

@@ -15,6 +15,7 @@ struct LightUniforms
     float4 fogColor;      // rgb = fog color
     float4 fogParams;     // x = start distance, y = end distance
     float4 textureParams; // x = scale (world meters per tile), y = strength
+    float4 skyParams;     // x = time, y = speed, z = scale, w = intensity
 };
 
 struct main0_out
@@ -29,6 +30,49 @@ struct main0_in
     float4 vertexColor [[user(locn2)]];
     float4 flags [[user(locn3)]];
 };
+
+// --- Procedural noise for animated sky ---
+
+float hash(float2 p)
+{
+    float3 p3 = fract(float3(p.xyx) * 0.1031);
+    p3 += dot(p3, p3.yzx + 33.33);
+    return fract((p3.x + p3.y) * p3.z);
+}
+
+float valueNoise(float2 p)
+{
+    float2 i = floor(p);
+    float2 f = fract(p);
+    // Smooth interpolation (quintic curve for less grid artifacts)
+    float2 u = f * f * f * (f * (f * 6.0 - 15.0) + 10.0);
+
+    float a = hash(i);
+    float b = hash(i + float2(1.0, 0.0));
+    float c = hash(i + float2(0.0, 1.0));
+    float d = hash(i + float2(1.0, 1.0));
+
+    return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
+}
+
+float fbm(float2 p)
+{
+    float value = 0.0;
+    float amplitude = 0.5;
+    float2 shift = float2(100.0, 100.0);
+    // Rotation matrix to reduce axis-aligned artifacts between octaves
+    float2x2 rot = float2x2(cos(0.5), sin(0.5), -sin(0.5), cos(0.5));
+
+    for (int i = 0; i < 5; i++)
+    {
+        value += amplitude * valueNoise(p);
+        p = rot * p * 2.0 + shift;
+        amplitude *= 0.5;
+    }
+    return value;
+}
+
+// --- End noise ---
 
 fragment main0_out main0(main0_in in [[stage_in]], constant LightUniforms& lights [[buffer(0)]], texture2d<float> groundTex [[texture(0)]], sampler groundSampler [[sampler(0)]], float4 fragCoord [[position]])
 {
@@ -99,6 +143,26 @@ fragment main0_out main0(main0_in in [[stage_in]], constant LightUniforms& light
                 brightness = texColor.b;
             result *= mix(1.0, brightness, texStrength);
         }
+    }
+
+    // Animated procedural sky (flags.x > 0.5 = sky dome / NoFog)
+    if (in.flags.x > 0.5 && lights.skyParams.w > 0.0)
+    {
+        float time = lights.skyParams.x;
+        float skyScale = lights.skyParams.z;
+        float skyIntensity = lights.skyParams.w;
+
+        // Project world direction onto dome as UV
+        float3 dir = normalize(in.worldPosition - lights.cameraPos.xyz);
+        float2 uv = dir.xz / (dir.y + 0.3) * skyScale;
+
+        // Domain-warped FBM for organic flowing patterns
+        float warp = fbm(uv * 0.8 + float2(time * 0.08, time * 0.06));
+        float n = fbm(uv + float2(warp * 0.6 + time * 0.03, warp * 0.4 - time * 0.02));
+
+        // Modulate: lighter ridges, darker valleys
+        float cloud = mix(1.0 - skyIntensity * 0.6, 1.0 + skyIntensity * 0.4, n);
+        result *= cloud;
     }
 
     // Distance fog (skip for sky dome)

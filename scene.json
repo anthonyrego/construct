@@ -44,5 +44,10 @@
   "textures": {
     "groundScale": 3.0,
     "groundStrength": 1
+  },
+  "sky": {
+    "speed": 3.0,
+    "scale": 9.0,
+    "intensity": 0.8
   }
 }

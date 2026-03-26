@@ -56,6 +56,11 @@ type SceneConfig struct {
 		GroundScale    float32 `json:"groundScale"`
 		GroundStrength float32 `json:"groundStrength"`
 	} `json:"textures"`
+	Sky struct {
+		Speed     float32 `json:"speed"`
+		Scale     float32 `json:"scale"`
+		Intensity float32 `json:"intensity"`
+	} `json:"sky"`
 }
 
 // ConfigWatcher polls a JSON config file for changes.

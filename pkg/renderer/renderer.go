@@ -86,6 +86,7 @@ type LightUniforms struct {
 	FogColor       mgl32.Vec4 // rgb=fog color (pre-post-process)
 	FogParams      mgl32.Vec4 // x=start distance, y=end distance, z=render distance (far plane fade)
 	TextureParams  mgl32.Vec4 // x=scale (world meters per tile), y=strength (0=off, 1=full)
+	SkyParams      mgl32.Vec4 // x=time, y=speed, z=scale, w=intensity
 }
 
 type PostProcessUniforms struct {
