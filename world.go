@@ -2,9 +2,11 @@ package main
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/go-gl/mathgl/mgl32"
 
+	"github.com/anthonyrego/construct/pkg/asset"
 	"github.com/anthonyrego/construct/pkg/building"
 	"github.com/anthonyrego/construct/pkg/doodad"
 	"github.com/anthonyrego/construct/pkg/geojson"
@@ -235,6 +237,55 @@ func loadFromMapData(
 
 	count := reg.Ingest(allFootprints)
 	fmt.Printf("Loaded %d buildings from map data\n", count)
+
+	// Check for processed building assets and replace meshes
+	assetCount := 0
+	for _, b := range reg.Buildings() {
+		dir := asset.AssetDir("data/assets", b.BBL)
+		m, err := asset.LoadManifest(dir)
+		if err != nil || !m.IsStageComplete("bake") {
+			continue
+		}
+		verts, indices, err := asset.LoadMesh(dir)
+		if err != nil {
+			continue
+		}
+		// Compute centroid from vertices
+		var cx, cz float32
+		for _, v := range verts {
+			cx += v.X
+			cz += v.Z
+		}
+		n := float32(len(verts))
+		cx /= n
+		cz /= n
+		// Compute bounding radius
+		var maxR float32
+		for _, v := range verts {
+			dx := v.X - cx
+			dz := v.Z - cz
+			dy := v.Y
+			r := dx*dx + dz*dz + dy*dy
+			if r > maxR {
+				maxR = r
+			}
+		}
+		raw := &building.RawMesh{
+			Vertices: verts,
+			Indices:  make([]uint16, len(indices)),
+			Position: mgl32.Vec3{cx, 0, cz},
+			Radius:   float32(math.Sqrt(float64(maxR))),
+		}
+		for i, idx := range indices {
+			raw.Indices[i] = uint16(idx)
+		}
+		if err := reg.ReplaceMesh(b.ID, raw); err == nil {
+			assetCount++
+		}
+	}
+	if assetCount > 0 {
+		fmt.Printf("Loaded %d building assets from data/assets/\n", assetCount)
+	}
 
 	for _, b := range reg.Buildings() {
 		s.Add(scene.Object{

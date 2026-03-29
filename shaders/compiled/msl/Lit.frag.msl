@@ -29,6 +29,7 @@ struct main0_in
     float3 worldNormal [[user(locn1)]];
     float4 vertexColor [[user(locn2)]];
     float4 flags [[user(locn3)]];
+    float2 texCoord [[user(locn4)]];
 };
 
 // --- Procedural noise for animated sky ---
@@ -74,7 +75,7 @@ float fbm(float2 p)
 
 // --- End noise ---
 
-fragment main0_out main0(main0_in in [[stage_in]], constant LightUniforms& lights [[buffer(0)]], texture2d<float> groundTex [[texture(0)]], sampler groundSampler [[sampler(0)]], float4 fragCoord [[position]])
+fragment main0_out main0(main0_in in [[stage_in]], constant LightUniforms& lights [[buffer(0)]], texture2d<float> groundTex [[texture(0)]], sampler groundSampler [[sampler(0)]], texture2d<float> buildingTex [[texture(1)]], sampler buildingSampler [[sampler(1)]], float4 fragCoord [[position]])
 {
     main0_out out = {};
 
@@ -142,6 +143,29 @@ fragment main0_out main0(main0_in in [[stage_in]], constant LightUniforms& light
             else
                 brightness = texColor.b;
             result *= mix(1.0, brightness, texStrength);
+        }
+    }
+
+    // Building texture (when UVs are present, sample from atlas/building texture)
+    if (in.texCoord.x > 0.001 || in.texCoord.y > 0.001)
+    {
+        float4 btex = buildingTex.sample(buildingSampler, in.texCoord);
+        // Replace vertex color with texture, keep lighting
+        result = btex.rgb * (lights.ambientColor.rgb +
+                 lights.sunColor.rgb * sunNdotL * lights.sunColor.a);
+        // Re-apply point lights on textured surface
+        for (int i = 0; i < 512; i++)
+        {
+            if (i >= numLights) break;
+            float3 lightPos = lights.lightPositions[i].xyz;
+            float3 lightColor = lights.lightColors[i].rgb;
+            float intensity = lights.lightColors[i].a;
+            float3 lightDir = lightPos - in.worldPosition;
+            float distance = length(lightDir);
+            lightDir = normalize(lightDir);
+            float NdotL = max(dot(normal, lightDir), 0.0);
+            float attenuation = intensity / (1.0 + distance * distance);
+            result += btex.rgb * lightColor * NdotL * attenuation;
         }
     }
 

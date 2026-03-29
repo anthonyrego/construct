@@ -143,3 +143,79 @@ func (r *Renderer) createGroundTexture() error {
 	r.groundTexture = tex
 	return nil
 }
+
+func (r *Renderer) createPlaceholderTexture() error {
+	pixels := []byte{255, 255, 255, 255} // 1x1 white
+	tex, err := createTextureFromPixels(r.window.Device(), 1, 1, pixels)
+	if err != nil {
+		return err
+	}
+	r.placeholderTexture = tex
+	return nil
+}
+
+func createTextureFromPixels(device *sdl.GPUDevice, width, height uint32, pixels []byte) (*sdl.GPUTexture, error) {
+	bufferSize := uint32(len(pixels))
+
+	tex, err := device.CreateTexture(&sdl.GPUTextureCreateInfo{
+		Type:              sdl.GPU_TEXTURETYPE_2D,
+		Format:            sdl.GPU_TEXTUREFORMAT_R8G8B8A8_UNORM,
+		Width:             width,
+		Height:            height,
+		LayerCountOrDepth: 1,
+		NumLevels:         1,
+		Usage:             sdl.GPU_TEXTUREUSAGE_SAMPLER,
+	})
+	if err != nil {
+		return nil, errors.New("failed to create texture: " + err.Error())
+	}
+
+	transferBuffer, err := device.CreateTransferBuffer(&sdl.GPUTransferBufferCreateInfo{
+		Usage: sdl.GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+		Size:  bufferSize,
+	})
+	if err != nil {
+		device.ReleaseTexture(tex)
+		return nil, errors.New("failed to create transfer buffer: " + err.Error())
+	}
+
+	transferDataPtr, err := device.MapTransferBuffer(transferBuffer, false)
+	if err != nil {
+		device.ReleaseTexture(tex)
+		device.ReleaseTransferBuffer(transferBuffer)
+		return nil, errors.New("failed to map transfer buffer: " + err.Error())
+	}
+
+	dst := unsafe.Slice((*byte)(unsafe.Pointer(transferDataPtr)), len(pixels))
+	copy(dst, pixels)
+	device.UnmapTransferBuffer(transferBuffer)
+
+	cmdBuf, err := device.AcquireCommandBuffer()
+	if err != nil {
+		device.ReleaseTexture(tex)
+		device.ReleaseTransferBuffer(transferBuffer)
+		return nil, errors.New("failed to acquire command buffer: " + err.Error())
+	}
+
+	copyPass := cmdBuf.BeginCopyPass()
+	copyPass.UploadToGPUTexture(
+		&sdl.GPUTextureTransferInfo{
+			TransferBuffer: transferBuffer,
+			Offset:         0,
+			PixelsPerRow:   width,
+			RowsPerLayer:   height,
+		},
+		&sdl.GPUTextureRegion{
+			Texture: tex,
+			W:       width,
+			H:       height,
+			D:       1,
+		},
+		false,
+	)
+	copyPass.End()
+	cmdBuf.Submit()
+
+	device.ReleaseTransferBuffer(transferBuffer)
+	return tex, nil
+}

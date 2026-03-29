@@ -45,6 +45,7 @@ type LitVertex struct {
 	X, Y, Z    float32 // location 0: FLOAT3
 	NX, NY, NZ float32 // location 1: FLOAT3
 	R, G, B, A uint8   // location 2: UBYTE4_NORM
+	U, V       float32 // location 3: FLOAT2
 }
 
 type DrawCall struct {
@@ -110,6 +111,7 @@ type Renderer struct {
 	offscreenDepth      *sdl.GPUTexture
 	nearestSampler      *sdl.GPUSampler
 	groundTexture       *sdl.GPUTexture
+	placeholderTexture  *sdl.GPUTexture
 	repeatSampler       *sdl.GPUSampler
 	offscreenW          uint32
 	offscreenH          uint32
@@ -240,7 +242,7 @@ func (r *Renderer) initLitPipeline() error {
 	}
 	defer device.ReleaseShader(litVert)
 
-	litFrag, err := shaders.LoadShader(device, "Lit.frag", 1, 1, 0, 0)
+	litFrag, err := shaders.LoadShader(device, "Lit.frag", 2, 1, 0, 0)
 	if err != nil {
 		return errors.New("failed to create lit fragment shader: " + err.Error())
 	}
@@ -271,6 +273,7 @@ func (r *Renderer) initLitPipeline() error {
 				{BufferSlot: 0, Format: sdl.GPU_VERTEXELEMENTFORMAT_FLOAT3, Location: 0, Offset: 0},
 				{BufferSlot: 0, Format: sdl.GPU_VERTEXELEMENTFORMAT_FLOAT3, Location: 1, Offset: 12},
 				{BufferSlot: 0, Format: sdl.GPU_VERTEXELEMENTFORMAT_UBYTE4_NORM, Location: 2, Offset: 24},
+				{BufferSlot: 0, Format: sdl.GPU_VERTEXELEMENTFORMAT_FLOAT2, Location: 3, Offset: 28},
 			},
 		},
 		RasterizerState: sdl.GPURasterizerState{
@@ -312,6 +315,7 @@ func (r *Renderer) initLitPipeline() error {
 				{BufferSlot: 0, Format: sdl.GPU_VERTEXELEMENTFORMAT_FLOAT3, Location: 0, Offset: 0},
 				{BufferSlot: 0, Format: sdl.GPU_VERTEXELEMENTFORMAT_FLOAT3, Location: 1, Offset: 12},
 				{BufferSlot: 0, Format: sdl.GPU_VERTEXELEMENTFORMAT_UBYTE4_NORM, Location: 2, Offset: 24},
+				{BufferSlot: 0, Format: sdl.GPU_VERTEXELEMENTFORMAT_FLOAT2, Location: 3, Offset: 28},
 			},
 		},
 		RasterizerState: sdl.GPURasterizerState{
@@ -353,6 +357,7 @@ func (r *Renderer) initLitPipeline() error {
 				{BufferSlot: 0, Format: sdl.GPU_VERTEXELEMENTFORMAT_FLOAT3, Location: 0, Offset: 0},
 				{BufferSlot: 0, Format: sdl.GPU_VERTEXELEMENTFORMAT_FLOAT3, Location: 1, Offset: 12},
 				{BufferSlot: 0, Format: sdl.GPU_VERTEXELEMENTFORMAT_UBYTE4_NORM, Location: 2, Offset: 24},
+				{BufferSlot: 0, Format: sdl.GPU_VERTEXELEMENTFORMAT_FLOAT2, Location: 3, Offset: 28},
 			},
 		},
 		RasterizerState: sdl.GPURasterizerState{
@@ -436,8 +441,11 @@ func (r *Renderer) initLitPipeline() error {
 	}
 	r.repeatSampler = repeatSampler
 
-	// --- Ground texture ---
+	// --- Textures ---
 	if err := r.createGroundTexture(); err != nil {
+		return err
+	}
+	if err := r.createPlaceholderTexture(); err != nil {
 		return err
 	}
 
@@ -868,7 +876,26 @@ func (r *Renderer) BeginScenePass(cmdBuf *sdl.GPUCommandBuffer) *sdl.GPURenderPa
 func (r *Renderer) bindGroundTexture(renderPass *sdl.GPURenderPass) {
 	renderPass.BindFragmentSamplers([]sdl.GPUTextureSamplerBinding{
 		{Texture: r.groundTexture, Sampler: r.repeatSampler},
+		{Texture: r.placeholderTexture, Sampler: r.repeatSampler},
 	})
+}
+
+// BindBuildingAtlas binds the ground texture + a building atlas texture for textured rendering.
+func (r *Renderer) BindBuildingAtlas(renderPass *sdl.GPURenderPass, atlas *sdl.GPUTexture) {
+	renderPass.BindFragmentSamplers([]sdl.GPUTextureSamplerBinding{
+		{Texture: r.groundTexture, Sampler: r.repeatSampler},
+		{Texture: atlas, Sampler: r.repeatSampler},
+	})
+}
+
+// CreateTextureFromRGBA creates a GPU texture from RGBA pixel data.
+func (r *Renderer) CreateTextureFromRGBA(width, height uint32, pixels []byte) (*sdl.GPUTexture, error) {
+	return createTextureFromPixels(r.window.Device(), width, height, pixels)
+}
+
+// ReleaseTexture releases a GPU texture.
+func (r *Renderer) ReleaseTexture(tex *sdl.GPUTexture) {
+	r.window.Device().ReleaseTexture(tex)
 }
 
 func (r *Renderer) PushLightUniforms(cmdBuf *sdl.GPUCommandBuffer, lights LightUniforms) {
@@ -1062,6 +1089,9 @@ func (r *Renderer) Destroy() {
 
 	if r.groundTexture != nil {
 		device.ReleaseTexture(r.groundTexture)
+	}
+	if r.placeholderTexture != nil {
+		device.ReleaseTexture(r.placeholderTexture)
 	}
 	if r.repeatSampler != nil {
 		device.ReleaseSampler(r.repeatSampler)

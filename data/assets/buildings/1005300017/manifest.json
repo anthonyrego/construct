@@ -1,0 +1,26 @@
+{
+  "bbl": "1005300017",
+  "version": 1,
+  "stages": {
+    "bake": {
+      "status": "pending",
+      "updated": "0001-01-01T00:00:00Z"
+    },
+    "reference": {
+      "status": "pending",
+      "updated": "0001-01-01T00:00:00Z"
+    },
+    "sculpt": {
+      "status": "complete",
+      "updated": "2026-03-28T00:39:11.070926-04:00"
+    },
+    "texture": {
+      "status": "pending",
+      "updated": "0001-01-01T00:00:00Z"
+    },
+    "uv": {
+      "status": "pending",
+      "updated": "0001-01-01T00:00:00Z"
+    }
+  }
+}

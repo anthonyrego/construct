@@ -10,12 +10,16 @@ import (
 
 	"github.com/anthonyrego/construct/pkg/engine"
 	"github.com/anthonyrego/construct/pkg/mapdata"
+	"github.com/anthonyrego/construct/pkg/pipeline"
 	"github.com/anthonyrego/construct/pkg/settings"
 )
 
 func main() {
 	doImport := flag.Bool("import", false, "Import .cache/ data into data/map/ and exit")
 	useFetch := flag.Bool("fetch", false, "Use old fetch-from-API pipeline instead of map data")
+	doPipeline := flag.Bool("pipeline", false, "Run asset pipeline")
+	pipelineBBL := flag.String("bbl", "", "Building BBL to process (with -pipeline)")
+	pipelineStage := flag.String("stage", "", "Specific stage to run (with -pipeline)")
 	flag.Parse()
 
 	minLat, minLon, maxLat, maxLon := 40.700, -74.020, 40.747, -73.970
@@ -25,6 +29,28 @@ func main() {
 			fmt.Println("Import failed:", err)
 			os.Exit(1)
 		}
+		return
+	}
+
+	if *doPipeline {
+		if *pipelineBBL == "" {
+			fmt.Println("Usage: construct -pipeline -bbl=BUILDING_BBL [-stage=STAGE]")
+			os.Exit(1)
+		}
+		store, _ := mapdata.Load(mapDataDir)
+		runner := pipeline.NewRunner("data/assets", store)
+		fmt.Printf("Pipeline: processing BBL %s\n", *pipelineBBL)
+		var err error
+		if *pipelineStage != "" {
+			err = runner.RunStage(*pipelineBBL, *pipelineStage)
+		} else {
+			err = runner.RunBuilding(*pipelineBBL)
+		}
+		if err != nil {
+			fmt.Println("Pipeline error:", err)
+			os.Exit(1)
+		}
+		fmt.Println("Pipeline complete.")
 		return
 	}
 
